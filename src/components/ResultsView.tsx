@@ -19,6 +19,8 @@ import {
   TestMode,
 } from '../types/exam';
 import { LatexRenderer } from './LatexRenderer';
+import { KTestLogo } from './brand/KTestLogo';
+import { MathPAAIcon, VerbalPAAIcon } from './brand/KTestIcons';
 
 interface ResultsViewProps {
   examData: MockPaaExamData;
@@ -99,19 +101,12 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       <header className="sticky top-0 z-30 bg-[#0A1128] text-white border-b border-white/10 shadow-md">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#0052FF] flex items-center justify-center font-display font-extrabold text-sm">
-              K
-            </div>
-            <div>
-              <span className="font-display font-bold text-sm tracking-wider">
-                KEY INSTITUTE · REPORTE PAA
-              </span>
-              {attemptRecord && (
-                <div className="text-[11px] text-[#00D2FF]">
-                  Alumno: {attemptRecord.userName} ({attemptRecord.userEmail})
-                </div>
-              )}
-            </div>
+            <KTestLogo theme="dark" variant="full" />
+            {attemptRecord && (
+              <div className="hidden sm:block pl-3 border-l border-white/15 text-[11px] text-[#00D2FF]">
+                Alumno: {attemptRecord.userName} ({attemptRecord.userEmail})
+              </div>
+            )}
           </div>
 
           <button
@@ -180,8 +175,8 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
             {readingQuestions.length > 0 && (
               <div className="rounded-xl bg-white/5 border border-white/10 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#0052FF]/20 text-[#00D2FF] flex items-center justify-center">
-                    <BookOpen className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center">
+                    <VerbalPAAIcon size={22} />
                   </div>
                   <div>
                     <div className="text-xs text-slate-300">Módulo</div>
@@ -204,8 +199,8 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
             {mathQuestions.length > 0 && (
               <div className="rounded-xl bg-white/5 border border-white/10 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#0052FF]/20 text-[#00D2FF] flex items-center justify-center">
-                    <Calculator className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center">
+                    <MathPAAIcon size={22} />
                   </div>
                   <div>
                     <div className="text-xs text-slate-300">Módulo</div>

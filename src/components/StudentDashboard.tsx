@@ -32,6 +32,13 @@ import {
 import { StudentUser } from '../models/UserClasses';
 import { SPRINTS_CATALOG } from '../data/sprintsCatalog';
 import { KEY_ADMISSION_COHORTS } from '../data/cohortsCatalog';
+import { KTestLogo } from './brand/KTestLogo';
+import {
+  SimulacroEngineIcon,
+  AsyncTrainerIcon,
+  MathPAAIcon,
+  VerbalPAAIcon,
+} from './brand/KTestIcons';
 import { LatexRenderer } from './LatexRenderer';
 
 interface StudentDashboardProps {
@@ -118,20 +125,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       <header className="sticky top-0 z-30 bg-[#0A1128] text-white border-b border-white/10 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#0052FF] flex items-center justify-center font-display font-extrabold text-base text-white shrink-0">
-              K
-            </div>
-            <div className="min-w-0">
+            <KTestLogo theme="dark" variant="full" />
+            <div className="hidden md:block h-6 w-px bg-white/15" />
+            <div className="hidden md:block min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-display font-bold text-sm tracking-wider uppercase">
-                  KEY INSTITUTE
-                </span>
-                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#0052FF]/30 text-[#00D2FF] border border-[#00D2FF]/30">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#0052FF]/30 text-[#00D2FF] border border-[#00D2FF]/30">
                   <GraduationCap className="w-3 h-3" />
                   Portal Estudiante
                 </span>
               </div>
-              <div className="text-xs text-slate-300 truncate">
+              <div className="text-xs text-slate-300 truncate mt-0.5">
                 {student.name} · <span className="text-slate-400">{student.cohort}</span>
               </div>
             </div>
@@ -359,10 +362,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             {/* Full Simulacro Section */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-display text-lg font-bold text-[#0A1128] flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-[#0052FF]" />
-                  Prueba de Simulacro (Test Completo Secuencial)
-                </h2>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-lg bg-[#0052FF]/10 border border-[#0052FF]/20 flex items-center justify-center shrink-0">
+                    <SimulacroEngineIcon size={24} />
+                  </div>
+                  <h2 className="font-display text-lg font-bold text-[#0A1128]">
+                    Prueba de Simulacro (Test Completo Secuencial)
+                  </h2>
+                </div>
                 <span className="text-xs font-semibold text-slate-500">
                   Escala PAA 400–1600 pts
                 </span>
@@ -390,10 +397,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   </p>
 
                   <div className="flex flex-wrap gap-2 pt-1 text-xs text-slate-600">
-                    <span className="px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 font-medium">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 font-medium">
+                      <VerbalPAAIcon size={16} />
                       1. Lectura y Redacción ({reading.questions.length} pregs · {reading.durationMinutes} min)
                     </span>
-                    <span className="px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 font-medium">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 font-medium">
+                      <MathPAAIcon size={16} />
                       2. Matemáticas ({math.questions.length} pregs · {math.durationMinutes} min)
                     </span>
                   </div>
@@ -413,10 +422,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             {/* Sprints Section: Either Subject Hub Cards OR Expanded Sprint Catalog for Selected Subject */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-display text-lg font-bold text-[#0A1128] flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-amber-500 fill-amber-400" />
-                  Sprints PAA por Materia (Tests Cortos de Entrenamiento)
-                </h2>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-lg bg-[#ECFDF5] border border-[#10B981]/20 flex items-center justify-center shrink-0">
+                    <AsyncTrainerIcon size={24} />
+                  </div>
+                  <h2 className="font-display text-lg font-bold text-[#0A1128]">
+                    Sprints PAA por Materia (Práctica Asíncrona / Entrenador Activo)
+                  </h2>
+                </div>
                 {selectedSprintSubject ? (
                   <button
                     type="button"
@@ -440,9 +453,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   <div className="bg-white rounded-2xl border-2 border-slate-200 hover:border-[#0052FF]/50 p-6 shadow-2xs flex flex-col justify-between transition-all">
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/12 text-amber-800 text-xs font-bold uppercase tracking-wider">
-                          <BookOpen className="w-3.5 h-3.5 text-amber-600" />
-                          Área de Lenguaje
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 text-purple-900 border border-purple-200/70 text-xs font-bold uppercase tracking-wider">
+                          <VerbalPAAIcon size={18} />
+                          Área de Lenguaje y Redacción
                         </span>
                         <span className="inline-flex items-center gap-1 text-xs font-mono-num font-bold text-[#0052FF] bg-[#0052FF]/10 px-2.5 py-1 rounded-md">
                           {readingSprints.length} Sprints disponibles
@@ -496,9 +509,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   <div className="bg-white rounded-2xl border-2 border-slate-200 hover:border-[#0052FF]/50 p-6 shadow-2xs flex flex-col justify-between transition-all">
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0A1128] text-[#00D2FF] text-xs font-bold uppercase tracking-wider">
-                          <Calculator className="w-3.5 h-3.5 text-[#00D2FF]" />
-                          Área Cuantitativa
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0052FF]/8 text-[#0A1128] border border-[#0052FF]/20 text-xs font-bold uppercase tracking-wider">
+                          <MathPAAIcon size={18} />
+                          Área Cuantitativa · Matemáticas
                         </span>
                         <span className="inline-flex items-center gap-1 text-xs font-mono-num font-bold text-[#0052FF] bg-[#0052FF]/10 px-2.5 py-1 rounded-md">
                           {mathSprints.length} Sprints disponibles
@@ -554,11 +567,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 <div className="bg-white rounded-2xl border-2 border-[#0052FF]/25 p-5 sm:p-6 shadow-xs space-y-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#0A1128] text-[#00D2FF] flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
                         {selectedSprintSubject === 'reading' ? (
-                          <BookOpen className="w-5 h-5" />
+                          <VerbalPAAIcon size={22} />
                         ) : (
-                          <Calculator className="w-5 h-5" />
+                          <MathPAAIcon size={22} />
                         )}
                       </div>
                       <div>

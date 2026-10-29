@@ -28,6 +28,7 @@ import {
   apiSaveTestAttempt,
 } from './services/api';
 import { Header } from './components/Header';
+import { KTestLogo } from './components/brand/KTestLogo';
 import { AuthView } from './components/AuthView';
 import { StudentDashboard } from './components/StudentDashboard';
 import { TeacherDashboard } from './components/TeacherDashboard';
@@ -328,12 +329,12 @@ export const App: React.FC = () => {
   if (loadingDb) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-[#0A1128] text-white">
-        <div className="text-center space-y-2">
-          <div className="w-10 h-10 rounded-xl bg-[#0052FF] flex items-center justify-center font-display font-extrabold text-lg mx-auto animate-pulse">
-            K
+        <div className="text-center space-y-3">
+          <div className="flex justify-center animate-pulse">
+            <KTestLogo theme="dark" variant="full" />
           </div>
           <p className="text-xs font-mono-num text-[#00D2FF]">
-            Conectando con base de datos SQLite...
+            Inicializando entorno K-test...
           </p>
         </div>
       </div>

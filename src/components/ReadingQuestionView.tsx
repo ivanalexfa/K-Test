@@ -10,6 +10,11 @@ import {
 } from 'lucide-react';
 import { ExamQuestion, OptionId, ReadingPassage } from '../types/exam';
 import { LatexRenderer } from './LatexRenderer';
+import {
+  VerbalPAAIcon,
+  StrikeOptionIcon,
+  KeyHintIcon,
+} from './brand/KTestIcons';
 
 interface ReadingQuestionViewProps {
   question: ExamQuestion;
@@ -32,10 +37,26 @@ export const ReadingQuestionView: React.FC<ReadingQuestionViewProps> = ({
 }) => {
   // Mobile tab state: 'passage' | 'question'
   const [mobileTab, setMobileTab] = useState<'passage' | 'question'>('question');
+  const [struckOptions, setStruckOptions] = useState<Record<string, boolean>>({});
+  const [showKeyHint, setShowKeyHint] = useState<boolean>(false);
   const lineRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const referencedSet = new Set(question.referencedLines ?? []);
   const firstReferencedLine = question.referencedLines?.[0];
+
+  // Reset hint & struck options when switching questions
+  useEffect(() => {
+    setShowKeyHint(false);
+    setStruckOptions({});
+  }, [question.id]);
+
+  const toggleStrikeOption = (e: React.MouseEvent, optId: OptionId) => {
+    e.stopPropagation();
+    setStruckOptions((prev) => ({
+      ...prev,
+      [optId]: !prev[optId],
+    }));
+  };
 
   // Auto-scroll to referenced line in desktop or when switching to passage tab on mobile
   const scrollToReferencedLines = () => {
@@ -208,36 +229,70 @@ export const ReadingQuestionView: React.FC<ReadingQuestionViewProps> = ({
           }`}
         >
           {/* Question Top Bar */}
-          <div className="px-4 sm:px-6 py-4 bg-slate-50/80 border-b border-slate-200/80 flex items-center justify-between gap-2 shrink-0">
+          <div className="px-4 sm:px-6 py-4 bg-slate-50/80 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-2 shrink-0">
             <div className="flex items-center gap-2.5">
               <span className="w-7 h-7 rounded-lg bg-[#0A1128] text-white font-mono-num font-bold text-xs flex items-center justify-center">
                 {question.numberInSection}
               </span>
-              <span className="text-xs font-semibold text-slate-600 bg-slate-200/70 px-2.5 py-1 rounded-md">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-slate-200/70 px-2.5 py-1 rounded-md">
+                <VerbalPAAIcon size={15} />
                 {question.category}
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={onToggleFlag}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                isFlagged
-                  ? 'bg-amber-50 border-amber-400 text-amber-800'
-                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-[#0A1128]'
-              }`}
-            >
-              <Flag
-                className={`w-3.5 h-3.5 ${
-                  isFlagged ? 'fill-amber-400 text-amber-500' : 'text-slate-400'
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowKeyHint((v) => !v)}
+                title="Mostrar pista o asistencia guiada"
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                  showKeyHint
+                    ? 'bg-amber-50 border-amber-400 text-amber-800'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-amber-300 hover:text-[#0A1128]'
                 }`}
-              />
-              <span>{isFlagged ? 'Marcada para revisión' : 'Marcar para revisión'}</span>
-            </button>
+              >
+                <KeyHintIcon size={16} />
+                <span>Pista Key</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onToggleFlag}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                  isFlagged
+                    ? 'bg-amber-50 border-amber-400 text-amber-800'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-[#0A1128]'
+                }`}
+              >
+                <Flag
+                  className={`w-3.5 h-3.5 ${
+                    isFlagged ? 'fill-amber-400 text-amber-500' : 'text-slate-400'
+                  }`}
+                />
+                <span>{isFlagged ? 'Marcada' : 'Marcar'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Question Prompt & Options Scroll Container */}
           <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-6">
+            {/* Guided Key Hint Callout */}
+            {showKeyHint && (
+              <div className="p-3.5 rounded-xl bg-[#FFFBEB] border border-[#F59E0B]/40 text-xs sm:text-sm text-amber-950 flex items-start gap-3">
+                <KeyHintIcon size={20} className="shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-display font-bold text-xs uppercase tracking-wider text-amber-800 mb-0.5">
+                    Asistencia Guiada K-test ({question.category})
+                  </div>
+                  <p className="text-xs leading-relaxed text-amber-900">
+                    {question.referencedLinesLabel
+                      ? `Ubica primero ${question.referencedLinesLabel} en el pasaje e identifica la idea principal del párrafo antes de comparar los distractores.`
+                      : 'Analiza el tono global del autor y utiliza el botón de descarte en las opciones que contradigan la evidencia textual.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Referenced Lines Chip */}
             {question.referencedLinesLabel && (
               <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-[#0052FF]/6 border border-[#0052FF]/20">
@@ -269,43 +324,74 @@ export const ReadingQuestionView: React.FC<ReadingQuestionViewProps> = ({
             <div className="space-y-3" role="radiogroup" aria-label="Opciones de respuesta">
               {question.options.map((option) => {
                 const isSelected = selectedOption === option.id;
+                const isStruck = Boolean(struckOptions[option.id]);
                 return (
-                  <button
+                  <div
                     key={option.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={isSelected}
-                    onClick={() => onSelectOption(option.id)}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-start gap-3.5 cursor-pointer group ${
+                    className={`w-full rounded-xl border-2 transition-all flex items-center gap-2 pr-2.5 ${
                       isSelected
                         ? 'border-[#0052FF] bg-[#0052FF]/6 shadow-xs'
+                        : isStruck
+                        ? 'border-slate-200 bg-slate-50/70 opacity-60'
                         : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50/70'
                     }`}
                   >
-                    <span
-                      className={`w-8 h-8 rounded-lg font-display font-bold text-sm flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected
-                          ? 'bg-[#0052FF] text-white shadow-xs shadow-[#0052FF]/30'
-                          : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'
-                      }`}
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      onClick={() => onSelectOption(option.id)}
+                      className="flex-1 text-left p-4 flex items-start gap-3.5 cursor-pointer group"
                     >
-                      {option.id}
-                    </span>
-
-                    <span
-                      className={`flex-1 text-sm sm:text-[15px] leading-relaxed pt-0.5 ${
-                        isSelected ? 'text-[#0A1128] font-semibold' : 'text-slate-700'
-                      }`}
-                    >
-                      <LatexRenderer content={option.text} />
-                    </span>
-
-                    {isSelected && (
-                      <span className="w-5 h-5 rounded-full bg-[#0052FF] text-white flex items-center justify-center shrink-0 mt-1">
-                        <Check className="w-3 h-3 stroke-[3]" />
+                      <span
+                        className={`w-8 h-8 rounded-lg font-display font-bold text-sm flex items-center justify-center shrink-0 transition-colors ${
+                          isSelected
+                            ? 'bg-[#0052FF] text-white shadow-xs shadow-[#0052FF]/30'
+                            : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'
+                        }`}
+                      >
+                        {option.id}
                       </span>
-                    )}
-                  </button>
+
+                      <span
+                        className={`flex-1 text-sm sm:text-[15px] leading-relaxed pt-0.5 ${
+                          isStruck ? 'line-through text-slate-400' : ''
+                        } ${
+                          isSelected ? 'text-[#0A1128] font-semibold' : 'text-slate-700'
+                        }`}
+                      >
+                        <LatexRenderer content={option.text} />
+                      </span>
+
+                      {isSelected && (
+                        <span className="w-5 h-5 rounded-full bg-[#0052FF] text-white flex items-center justify-center shrink-0 mt-1">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </span>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => toggleStrikeOption(e, option.id)}
+                      title={
+                        isStruck
+                          ? `Restaurar opción ${option.id}`
+                          : `Descartar / tachar opción ${option.id}`
+                      }
+                      aria-label={
+                        isStruck
+                          ? `Restaurar opción ${option.id}`
+                          : `Descartar opción ${option.id}`
+                      }
+                      className={`p-2 rounded-lg border transition-colors cursor-pointer shrink-0 ${
+                        isStruck
+                          ? 'bg-red-50 border-red-200 text-red-600'
+                          : 'bg-white border-transparent hover:border-slate-200 text-slate-400 hover:text-slate-700'
+                      }`}
+                    >
+                      <StrikeOptionIcon size={18} />
+                    </button>
+                  </div>
                 );
               })}
             </div>
