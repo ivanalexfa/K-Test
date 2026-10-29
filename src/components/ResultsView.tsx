@@ -23,6 +23,7 @@ import { LatexRenderer } from './LatexRenderer';
 interface ResultsViewProps {
   examData: MockPaaExamData;
   testMode: TestMode;
+  customQuestions?: ExamQuestion[] | null;
   answers: Record<string, OptionId>;
   attemptRecord?: TestAttemptRecord | null;
   onBackToPortal: () => void;
@@ -33,16 +34,28 @@ type FilterMode = 'all' | 'reading' | 'math' | 'incorrect';
 export const ResultsView: React.FC<ResultsViewProps> = ({
   examData,
   testMode,
+  customQuestions,
   answers,
   attemptRecord,
   onBackToPortal,
 }) => {
   const [filter, setFilter] = useState<FilterMode>('all');
 
-  const readingQuestions =
-    testMode === 'sprint_math' ? [] : examData.sections.reading.questions;
-  const mathQuestions =
-    testMode === 'sprint_reading' ? [] : examData.sections.math.questions;
+  const allSectionReading = examData.sections.reading.questions;
+  const allSectionMath = examData.sections.math.questions;
+
+  const readingQuestions = customQuestions
+    ? customQuestions.filter((q) => q.section === 'reading')
+    : testMode === 'sprint_math'
+    ? []
+    : allSectionReading;
+
+  const mathQuestions = customQuestions
+    ? customQuestions.filter((q) => q.section === 'math')
+    : testMode === 'sprint_reading'
+    ? []
+    : allSectionMath;
+
   const activeQuestions: ExamQuestion[] = [...readingQuestions, ...mathQuestions];
 
   const readingCorrect = readingQuestions.filter(

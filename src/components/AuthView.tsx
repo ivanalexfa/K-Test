@@ -1,77 +1,200 @@
-import React, { useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import {
   GraduationCap,
   BookOpenCheck,
-  Database,
   ArrowRight,
-  UserPlus,
   Sparkles,
-  ShieldCheck,
+  ChevronDown,
+  ChevronUp,
   CheckCircle2,
+  AlertCircle,
+  Lock,
+  X,
+  Layers,
+  Zap,
+  BookOpen,
+  Compass,
 } from 'lucide-react';
 import { UserRecord, UserRole } from '../types/exam';
 import { instantiateUserClass } from '../models/UserClasses';
+import { KEY_ADMISSION_COHORTS } from '../data/cohortsCatalog';
+import {
+  isDemoAccountsEnabled,
+  isRealMsalConfigured,
+  MicrosoftIdentityPayload,
+  triggerRealMicrosoftPopup,
+} from '../config/msalConfig';
 
 interface AuthViewProps {
   users: UserRecord[];
   onSelectUser: (user: UserRecord) => void;
-  onRegisterUser: (payload: {
+  onMicrosoftLogin: (payload: {
     name: string;
     email: string;
-    password?: string;
-    role: UserRole;
-    cohort: string;
+    microsoftOid?: string;
+    idToken?: string;
+    accessToken?: string;
+    requestedRole: UserRole;
+    teacherPin?: string;
+    cohort?: string;
   }) => Promise<void>;
 }
+
+const MicrosoftLogoSvg: React.FC<{ className?: string }> = ({
+  className = 'w-5 h-5',
+}) => (
+  <svg viewBox="0 0 21 21" className={className} aria-hidden="true">
+    <rect x="1" y="1" width="9" height="9" fill="#F25022" />
+    <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
+    <rect x="1" y="11" width="9" height="9" fill="#00A4EF" />
+    <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
+  </svg>
+);
 
 export const AuthView: React.FC<AuthViewProps> = ({
   users,
   onSelectUser,
-  onRegisterUser,
+  onMicrosoftLogin,
 }) => {
   const [roleTab, setRoleTab] = useState<UserRole>('student');
-  const [showRegisterForm, setShowRegisterForm] = useState(false);
-
-  // New user form state
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState<UserRole>('student');
-  const [cohort, setCohort] = useState('Cohorte Admisión Ingeniería 2027 · Grupo A');
+  const [selectedCohort, setSelectedCohort] = useState<string>(
+    KEY_ADMISSION_COHORTS[0]
+  );
+  const [teacherPin, setTeacherPin] = useState<string>('');
+  const [pinRequiredHighlight, setPinRequiredHighlight] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [loadingMs, setLoadingMs] = useState<boolean>(false);
+
+  // Collapsible Developer / Demo Accounts section
+  const [demoPanelOpen, setDemoPanelOpen] = useState<boolean>(false);
+
+  // Fallback Simulator Modal (only if VITE_MSAL_CLIENT_ID is empty)
+  const [isMsSimModalOpen, setIsMsSimModalOpen] = useState<boolean>(false);
+  const [simEmail, setSimEmail] = useState<string>('');
+  const [simName, setSimName] = useState<string>('');
+
+  const msDialogRef = useRef<HTMLDialogElement | null>(null);
+  const msDialogTitleId = useId();
+
+  const realMsalActive = isRealMsalConfigured();
+  const showDemoSection = isDemoAccountsEnabled();
 
   const students = users.filter((u) => u.role === 'student');
   const teachers = users.filter((u) => u.role === 'teacher');
-  const displayedUsers = roleTab === 'student' ? students : teachers;
 
-  const handleCreateAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    const dialog = msDialogRef.current;
+    if (!dialog) return;
+    if (isMsSimModalOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isMsSimModalOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isMsSimModalOpen]);
+
+  // Mandatory light-dismiss fallback for browsers without native <dialog closedby="any">
+  useEffect(() => {
+    const dialog = msDialogRef.current;
+    if (!dialog) return;
+
+    if (!('closedBy' in HTMLDialogElement.prototype)) {
+      const handleBackdropClick = (event: MouseEvent) => {
+        if (event.target !== dialog) return;
+        const rect = dialog.getBoundingClientRect();
+        const isDialogContent =
+          rect.top <= event.clientY &&
+          event.clientY <= rect.top + rect.height &&
+          rect.left <= event.clientX &&
+          event.clientX <= rect.left + rect.width;
+        if (isDialogContent) return;
+        dialog.close();
+      };
+
+      dialog.addEventListener('click', handleBackdropClick);
+      return () => dialog.removeEventListener('click', handleBackdropClick);
+    }
+  }, []);
+
+  const completeBackendMicrosoftHandshake = async (
+    identity: MicrosoftIdentityPayload
+  ) => {
     setError(null);
-    if (!name.trim() || !email.trim()) {
-      setError('Por favor completa tu nombre y correo institucional.');
-      return;
-    }
+    setPinRequiredHighlight(false);
+    setLoadingMs(true);
     try {
-      setSubmitting(true);
-      await onRegisterUser({
-        name,
-        email,
-        role,
-        cohort,
+      await onMicrosoftLogin({
+        name: identity.name,
+        email: identity.email,
+        microsoftOid: identity.microsoftOid,
+        idToken: identity.idToken,
+        accessToken: identity.accessToken,
+        requestedRole: roleTab,
+        teacherPin: roleTab === 'teacher' ? teacherPin : undefined,
+        cohort:
+          roleTab === 'student'
+            ? selectedCohort
+            : 'Cátedra Académica Key Institute',
       });
-      setName('');
-      setEmail('');
-      setShowRegisterForm(false);
+      setIsMsSimModalOpen(false);
     } catch (err: any) {
-      setError(err?.message || 'No se pudo registrar el usuario');
+      if (err?.code === 'PIN_REQUIRED' || err?.code === 'INVALID_PIN') {
+        setPinRequiredHighlight(true);
+      }
+      setError(
+        err?.message || 'No se pudo completar el inicio de sesión con Microsoft.'
+      );
+      setIsMsSimModalOpen(false);
     } finally {
-      setSubmitting(false);
+      setLoadingMs(false);
     }
+  };
+
+  const handleClickMicrosoftLogin = async () => {
+    setError(null);
+    setPinRequiredHighlight(false);
+
+    if (realMsalActive) {
+      try {
+        setLoadingMs(true);
+        const identity = await triggerRealMicrosoftPopup();
+        await completeBackendMicrosoftHandshake(identity);
+      } catch (err: any) {
+        setError(
+          err?.message || 'El inicio de sesión con Microsoft fue cancelado o falló.'
+        );
+      } finally {
+        setLoadingMs(false);
+      }
+    } else {
+      const defaultAcc =
+        roleTab === 'student'
+          ? students[0] || {
+              name: 'Sofía Martínez',
+              email: 'sofia.martinez@keyinstitute.edu.sv',
+            }
+          : teachers[0] || {
+              name: 'Dr. Roberto Méndez',
+              email: 'roberto.mendez@keyinstitute.com',
+            };
+      setSimName(defaultAcc.name);
+      setSimEmail(defaultAcc.email);
+      setIsMsSimModalOpen(true);
+    }
+  };
+
+  const handleSimulatedMsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!simEmail.trim()) return;
+    await completeBackendMicrosoftHandshake({
+      name: simName.trim() || simEmail.split('@')[0],
+      email: simEmail.trim().toLowerCase(),
+      microsoftOid: `ms-sim-${simEmail.trim().toLowerCase()}`,
+    });
   };
 
   return (
     <div className="min-h-dvh flex flex-col bg-[#F8FAFC] text-[#0A1128]">
-      {/* Top Institutional Navbar */}
+      {/* Top Institutional Bar */}
       <header className="bg-[#0A1128] text-white border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -83,301 +206,372 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 KEY INSTITUTE
               </div>
               <div className="text-[11px] text-[#00D2FF] tracking-wide">
-                Plataforma Académica PAA · Estudiantes y Docentes
+                Instituto Kriete de Ingeniería y Ciencias
               </div>
             </div>
           </div>
 
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
-            <Database className="w-3.5 h-3.5 text-emerald-400" />
-            SQLite Conectado ({users.length} usuarios)
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-slate-200 border border-white/15">
+            <Sparkles className="w-3.5 h-3.5 text-[#00D2FF]" />
+            Powering Engineers for Life
           </span>
         </div>
       </header>
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Platform Architecture & Role Overview */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="rounded-2xl bg-[#0A1128] text-white p-6 sm:p-8 shadow-xl border border-slate-800 relative overflow-hidden">
-            <div className="absolute -right-14 -top-14 w-56 h-56 rounded-full bg-[#0052FF]/25 blur-3xl pointer-events-none" />
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0052FF]/25 border border-[#00D2FF]/30 text-[#00D2FF] text-xs font-semibold uppercase tracking-wider mb-4">
-                <Sparkles className="w-3.5 h-3.5" />
-                Powering Engineers for Life
-              </div>
-              <h1 className="font-display text-2xl sm:text-3xl font-extrabold leading-tight mb-3">
-                Ecosistema de Preparación y Evaluación PAA
-              </h1>
-              <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mb-6">
-                Selecciona un perfil de <strong>Estudiante</strong> o{' '}
-                <strong>Docente</strong> para acceder a la plataforma conectada a la
-                base de datos local SQLite (`data/paa_platform.sqlite`).
-              </p>
+      {/* Hero Section with Centered Minimalist Login Card */}
+      <section className="relative bg-[#0A1128] text-white pt-10 pb-20 sm:pt-14 sm:pb-24 px-4 sm:px-6 overflow-hidden border-b border-slate-800">
+        {/* Ambient Key Institute Glows */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[650px] h-[300px] bg-[#0052FF]/25 blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 right-10 w-80 h-80 bg-[#00D2FF]/10 blur-[100px] pointer-events-none" />
 
-              <div className="space-y-3 pt-4 border-t border-white/10 text-xs sm:text-sm">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#0052FF]/25 text-[#00D2FF] flex items-center justify-center shrink-0 mt-0.5">
-                    <GraduationCap className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-white">Clase Estudiante (`StudentUser`)</div>
-                    <p className="text-slate-300 text-xs leading-relaxed">
-                      Acceso a Materiales de Estudio, Simulacros Completos (Lectura + Matemáticas), Sprints cortos por área e historial propio de resultados.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#00D2FF]/20 text-[#00D2FF] flex items-center justify-center shrink-0 mt-0.5">
-                    <BookOpenCheck className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-white">Clase Docente (`TeacherUser`)</div>
-                    <p className="text-slate-300 text-xs leading-relaxed">
-                      Administración de Materiales de Estudio en la base de datos y matriz analítica cruzada de Estudiantes × Resultados (Simulacros y Sprints).
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div className="relative z-10 max-w-3xl mx-auto text-center mb-8 sm:mb-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#0052FF]/25 border border-[#00D2FF]/35 text-[#00D2FF] text-xs font-bold uppercase tracking-wider mb-4">
+            Plataforma de Preparación y Diagnóstico PAA
           </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs text-xs text-slate-600 space-y-2">
-            <div className="flex items-center gap-2 font-bold text-[#0A1128] text-sm">
-              <ShieldCheck className="w-4 h-4 text-[#0052FF]" />
-              Persistencia Real en Base de Datos
-            </div>
-            <p className="leading-relaxed">
-              Cada Simulacro o Sprint completado por un alumno se guarda automáticamente en la tabla <code>test_attempts</code> y se cruza en tiempo real con el panel del docente.
-            </p>
-          </div>
+          <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight mb-3">
+            Entrena tu mente para la ingeniería del futuro
+          </h1>
+          <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+            Domina las áreas de Lectura Crítica, Redacción Académica y Razonamiento
+            Matemático con simulacros reales, sprints cortos y acompañamiento docente.
+          </p>
         </div>
 
-        {/* Right Column: Role Selector & Account Cards */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        {/* Centered Login Card */}
+        <div className="relative z-10 max-w-md mx-auto bg-white text-[#0A1128] rounded-2xl shadow-2xl border border-white/15 overflow-hidden">
           {/* Role Switcher Tabs */}
-          <div className="p-4 sm:p-6 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-200/80 border border-slate-300/70 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => {
-                  setRoleTab('student');
-                  setShowRegisterForm(false);
-                }}
-                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                  roleTab === 'student'
-                    ? 'bg-[#0052FF] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-[#0A1128]'
-                }`}
-              >
-                <GraduationCap className="w-4 h-4" />
-                <span>Estudiantes ({students.length})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setRoleTab('teacher');
-                  setShowRegisterForm(false);
-                }}
-                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                  roleTab === 'teacher'
-                    ? 'bg-[#0A1128] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-[#0A1128]'
-                }`}
-              >
-                <BookOpenCheck className="w-4 h-4 text-[#00D2FF]" />
-                <span>Docentes ({teachers.length})</span>
-              </button>
-            </div>
+          <div className="p-2 bg-slate-100 border-b border-slate-200 grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setRoleTab('student');
+                setError(null);
+                setPinRequiredHighlight(false);
+              }}
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                roleTab === 'student'
+                  ? 'bg-[#0052FF] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-[#0A1128]'
+              }`}
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>Soy Estudiante</span>
+            </button>
 
             <button
               type="button"
               onClick={() => {
-                setRole(roleTab);
-                setCohort(
-                  roleTab === 'teacher'
-                    ? 'Departamento de Ciencias e Ingeniería'
-                    : 'Cohorte Admisión Ingeniería 2027 · Grupo A'
-                );
-                setShowRegisterForm((v) => !v);
+                setRoleTab('teacher');
+                setError(null);
               }}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-[#0A1128] transition-colors cursor-pointer"
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                roleTab === 'teacher'
+                  ? 'bg-[#0A1128] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-[#0A1128]'
+              }`}
             >
-              <UserPlus className="w-3.5 h-3.5 text-[#0052FF]" />
-              <span>{showRegisterForm ? 'Ver cuentas existentes' : 'Crear nuevo usuario'}</span>
+              <BookOpenCheck className="w-4 h-4 text-[#00D2FF]" />
+              <span>Soy Docente</span>
             </button>
           </div>
 
-          {showRegisterForm ? (
-            <form onSubmit={handleCreateAccount} className="p-6 space-y-4">
+          <div className="p-6 sm:p-7 space-y-5">
+            <div className="text-center">
+              <h2 className="font-display font-extrabold text-lg sm:text-xl text-[#0A1128]">
+                {roleTab === 'student'
+                  ? 'Ingresa al Portal de Estudiantes'
+                  : 'Ingresa al Panel de Cátedra'}
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                {roleTab === 'student'
+                  ? 'Accede con tu cuenta de Microsoft para guardar tu progreso.'
+                  : 'Accede con tu cuenta institucional de Microsoft.'}
+              </p>
+            </div>
+
+            {error && (
+              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-xs text-red-800">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex-1 font-medium">{error}</div>
+              </div>
+            )}
+
+            {/* Student Target Cohort Selector */}
+            {roleTab === 'student' && (
               <div>
-                <h2 className="font-display font-bold text-lg text-[#0A1128]">
-                  Registrar nuevo usuario en SQLite
-                </h2>
-                <p className="text-xs text-slate-500">
-                  El usuario quedará almacenado permanentemente en <code>paa_platform.sqlite</code>.
-                </p>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Carrera / Cohorte de Admisión a la que aspiras
+                </label>
+                <select
+                  value={selectedCohort}
+                  onChange={(e) => setSelectedCohort(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/70 text-xs sm:text-sm font-medium text-[#0A1128] focus:outline-none focus:border-[#0052FF]"
+                >
+                  {KEY_ADMISSION_COHORTS.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </div>
+            )}
 
-              {error && (
-                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
-                  {error}
-                </div>
+            {/* Teacher Access PIN Box */}
+            {roleTab === 'teacher' && (
+              <div
+                className={`p-4 rounded-xl border transition-all ${
+                  pinRequiredHighlight
+                    ? 'border-amber-500 bg-amber-50/70'
+                    : 'border-slate-200 bg-slate-50/80'
+                }`}
+              >
+                <label className="flex items-center justify-between text-xs font-bold text-[#0A1128] mb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-[#0052FF]" />
+                    PIN de Cátedra Docente
+                  </span>
+                  <span className="text-[10px] font-normal text-slate-500">
+                    1.er registro
+                  </span>
+                </label>
+                <input
+                  type="password"
+                  value={teacherPin}
+                  onChange={(e) => setTeacherPin(e.target.value)}
+                  placeholder="Ingresa tu PIN de cátedra"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-sm font-mono focus:outline-none focus:border-[#0052FF]"
+                />
+              </div>
+            )}
+
+            {/* Primary Microsoft Login Button */}
+            <button
+              type="button"
+              disabled={loadingMs}
+              onClick={handleClickMicrosoftLogin}
+              className="w-full py-3.5 px-5 rounded-xl bg-[#0A1128] hover:bg-[#0052FF] text-white font-display font-bold text-sm sm:text-base shadow-lg flex items-center justify-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60"
+            >
+              <MicrosoftLogoSvg className="w-5 h-5 shrink-0" />
+              <span>
+                {loadingMs ? 'Conectando...' : 'Continuar con Microsoft'}
+              </span>
+              <ArrowRight className="w-4 h-4 text-[#00D2FF]" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Welcome Landing Showcase Section: What Awaits Inside */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 -mt-10 pb-14 relative z-20 space-y-10">
+        {/* 3 Symmetrical Pillars of the Platform */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Pillar 1: Full PAA Simulacro */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
+            <div>
+              <div className="w-11 h-11 rounded-xl bg-[#0052FF]/10 text-[#0052FF] flex items-center justify-center mb-4">
+                <Layers className="w-5 h-5" />
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0052FF]">
+                Experiencia Oficial College Board
+              </span>
+              <h3 className="font-display text-lg font-extrabold text-[#0A1128] mt-1 mb-2">
+                Simulacros Completos PAA
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Practica bajo las mismas condiciones del examen real: vista dividida
+                con pasajes de líneas numeradas en Lectura y módulo de Matemáticas
+                con formulario geométrico interactivo.
+              </p>
+            </div>
+            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
+              <span>Lectura + Matemáticas</span>
+              <span className="font-mono-num text-[#0A1128]">Escala 400–1600</span>
+            </div>
+          </div>
+
+          {/* Pillar 2: Focused Sprints */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
+            <div>
+              <div className="w-11 h-11 rounded-xl bg-[#0A1128] text-[#00D2FF] flex items-center justify-center mb-4">
+                <Zap className="w-5 h-5" />
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600">
+                Entrenamiento Diario Ágil
+              </span>
+              <h3 className="font-display text-lg font-extrabold text-[#0A1128] mt-1 mb-2">
+                Sprints Cortos por Materia
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                ¿Tienes pocos minutos? Elige entre múltiples Sprints especializados
+                en vocabulario contextual, redacción indirecta, volúmenes 3D,
+                triángulos notables o modelos algebraicos.
+              </p>
+            </div>
+            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
+              <span>Sesiones de 3 a 6 min</span>
+              <span className="font-mono-num text-[#0A1128]">Por dificultad</span>
+            </div>
+          </div>
+
+          {/* Pillar 3: Study Materials & Step-by-Step Feedback */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
+            <div>
+              <div className="w-11 h-11 rounded-xl bg-[#0052FF]/10 text-[#0052FF] flex items-center justify-center mb-4">
+                <Compass className="w-5 h-5" />
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0052FF]">
+                Acompañamiento Docente
+              </span>
+              <h3 className="font-display text-lg font-extrabold text-[#0A1128] mt-1 mb-2">
+                Materiales y Solucionarios
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Consulta guías teóricas, descarga presentaciones y ejercicios
+                subidos por tus profesores, y revisa la justificación matemática
+                paso a paso de cada reactivo finalizado.
+              </p>
+            </div>
+            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
+              <span>Guías + Archivos Adjuntos</span>
+              <span className="font-mono-num text-[#0A1128]">KaTeX / PDF / Office</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Discreet Collapsible Demo Quick-Access (Only visible in Dev when VITE_ENABLE_DEMO_ACCOUNTS=true) */}
+        {showDemoSection && (
+          <div className="max-w-2xl mx-auto bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setDemoPanelOpen((v) => !v)}
+              className="w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100/80 flex items-center justify-between text-xs font-semibold text-slate-500 transition-colors cursor-pointer"
+            >
+              <span>
+                Acceso rápido de prueba ({roleTab === 'student' ? 'Estudiantes' : 'Docentes'})
+              </span>
+              {demoPanelOpen ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
               )}
+            </button>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Clase de Usuario
-                  </label>
-                  <select
-                    value={role}
-                    onChange={(e) => {
-                      const nextRole = e.target.value as UserRole;
-                      setRole(nextRole);
-                      setCohort(
-                        nextRole === 'teacher'
-                          ? 'Departamento de Matemáticas y Física'
-                          : 'Cohorte Admisión Ingeniería 2027 · Grupo A'
-                      );
-                    }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-[#0052FF]"
-                  >
-                    <option value="student">Clase Estudiante (StudentUser)</option>
-                    <option value="teacher">Clase Docente (TeacherUser)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Nombre Completo
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Ej. Andrea Castellanos"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-[#0052FF]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Correo Institucional
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="usuario@keyinstitute.edu.sv"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-[#0052FF]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Cohorte / Departamento
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={cohort}
-                    onChange={(e) => setCohort(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-[#0052FF]"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowRegisterForm(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2.5 rounded-xl bg-[#0052FF] hover:bg-[#0045D8] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#0052FF]/25 cursor-pointer"
-                >
-                  {submitting ? 'Guardando...' : 'Crear y Acceder'}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className="p-5 sm:p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-display font-bold text-base sm:text-lg text-[#0A1128]">
-                    {roleTab === 'student'
-                      ? 'Ingresa como Estudiante'
-                      : 'Ingresa como Docente'}
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Haz clic en una cuenta para iniciar sesión con sus permisos y datos asociados.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {displayedUsers.map((u) => {
-                  const userInstance = instantiateUserClass(u);
+            {demoPanelOpen && (
+              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 border-t border-slate-200 max-h-60 overflow-y-auto custom-scrollbar">
+                {(roleTab === 'student' ? students : teachers).map((u) => {
+                  const inst = instantiateUserClass(u);
                   return (
                     <button
                       key={u.id}
                       type="button"
                       onClick={() => onSelectUser(u)}
-                      className="w-full text-left p-4 rounded-xl border-2 border-slate-200 hover:border-[#0052FF] bg-white hover:bg-[#0052FF]/3 transition-all flex items-center justify-between gap-4 group cursor-pointer"
+                      className="text-left p-2.5 rounded-lg border border-slate-200 hover:border-[#0052FF] bg-white hover:bg-slate-50 flex items-center justify-between gap-2 transition-all cursor-pointer"
                     >
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div
-                          className={`w-11 h-11 rounded-xl font-display font-extrabold text-sm flex items-center justify-center shrink-0 ${
-                            u.role === 'teacher'
-                              ? 'bg-[#0A1128] text-[#00D2FF]'
-                              : 'bg-[#0052FF]/12 text-[#0052FF]'
-                          }`}
-                        >
-                          {userInstance.getInitials()}
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-md bg-[#0A1128] text-[#00D2FF] font-display font-bold text-[11px] flex items-center justify-center shrink-0">
+                          {inst.getInitials()}
                         </div>
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-display font-bold text-sm sm:text-base text-[#0A1128] truncate">
-                              {u.name}
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                u.role === 'teacher'
-                                  ? 'bg-[#0A1128] text-[#00D2FF]'
-                                  : 'bg-[#0052FF]/10 text-[#0052FF]'
-                              }`}
-                            >
-                              {userInstance.getRoleBadgeLabel()}
-                            </span>
+                          <div className="font-bold text-xs text-[#0A1128] truncate">
+                            {u.name}
                           </div>
-                          <div className="text-xs text-slate-500 truncate mt-0.5">
-                            {u.email} · {u.cohort}
+                          <div className="text-[10px] text-slate-500 truncate">
+                            {u.cohort}
                           </div>
                         </div>
                       </div>
-
-                      <div className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-100 group-hover:bg-[#0052FF] text-slate-700 group-hover:text-white text-xs font-bold transition-colors">
-                        <span>Acceder</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </div>
+                      <span className="text-[11px] font-bold text-[#0052FF] shrink-0">
+                        Entrar
+                      </span>
                     </button>
                   );
                 })}
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </main>
+
+      {/* Fallback Microsoft SSO Simulator Modal (only if VITE_MSAL_CLIENT_ID is empty) */}
+      <dialog
+        ref={msDialogRef}
+        {...({ closedby: 'any' } as any)}
+        aria-labelledby={msDialogTitleId}
+        onClose={() => setIsMsSimModalOpen(false)}
+        className="paa-dialog w-[94vw] max-w-md rounded-2xl shadow-2xl overflow-hidden"
+      >
+        <div className="bg-white text-[#0A1128] rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <MicrosoftLogoSvg className="w-5 h-5" />
+              <span
+                id={msDialogTitleId}
+                className="font-semibold text-sm text-slate-800"
+              >
+                Iniciar sesión con Microsoft
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => msDialogRef.current?.close()}
+              aria-label="Cerrar ventana de Microsoft"
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSimulatedMsSubmit} className="p-6 space-y-4">
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Correo Institucional Microsoft
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={simEmail}
+                  onChange={(e) => setSimEmail(e.target.value)}
+                  placeholder="nombre.apellido@keyinstitute.edu.sv"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-[#0052FF]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Nombre Completo
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={simName}
+                  onChange={(e) => setSimName(e.target.value)}
+                  placeholder="Nombre y Apellido"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-[#0052FF]"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => msDialogRef.current?.close()}
+                className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={loadingMs}
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#0052FF] hover:bg-[#0045D8] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#0052FF]/25 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Continuar</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </dialog>
     </div>
   );
 };
