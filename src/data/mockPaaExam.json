@@ -1,0 +1,251 @@
+{
+  "examTitle": "Simulador Oficial PAA — Prueba de Aptitud Académica",
+  "institution": "KEY INSTITUTE",
+  "tagline": "Powering Engineers for Life · Admisión e Ingeniería",
+  "passages": {
+    "passage-1": {
+      "id": "passage-1",
+      "title": "La arquitectura invisible de los nanosatélites y la democratización orbital",
+      "authorOrSource": "Adaptado de Revista Latinoamericana de Ingeniería Aeroespacial (2025)",
+      "preamble": "El siguiente fragmento analiza la evolución de los estándares CubeSat y su impacto en las capacidades científicas de las universidades emergentes.",
+      "tag": "Lectura Científica · Comprensión",
+      "lines": [
+        { "lineNumber": 1, "text": "Durante décadas, el diseño y lanzamiento de satélites artificiales", "isParagraphStart": true },
+        { "lineNumber": 2, "text": "fue un privilegio reservado exclusivamente para agencias estatales" },
+        { "lineNumber": 3, "text": "y consorcios aeroespaciales con presupuestos multimillonarios." },
+        { "lineNumber": 4, "text": "Cada misión requería años de manufactura a la medida, componentes" },
+        { "lineNumber": 5, "text": "redundantes de gran volumen y vehículos de lanzamiento dedicados." },
+        { "lineNumber": 6, "text": "Sin embargo, a finales del siglo XX surgió una propuesta disruptiva:", "isParagraphStart": true },
+        { "lineNumber": 7, "text": "estandarizar las dimensiones de los instrumentos espaciales en cubos" },
+        { "lineNumber": 8, "text": "modulares de diez centímetros de arista y apenas un kilogramo de masa," },
+        { "lineNumber": 9, "text": "conocidos hoy en la literatura técnica como unidades CubeSat (1U)." },
+        { "lineNumber": 10, "text": "Esta aparente restricción geométrica no limitó el alcance de la ciencia;" },
+        { "lineNumber": 11, "text": "por el contrario, catalizó una frugalidad creativa sin precedentes." },
+        { "lineNumber": 12, "text": "Al compartir contenedores de despliegue estandarizados, los laboratorios", "isParagraphStart": true },
+        { "lineNumber": 13, "text": "universitarios pudieron aprovechar el excedente de carga en cohetes" },
+        { "lineNumber": 14, "text": "comerciales, reduciendo el costo de acceso a la órbita terrestre baja" },
+        { "lineNumber": 15, "text": "en más de un orden de magnitud. Como resultado, estudiantes de pregrado" },
+        { "lineNumber": 16, "text": "hoy diseñan sistemas de telemetría, control térmico y sensores ópticos" },
+        { "lineNumber": 17, "text": "que monitorean desde la deforestación tropical hasta la ionosfera." },
+        { "lineNumber": 18, "text": "No obstante, la proliferación de constelaciones miniaturizadas plantea", "isParagraphStart": true },
+        { "lineNumber": 19, "text": "un dilema impostergable: la saturación del entorno orbital y el riesgo" },
+        { "lineNumber": 20, "text": "de colisiones en cascada exigirán que la próxima generación de ingenieros" },
+        { "lineNumber": 21, "text": "integre mecanismos de desorbitación pasiva desde el boceto inicial." }
+      ]
+    },
+    "passage-2": {
+      "id": "passage-2",
+      "title": "Borrador de ensayo: La paradoja de la automatización algorítmica en el diseño",
+      "authorOrSource": "Sección de Redacción Indirecta · Revisión de Estilo y Cohesión",
+      "preamble": "Los segmentos numerados del siguiente texto contienen posibles mejoras de redacción, precisión léxica y conectores lógicos según los criterios de la PAA.",
+      "tag": "Redacción Indirecta · Estilo",
+      "lines": [
+        { "lineNumber": 1, "text": "En la práctica contemporánea de la ingeniería civil y estructural,", "isParagraphStart": true },
+        { "lineNumber": 2, "text": "los algoritmos de diseño generativo permiten explorar miles de" },
+        { "lineNumber": 3, "text": "topologías posibles en cuestión de segundos. Estas herramientas" },
+        { "lineNumber": 4, "text": "computacionales distribuyen la materia únicamente donde las líneas" },
+        { "lineNumber": 5, "text": "de esfuerzo mecánico lo demandan, imitando la eficiencia ósea." },
+        { "lineNumber": 6, "text": "Sin embargo, confiar ciegamente en la simulación automatizada", "isParagraphStart": true },
+        { "lineNumber": 7, "text": "entraña un peligro sutil: la atrofia de la intuición física del" },
+        { "lineNumber": 8, "text": "ingeniero. Cuando un profesional delega la comprensión de las cargas" },
+        { "lineNumber": 9, "text": "a una caja negra estadística, pierde la capacidad crítica para" },
+        { "lineNumber": 10, "text": "detectar anomalías en las condiciones de frontera del modelo." },
+        { "lineNumber": 11, "text": "Debido a esto, es que las escuelas de vanguardia insisten en que", "isParagraphStart": true },
+        { "lineNumber": 12, "text": "el dominio analítico del cálculo y la mecánica clásica debe preceder" },
+        { "lineNumber": 13, "text": "al uso de cualquier paquete de elementos finitos. La computadora" },
+        { "lineNumber": 14, "text": "multiplica la velocidad de respuesta; el criterio humano, en cambio," },
+        { "lineNumber": 15, "text": "garantiza que la pregunta formulada tenga sentido físico y ético." }
+      ]
+    }
+  },
+  "sections": {
+    "reading": {
+      "id": "reading",
+      "title": "Sección 1: Lectura y Redacción",
+      "subtitle": "Comprensión de Lectura y Redacción Indirecta",
+      "durationMinutes": 10,
+      "description": "Evalúa el análisis crítico de textos científicos y humanísticos, la inferencia contextual y el uso preciso del lenguaje académico.",
+      "questions": [
+        {
+          "id": "read-1",
+          "numberInSection": 1,
+          "section": "reading",
+          "category": "Vocabulario en Contexto",
+          "passageId": "passage-1",
+          "referencedLines": [10, 11],
+          "referencedLinesLabel": "Líneas 10–11",
+          "prompt": "En las líneas 10–11 («Esta aparente restricción geométrica no limitó el alcance de la ciencia; por el contrario, catalizó una frugalidad creativa sin precedentes»), la expresión «frugalidad creativa» se refiere principalmente a la capacidad de:",
+          "options": [
+            { "id": "A", "text": "reducir la precisión de los instrumentos ópticos para abaratar su mantenimiento en tierra." },
+            { "id": "B", "text": "maximizar la innovación tecnológica y científica empleando recursos físicos y económicos mínimos." },
+            { "id": "C", "text": "reemplazar los lanzamientos espaciales por simulaciones exclusivamente computacionales." },
+            { "id": "D", "text": "restringir la participación estudiantil a proyectos teóricos sin impacto experimental." }
+          ],
+          "correctOption": "B",
+          "explanation": "En el contexto de las líneas 7 a 15, el texto explica que limitar el tamaño a un cubo de $10\\text{ cm}$ y $1\\text{ kg}$ (restricción física y de costo) impulsó soluciones ingeniosas para integrar telemetría y sensores avanzados en espacios reducidos. Por tanto, «frugalidad creativa» significa innovar al máximo con recursos mínimos."
+        },
+        {
+          "id": "read-2",
+          "numberInSection": 2,
+          "section": "reading",
+          "category": "Inferencia y Análisis",
+          "passageId": "passage-1",
+          "referencedLines": [12, 13, 14, 15],
+          "referencedLinesLabel": "Líneas 12–15",
+          "prompt": "Según las líneas 12–15, ¿cuál fue el factor logístico determinante que permitió disminuir drásticamente el costo de poner un CubeSat en órbita?",
+          "options": [
+            { "id": "A", "text": "La construcción de plataformas de lanzamiento propias dentro de los campus universitarios." },
+            { "id": "B", "text": "La eliminación total de los sistemas de control térmico y telemetría en la órbita baja." },
+            { "id": "C", "text": "El uso de dispensadores estándar que permiten viajar como carga secundaria en cohetes comerciales." },
+            { "id": "D", "text": "El subsidio directo de las agencias espaciales a la totalidad de los consorcios privados." }
+          ],
+          "correctOption": "C",
+          "explanation": "Las líneas 12–15 señalan explícitamente que «Al compartir contenedores de despliegue estandarizados, los laboratorios universitarios pudieron aprovechar el excedente de carga en cohetes comerciales», evitando pagar un vehículo de lanzamiento exclusivo."
+        },
+        {
+          "id": "read-3",
+          "numberInSection": 3,
+          "section": "reading",
+          "category": "Estructura y Propósito",
+          "passageId": "passage-1",
+          "referencedLines": [18, 19, 20, 21],
+          "referencedLinesLabel": "Líneas 18–21",
+          "prompt": "¿Qué función cumple el último párrafo (líneas 18–21) en relación con el resto del pasaje?",
+          "options": [
+            { "id": "A", "text": "Refutar la utilidad educativa de los estándares CubeSat descrita en los párrafos anteriores." },
+            { "id": "B", "text": "Introducir una responsabilidad técnica y ambiental derivada del éxito masivo de los nanosatélites." },
+            { "id": "C", "text": "Demostrar que las agencias estatales recuperarán el monopolio absoluto del espacio exterior." },
+            { "id": "D", "text": "Enumerar los materiales metálicos requeridos para fabricar escudos contra basura espacial." }
+          ],
+          "correctOption": "B",
+          "explanation": "Mientras los primeros párrafos celebran la democratización y reducción de costos de los CubeSat, el párrafo final (líneas 18–21) introduce un matiz crítico («No obstante... plantea un dilema impostergable»): la necesidad de diseñar sistemas de desorbitación pasiva para evitar la saturación orbital."
+        },
+        {
+          "id": "read-4",
+          "numberInSection": 4,
+          "section": "reading",
+          "category": "Redacción · Concisión y Normativa",
+          "passageId": "passage-2",
+          "referencedLines": [11, 12],
+          "referencedLinesLabel": "Líneas 11–12",
+          "prompt": "En las líneas 11–12 se lee: «Debido a esto, es que las escuelas de vanguardia insisten en que el dominio analítico...». ¿Cuál de las siguientes opciones sustituye el segmento «Debido a esto, es que» de manera más concisa y gramaticalmente correcta?",
+          "options": [
+            { "id": "A", "text": "Por ello," },
+            { "id": "B", "text": "Siendo por esta razón que" },
+            { "id": "C", "text": "A causa de esto es por lo que" },
+            { "id": "D", "text": "No obstante," }
+          ],
+          "correctOption": "A",
+          "explanation": "En la prueba PAA de Redacción Indirecta se penaliza el queísmo/galicismo perifrástico («Debido a esto, es que...») y la redundancia. «Por ello,» conserva el vínculo causal exacto con máxima economía verbal y corrección normativa."
+        },
+        {
+          "id": "read-5",
+          "numberInSection": 5,
+          "section": "reading",
+          "category": "Redacción · Cohesión y Tesis",
+          "passageId": "passage-2",
+          "referencedLines": [13, 14, 15],
+          "referencedLinesLabel": "Líneas 13–15",
+          "prompt": "Considere el cierre del texto en las líneas 13–15. ¿Cuál es la relación lógica que establece el punto y coma junto con el conector «en cambio» en esa oración final?",
+          "options": [
+            { "id": "A", "text": "Ejemplifica una consecuencia temporal inmediata del uso de paquetes de elementos finitos." },
+            { "id": "B", "text": "Contrasta la potencia de cálculo de la máquina con el juicio crítico irreemplazable del ser humano." },
+            { "id": "C", "text": "Descarta por completo el uso de computadoras en el diseño estructural moderno." },
+            { "id": "D", "text": "Añade una causa secundaria de por qué las estructuras óseas son más ligeras que el acero." }
+          ],
+          "correctOption": "B",
+          "explanation": "En las líneas 13–15, el autor contrapone dos funciones complementarias pero distintas: «La computadora multiplica la velocidad de respuesta; el criterio humano, en cambio, garantiza que la pregunta formulada tenga sentido físico y ético»."
+        }
+      ]
+    },
+    "math": {
+      "id": "math",
+      "title": "Sección 2: Matemáticas",
+      "subtitle": "Álgebra, Geometría, Funciones y Análisis de Datos",
+      "durationMinutes": 12,
+      "description": "Resuelve problemas cuantitativos aplicados. Puedes consultar el modal de Fórmulas Geométricas Oficiales de la PAA en cualquier momento.",
+      "questions": [
+        {
+          "id": "math-1",
+          "numberInSection": 1,
+          "section": "math",
+          "category": "Geometría · Volúmenes y Cilindros",
+          "prompt": "En un laboratorio de propulsión de Key Institute se diseña un tanque cilíndrico circular recto cuyo radio de la base es $r = 3\\text{ cm}$ y cuya altura es $h = 10\\text{ cm}$. Si el contenido líquido de este tanque se vierte por completo dentro de un recipiente cónico circular recto que tiene el mismo radio de base ($R = 3\\text{ cm}$) sin que se derrame nada y llenándolo exactamente al tope, ¿cuál debe ser la altura $H$ del cono?",
+          "mathEquationBlock": "V_{\\text{cilindro}} = V_{\\text{cono}} \\implies \\pi r^2 h = \\frac{1}{3}\\pi R^2 H",
+          "options": [
+            { "id": "A", "text": "$H = 10\\text{ cm}$" },
+            { "id": "B", "text": "$H = 15\\text{ cm}$" },
+            { "id": "C", "text": "$H = 30\\text{ cm}$" },
+            { "id": "D", "text": "$H = 90\\text{ cm}$" }
+          ],
+          "correctOption": "C",
+          "explanation": "Consultando las fórmulas geométricas de la PAA: el volumen de un cilindro es $V_{\\text{cil}} = \\pi r^2 h$ y el de un cono es $V_{\\text{cono}} = \\frac{1}{3}\\pi R^2 H$. Como ambos tienen radio $r = R = 3\\text{ cm}$ y volúmenes iguales:\n$$\\pi (3)^2 (10) = \\frac{1}{3}\\pi (3)^2 H$$\nCancelando $\\pi (3)^2$ en ambos lados obtenemos $10 = \\frac{1}{3}H$, por lo que $H = 30\\text{ cm}$."
+        },
+        {
+          "id": "math-2",
+          "numberInSection": 2,
+          "section": "math",
+          "category": "Geometría · Triángulos Especiales",
+          "prompt": "Un soporte estructural metálico tiene la forma de un triángulo rectángulo cuyos ángulos agudos miden $30^\\circ$ y $60^\\circ$. Si el cateto opuesto al ángulo de $30^\\circ$ mide $6\\text{ m}$, ¿cuál es la longitud exacta del cateto opuesto al ángulo de $60^\\circ$ y de la hipotenusa, respectivamente?",
+          "mathEquationBlock": "\\triangle\\, 30^\\circ\\text{-}60^\\circ\\text{-}90^\\circ : \\quad x,\\; x\\sqrt{3},\\; 2x",
+          "options": [
+            { "id": "A", "text": "$6\\sqrt{3}\\text{ m}$ y $12\\text{ m}$" },
+            { "id": "B", "text": "$6\\sqrt{2}\\text{ m}$ y $12\\text{ m}$" },
+            { "id": "C", "text": "$12\\text{ m}$ y $6\\sqrt{3}\\text{ m}$" },
+            { "id": "D", "text": "$3\\sqrt{3}\\text{ m}$ y $6\\text{ m}$" }
+          ],
+          "correctOption": "A",
+          "explanation": "Según la hoja de fórmulas de la PAA para el triángulo rectángulo especial $30^\\circ\\text{-}60^\\circ\\text{-}90^\\circ$, si el lado opuesto a $30^\\circ$ mide $x = 6\\text{ m}$, entonces el cateto opuesto a $60^\\circ$ mide $x\\sqrt{3} = 6\\sqrt{3}\\text{ m}$, y la hipotenusa (opuesta a $90^\\circ$) mide $2x = 2(6) = 12\\text{ m}$."
+        },
+        {
+          "id": "math-3",
+          "numberInSection": 3,
+          "section": "math",
+          "category": "Álgebra · Sistemas de Ecuaciones",
+          "prompt": "En el siguiente sistema de ecuaciones lineales, ¿cuál es el valor numérico de la expresión $x^2 - y^2$?",
+          "mathEquationBlock": "\\begin{cases} x + y = 14 \\\\ x - y = 6 \\end{cases}",
+          "options": [
+            { "id": "A", "text": "$20$" },
+            { "id": "B", "text": "$64$" },
+            { "id": "C", "text": "$84$" },
+            { "id": "D", "text": "$160$" }
+          ],
+          "correctOption": "C",
+          "explanation": "Por diferencia de cuadrados sabemos que:\n$$x^2 - y^2 = (x + y)(x - y)$$\nSustituyendo directamente los valores dados en el sistema ($x + y = 14$ y $x - y = 6$):\n$$x^2 - y^2 = (14)(6) = 84$$"
+        },
+        {
+          "id": "math-4",
+          "numberInSection": 4,
+          "section": "math",
+          "category": "Funciones y Modelos Cuadráticos",
+          "prompt": "La altura $h(t)$, en metros, de un dron experimental de telemetría a los $t$ segundos de iniciar una maniobra vertical está modelada por la función cuadrática mostrada abajo. ¿En qué instante $t$ alcanza el dron su altura máxima y cuál es dicha altura?",
+          "mathEquationBlock": "h(t) = -5(t - 4)^2 + 120",
+          "options": [
+            { "id": "A", "text": "$t = 4\\text{ s}$ y $h_{\\max} = 120\\text{ m}$" },
+            { "id": "B", "text": "$t = 5\\text{ s}$ y $h_{\\max} = 120\\text{ m}$" },
+            { "id": "C", "text": "$t = 4\\text{ s}$ y $h_{\\max} = 100\\text{ m}$" },
+            { "id": "D", "text": "$t = -4\\text{ s}$ y $h_{\\max} = 120\\text{ m}$" }
+          ],
+          "correctOption": "A",
+          "explanation": "La función está expresada en la forma canónica (vértice) de una parábola: $h(t) = a(t - k)^2 + m$, con $a = -5 < 0$. Dado que $(t - 4)^2 \\ge 0$ para todo $t$ real, el término $-5(t - 4)^2$ es siempre menor o igual a cero, alcanzando su valor máximo ($0$) cuando $t = 4\\text{ s}$. En ese instante, $h(4) = 0 + 120 = 120\\text{ m}$."
+        },
+        {
+          "id": "math-5",
+          "numberInSection": 5,
+          "section": "math",
+          "category": "Geometría Analítica y Áreas",
+          "prompt": "Un panel solar cuadrado está inscrito exactamente dentro de una estructura circular de radio $r = 4\\sqrt{2}\\text{ cm}$, de modo que los cuatro vértices del cuadrado tocan la circunferencia. ¿Cuál es el área sombreada que queda entre el círculo y el panel cuadrado?",
+          "mathEquationBlock": "A_{\\text{sombreada}} = A_{\\text{círculo}} - A_{\\text{cuadrado}}",
+          "options": [
+            { "id": "A", "text": "$(32\\pi - 32)\\text{ cm}^2$" },
+            { "id": "B", "text": "$(32\\pi - 64)\\text{ cm}^2$" },
+            { "id": "C", "text": "$(16\\pi - 32)\\text{ cm}^2$" },
+            { "id": "D", "text": "$(64\\pi - 64)\\text{ cm}^2$" }
+          ],
+          "correctOption": "B",
+          "explanation": "1) El área del círculo de radio $r = 4\\sqrt{2}$ es:\n$$A_{\\text{círculo}} = \\pi r^2 = \\pi (4\\sqrt{2})^2 = 32\\pi\\text{ cm}^2$$\n2) La diagonal $d$ del cuadrado inscrito es igual al diámetro del círculo: $d = 2r = 8\\sqrt{2}\\text{ cm}$. En un triángulo rectángulo isósceles ($45^\\circ\\text{-}45^\\circ\\text{-}90^\\circ$), la hipotenusa es $d = s\\sqrt{2}$, por lo que el lado del cuadrado es $s = 8\\text{ cm}$ y su área es $A_{\\text{cuadrado}} = 8^2 = 64\\text{ cm}^2$.\n3) Restando ambas áreas: $A_{\\text{sombreada}} = (32\\pi - 64)\\text{ cm}^2$."
+        }
+      ]
+    }
+  }
+}

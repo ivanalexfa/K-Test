@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Local SQLite runtime journals (optional: keep or ignore data/*.sqlite)
+data/*.sqlite-shm
+data/*.sqlite-wal
+
+# Environment & OS files
+.env
+.env.local
+.DS_Store
+Thumbs.db
