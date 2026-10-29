@@ -10,6 +10,8 @@ import {
   Calculator,
 } from 'lucide-react';
 import { SectionType } from '../types/exam';
+import { KTestLogo } from './brand/KTestLogo';
+import { MathPAAIcon, VerbalPAAIcon } from './brand/KTestIcons';
 
 interface HeaderProps {
   currentSection: SectionType;
@@ -49,17 +51,12 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
         {/* Brand + Active Section */}
         <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-[#0052FF] flex items-center justify-center font-display font-extrabold text-sm tracking-tighter shadow-inner shadow-[#00D2FF]/40">
-              K
+          <div className="shrink-0">
+            <div className="hidden sm:block">
+              <KTestLogo theme="dark" variant="full" />
             </div>
-            <div className="hidden sm:flex flex-col leading-none">
-              <span className="font-display font-bold text-xs tracking-widest text-white">
-                KEY INSTITUTE
-              </span>
-              <span className="text-[10px] text-[#00D2FF] font-medium tracking-wider uppercase mt-0.5">
-                PAA Simulator
-              </span>
+            <div className="sm:hidden">
+              <KTestLogo theme="dark" variant="mark-only" />
             </div>
           </div>
 
@@ -67,9 +64,9 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/8 border border-white/10 truncate">
             {currentSection === 'reading' ? (
-              <BookOpen className="w-3.5 h-3.5 text-[#00D2FF] shrink-0" />
+              <VerbalPAAIcon size={16} className="shrink-0" />
             ) : (
-              <Calculator className="w-3.5 h-3.5 text-[#00D2FF] shrink-0" />
+              <MathPAAIcon size={16} className="shrink-0" />
             )}
             <span className="text-xs sm:text-sm font-medium text-slate-100 truncate">
               {sectionTitle}

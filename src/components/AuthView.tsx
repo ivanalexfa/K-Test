@@ -18,6 +18,12 @@ import {
 import { UserRecord, UserRole } from '../types/exam';
 import { instantiateUserClass } from '../models/UserClasses';
 import { KEY_ADMISSION_COHORTS } from '../data/cohortsCatalog';
+import { KTestLogo } from './brand/KTestLogo';
+import {
+  SimulacroEngineIcon,
+  AsyncTrainerIcon,
+  TeacherDiagnosticIcon,
+} from './brand/KTestIcons';
 import {
   isDemoAccountsEnabled,
   isRealMsalConfigured,
@@ -197,19 +203,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       {/* Top Institutional Bar */}
       <header className="bg-[#0A1128] text-white border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#0052FF] flex items-center justify-center font-display font-extrabold text-base text-white shadow-md shadow-[#0052FF]/30">
-              K
-            </div>
-            <div>
-              <div className="font-display font-bold text-sm tracking-wider uppercase">
-                KEY INSTITUTE
-              </div>
-              <div className="text-[11px] text-[#00D2FF] tracking-wide">
-                Instituto Kriete de Ingeniería y Ciencias
-              </div>
-            </div>
-          </div>
+          <KTestLogo theme="dark" variant="full" />
 
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-slate-200 border border-white/15">
             <Sparkles className="w-3.5 h-3.5 text-[#00D2FF]" />
@@ -368,8 +362,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
           {/* Pillar 1: Full PAA Simulacro */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
             <div>
-              <div className="w-11 h-11 rounded-xl bg-[#0052FF]/10 text-[#0052FF] flex items-center justify-center mb-4">
-                <Layers className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-lg bg-[#0052FF]/10 border border-[#0052FF]/20 flex items-center justify-center mb-4">
+                <SimulacroEngineIcon size={24} />
               </div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#0052FF]">
                 Experiencia Oficial College Board
@@ -389,13 +383,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </div>
           </div>
 
-          {/* Pillar 2: Focused Sprints */}
+          {/* Pillar 2: Focused Sprints / Práctica Asíncrona */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
             <div>
-              <div className="w-11 h-11 rounded-xl bg-[#0A1128] text-[#00D2FF] flex items-center justify-center mb-4">
-                <Zap className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-lg bg-[#ECFDF5] border border-[#10B981]/20 flex items-center justify-center mb-4">
+                <AsyncTrainerIcon size={24} />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
                 Entrenamiento Diario Ágil
               </span>
               <h3 className="font-display text-lg font-extrabold text-[#0A1128] mt-1 mb-2">
@@ -413,14 +407,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </div>
           </div>
 
-          {/* Pillar 3: Study Materials & Step-by-Step Feedback */}
+          {/* Pillar 3: Teacher Diagnostic & Study Materials */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
             <div>
-              <div className="w-11 h-11 rounded-xl bg-[#0052FF]/10 text-[#0052FF] flex items-center justify-center mb-4">
-                <Compass className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-lg bg-[#F1F5F9] border border-[#CBD5E1] flex items-center justify-center mb-4">
+                <TeacherDiagnosticIcon size={24} />
               </div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#0052FF]">
-                Acompañamiento Docente
+                Diagnóstico y Acompañamiento Docente
               </span>
               <h3 className="font-display text-lg font-extrabold text-[#0A1128] mt-1 mb-2">
                 Materiales y Solucionarios

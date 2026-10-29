@@ -1,7 +1,12 @@
-import React from 'react';
-import { Flag, Sigma, Check, Calculator, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Flag, Sigma, Check, Sparkles } from 'lucide-react';
 import { ExamQuestion, OptionId } from '../types/exam';
 import { LatexRenderer } from './LatexRenderer';
+import {
+  MathPAAIcon,
+  StrikeOptionIcon,
+  KeyHintIcon,
+} from './brand/KTestIcons';
 
 interface MathQuestionViewProps {
   question: ExamQuestion;
@@ -20,6 +25,22 @@ export const MathQuestionView: React.FC<MathQuestionViewProps> = ({
   onToggleFlag,
   onOpenFormulaModal,
 }) => {
+  const [struckOptions, setStruckOptions] = useState<Record<string, boolean>>({});
+  const [showKeyHint, setShowKeyHint] = useState<boolean>(false);
+
+  useEffect(() => {
+    setShowKeyHint(false);
+    setStruckOptions({});
+  }, [question.id]);
+
+  const toggleStrikeOption = (e: React.MouseEvent, optId: OptionId) => {
+    e.stopPropagation();
+    setStruckOptions((prev) => ({
+      ...prev,
+      [optId]: !prev[optId],
+    }));
+  };
+
   return (
     <div className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-6 pt-4 pb-24 sm:pb-10 flex flex-col justify-start">
       {/* Main Math Problem Card */}
@@ -31,12 +52,27 @@ export const MathQuestionView: React.FC<MathQuestionViewProps> = ({
               {question.numberInSection}
             </span>
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0A1128] bg-slate-200/80 px-2.5 py-1 rounded-md">
-              <Calculator className="w-3.5 h-3.5 text-[#0052FF]" />
+              <MathPAAIcon size={16} />
               {question.category}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Guided Hint Trigger */}
+            <button
+              type="button"
+              onClick={() => setShowKeyHint((v) => !v)}
+              title="Mostrar pista o asistencia guiada"
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                showKeyHint
+                  ? 'bg-amber-50 border-amber-400 text-amber-800'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-amber-300 hover:text-[#0A1128]'
+              }`}
+            >
+              <KeyHintIcon size={16} />
+              <span>Pista Key</span>
+            </button>
+
             {/* Quick Formula Sheet Trigger inside Card */}
             <button
               type="button"
@@ -70,6 +106,21 @@ export const MathQuestionView: React.FC<MathQuestionViewProps> = ({
 
         {/* Question Body */}
         <div className="p-5 sm:p-8 space-y-6">
+          {/* Guided Key Hint Callout */}
+          {showKeyHint && (
+            <div className="p-3.5 rounded-xl bg-[#FFFBEB] border border-[#F59E0B]/40 text-xs sm:text-sm text-amber-950 flex items-start gap-3">
+              <KeyHintIcon size={20} className="shrink-0 mt-0.5" />
+              <div>
+                <div className="font-display font-bold text-xs uppercase tracking-wider text-amber-800 mb-0.5">
+                  Asistencia Guiada K-test ({question.category})
+                </div>
+                <p className="text-xs leading-relaxed text-amber-900">
+                  Identifica las variables y unidades clave del planteamiento, consulta el botón de <strong>Fórmulas Geométricas PAA</strong> si requieres identidades de área/volumen y descarta opciones cuyos órdenes de magnitud no sean coherentes.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Problem Statement with Inline LaTeX */}
           <div className="text-base sm:text-lg font-medium text-[#0A1128] leading-relaxed">
             <LatexRenderer content={question.prompt} />
@@ -101,43 +152,74 @@ export const MathQuestionView: React.FC<MathQuestionViewProps> = ({
             >
               {question.options.map((option) => {
                 const isSelected = selectedOption === option.id;
+                const isStruck = Boolean(struckOptions[option.id]);
                 return (
-                  <button
+                  <div
                     key={option.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={isSelected}
-                    onClick={() => onSelectOption(option.id)}
-                    className={`text-left p-4 sm:p-5 rounded-xl border-2 transition-all flex items-center gap-3.5 cursor-pointer group ${
+                    className={`rounded-xl border-2 transition-all flex items-center gap-2 pr-2.5 ${
                       isSelected
                         ? 'border-[#0052FF] bg-[#0052FF]/6 shadow-xs'
+                        : isStruck
+                        ? 'border-slate-200 bg-slate-50/70 opacity-60'
                         : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50/70'
                     }`}
                   >
-                    <span
-                      className={`w-9 h-9 rounded-lg font-display font-bold text-sm flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected
-                          ? 'bg-[#0052FF] text-white shadow-xs shadow-[#0052FF]/30'
-                          : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'
-                      }`}
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      onClick={() => onSelectOption(option.id)}
+                      className="flex-1 text-left p-4 sm:p-5 flex items-center gap-3.5 cursor-pointer group min-w-0"
                     >
-                      {option.id}
-                    </span>
-
-                    <div
-                      className={`flex-1 text-sm sm:text-base overflow-x-auto ${
-                        isSelected ? 'text-[#0A1128] font-semibold' : 'text-slate-800'
-                      }`}
-                    >
-                      <LatexRenderer content={option.text} />
-                    </div>
-
-                    {isSelected && (
-                      <span className="w-5 h-5 rounded-full bg-[#0052FF] text-white flex items-center justify-center shrink-0">
-                        <Check className="w-3 h-3 stroke-[3]" />
+                      <span
+                        className={`w-9 h-9 rounded-lg font-display font-bold text-sm flex items-center justify-center shrink-0 transition-colors ${
+                          isSelected
+                            ? 'bg-[#0052FF] text-white shadow-xs shadow-[#0052FF]/30'
+                            : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'
+                        }`}
+                      >
+                        {option.id}
                       </span>
-                    )}
-                  </button>
+
+                      <div
+                        className={`flex-1 text-sm sm:text-base overflow-x-auto ${
+                          isStruck ? 'line-through text-slate-400' : ''
+                        } ${
+                          isSelected ? 'text-[#0A1128] font-semibold' : 'text-slate-800'
+                        }`}
+                      >
+                        <LatexRenderer content={option.text} />
+                      </div>
+
+                      {isSelected && (
+                        <span className="w-5 h-5 rounded-full bg-[#0052FF] text-white flex items-center justify-center shrink-0">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </span>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => toggleStrikeOption(e, option.id)}
+                      title={
+                        isStruck
+                          ? `Restaurar opción ${option.id}`
+                          : `Descartar / tachar opción ${option.id}`
+                      }
+                      aria-label={
+                        isStruck
+                          ? `Restaurar opción ${option.id}`
+                          : `Descartar opción ${option.id}`
+                      }
+                      className={`p-2 rounded-lg border transition-colors cursor-pointer shrink-0 ${
+                        isStruck
+                          ? 'bg-red-50 border-red-200 text-red-600'
+                          : 'bg-white border-transparent hover:border-slate-200 text-slate-400 hover:text-slate-700'
+                      }`}
+                    >
+                      <StrikeOptionIcon size={18} />
+                    </button>
+                  </div>
                 );
               })}
             </div>
