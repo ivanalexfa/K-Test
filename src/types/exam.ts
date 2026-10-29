@@ -4,6 +4,19 @@ export type UserRole = 'student' | 'teacher';
 
 export type TestMode = 'simulacro' | 'sprint_reading' | 'sprint_math';
 
+export interface SprintConfig {
+  id: string;
+  code: string;
+  title: string;
+  section: SectionType;
+  mode: TestMode;
+  durationMinutes: number;
+  difficulty: 'Básico' | 'Intermedio' | 'Avanzado';
+  description: string;
+  topics: string[];
+  questionIds: string[];
+}
+
 export interface QuestionOption {
   id: OptionId;
   text: string;
@@ -80,6 +93,10 @@ export interface StudyMaterial {
   readingTimeMinutes: number;
   authorId: string;
   authorName: string;
+  attachmentName?: string | null;
+  attachmentMime?: string | null;
+  attachmentSize?: number | null;
+  attachmentUrl?: string | null;
   createdAt: string;
 }
 

@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, LayoutGrid, CheckCircle2 } from 'lucide-react';
 import rawExamData from './data/mockPaaExam.json';
 import {
+  ExamQuestion,
   MockPaaExamData,
   OptionId,
   SectionType,
+  SprintConfig,
   StudyMaterial,
   TestAttemptRecord,
   TestMode,
@@ -18,7 +20,8 @@ import {
 } from './models/UserClasses';
 import {
   fetchBootstrapData,
-  apiRegisterUser,
+  apiAuthenticateWithMicrosoft,
+  apiUpdateUserCohort,
   apiCreateStudyMaterial,
   apiUpdateStudyMaterial,
   apiDeleteStudyMaterial,
@@ -53,6 +56,8 @@ export const App: React.FC = () => {
 
   // Active exam state (Simulacro or Sprint)
   const [testMode, setTestMode] = useState<TestMode>('simulacro');
+  const [activeSprintConfig, setActiveSprintConfig] =
+    useState<SprintConfig | null>(null);
   const [currentSection, setCurrentSection] = useState<SectionType>('reading');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [answers, setAnswers] = useState<Record<string, OptionId>>({});
@@ -93,18 +98,51 @@ export const App: React.FC = () => {
     : null;
 
   const activeSectionConfig = examData.sections[currentSection];
-  const questions = activeSectionConfig.questions;
-  const activeQuestion = questions[currentQuestionIndex];
+
+  // Filter questions when a specific SprintConfig is active
+  const questions: ExamQuestion[] = useMemo(() => {
+    const baseQuestions = activeSectionConfig.questions;
+    if (!activeSprintConfig) return baseQuestions;
+
+    const idSet = new Set(activeSprintConfig.questionIds);
+    const filtered = baseQuestions.filter((q) => idSet.has(q.id));
+    if (filtered.length === 0) return baseQuestions;
+
+    return filtered.map((q, idx) => ({
+      ...q,
+      numberInSection: idx + 1,
+    }));
+  }, [activeSectionConfig.questions, activeSprintConfig]);
+
+  const activeQuestion = questions[currentQuestionIndex] || questions[0];
 
   // Finalize test & persist to SQLite
   const finalizeAndSaveAttempt = useCallback(
-    async (finalAnswers: Record<string, OptionId>, activeMode: TestMode) => {
+    async (
+      finalAnswers: Record<string, OptionId>,
+      activeMode: TestMode,
+      sprintCfg: SprintConfig | null
+    ) => {
       if (!currentUserRecord) return;
 
-      const readingQs =
-        activeMode === 'sprint_math' ? [] : examData.sections.reading.questions;
-      const mathQs =
-        activeMode === 'sprint_reading' ? [] : examData.sections.math.questions;
+      const allReading = examData.sections.reading.questions;
+      const allMath = examData.sections.math.questions;
+
+      const readingQs = sprintCfg
+        ? sprintCfg.section === 'reading'
+          ? allReading.filter((q) => sprintCfg.questionIds.includes(q.id))
+          : []
+        : activeMode === 'sprint_math'
+        ? []
+        : allReading;
+
+      const mathQs = sprintCfg
+        ? sprintCfg.section === 'math'
+          ? allMath.filter((q) => sprintCfg.questionIds.includes(q.id))
+          : []
+        : activeMode === 'sprint_reading'
+        ? []
+        : allMath;
 
       const readingCorrect = readingQs.filter(
         (q) => finalAnswers[q.id] === q.correctOption
@@ -134,12 +172,13 @@ export const App: React.FC = () => {
           ? readingScaled
           : mathScaled;
 
-      const modeTitle =
-        activeMode === 'simulacro'
-          ? 'Simulacro Oficial PAA (Test Completo)'
-          : activeMode === 'sprint_reading'
-          ? 'Sprint de Lectura y Redacción (Test Corto)'
-          : 'Sprint de Matemáticas (Test Corto)';
+      const modeTitle = sprintCfg
+        ? `${sprintCfg.code}: ${sprintCfg.title}`
+        : activeMode === 'simulacro'
+        ? 'Simulacro Oficial PAA (Test Completo)'
+        : activeMode === 'sprint_reading'
+        ? 'Sprint de Lectura y Redacción (Test Corto)'
+        : 'Sprint de Matemáticas (Test Corto)';
 
       const durationSeconds = Math.max(
         10,
@@ -180,11 +219,17 @@ export const App: React.FC = () => {
       setSecondsRemaining(examData.sections.math.durationMinutes * 60);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      await finalizeAndSaveAttempt(answers, testMode);
+      await finalizeAndSaveAttempt(answers, testMode, activeSprintConfig);
       setScreen('results');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [testMode, currentSection, answers, finalizeAndSaveAttempt]);
+  }, [
+    testMode,
+    currentSection,
+    answers,
+    activeSprintConfig,
+    finalizeAndSaveAttempt,
+  ]);
 
   // Countdown timer effect when in 'exam' screen
   useEffect(() => {
@@ -209,38 +254,46 @@ export const App: React.FC = () => {
     setScreen('portal');
   };
 
-  const handleRegisterUser = async (payload: {
+  const handleMicrosoftLogin = async (payload: {
     name: string;
     email: string;
-    password?: string;
-    role: UserRole;
-    cohort: string;
+    microsoftOid?: string;
+    idToken?: string;
+    accessToken?: string;
+    requestedRole: UserRole;
+    teacherPin?: string;
+    cohort?: string;
   }) => {
-    const res = await apiRegisterUser(payload);
+    const res = await apiAuthenticateWithMicrosoft(payload);
     setUsers(res.users);
     setCurrentUserRecord(res.user);
     setScreen('portal');
   };
 
-  const handleStartTest = (mode: TestMode) => {
+  const handleStartTest = (mode: TestMode, sprintCfg?: SprintConfig) => {
     setTestMode(mode);
+    setActiveSprintConfig(sprintCfg ?? null);
     setAnswers({});
     setFlaggedQuestions({});
     setInspectedAttempt(null);
     examStartTimestampRef.current = Date.now();
 
-    if (mode === 'simulacro') {
+    if (sprintCfg) {
+      setCurrentSection(sprintCfg.section);
+      setCurrentQuestionIndex(0);
+      setSecondsRemaining(sprintCfg.durationMinutes * 60);
+    } else if (mode === 'simulacro') {
       setCurrentSection('reading');
       setCurrentQuestionIndex(0);
       setSecondsRemaining(examData.sections.reading.durationMinutes * 60);
     } else if (mode === 'sprint_reading') {
       setCurrentSection('reading');
       setCurrentQuestionIndex(0);
-      setSecondsRemaining(5 * 60); // 5 min Sprint
+      setSecondsRemaining(5 * 60);
     } else {
       setCurrentSection('math');
       setCurrentQuestionIndex(0);
-      setSecondsRemaining(6 * 60); // 6 min Sprint
+      setSecondsRemaining(6 * 60);
     }
 
     setScreen('exam');
@@ -250,6 +303,7 @@ export const App: React.FC = () => {
   const handleInspectAttempt = (attempt: TestAttemptRecord) => {
     setInspectedAttempt(attempt);
     setTestMode(attempt.mode);
+    setActiveSprintConfig(null);
     setAnswers(attempt.answers || {});
     setScreen('results');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -292,17 +346,29 @@ export const App: React.FC = () => {
       <AuthView
         users={users}
         onSelectUser={handleSelectUser}
-        onRegisterUser={handleRegisterUser}
+        onMicrosoftLogin={handleMicrosoftLogin}
       />
     );
   }
 
   // 2. Results / Solucionario View (for both Student and Teacher inspection)
   if (screen === 'results') {
+    const customQuestionsForResults = activeSprintConfig
+      ? questions
+      : inspectedAttempt && inspectedAttempt.mode !== 'simulacro'
+      ? [...examData.sections.reading.questions, ...examData.sections.math.questions].filter(
+          (q) =>
+            q.id in (inspectedAttempt.answers || {}) ||
+            (inspectedAttempt.mode === 'sprint_reading' && q.section === 'reading') ||
+            (inspectedAttempt.mode === 'sprint_math' && q.section === 'math')
+        )
+      : null;
+
     return (
       <ResultsView
         examData={examData}
         testMode={testMode}
+        customQuestions={customQuestionsForResults}
         answers={answers}
         attemptRecord={inspectedAttempt}
         onBackToPortal={() => setScreen('portal')}
@@ -349,6 +415,12 @@ export const App: React.FC = () => {
           allAttempts={attempts}
           onStartTest={handleStartTest}
           onInspectAttempt={handleInspectAttempt}
+          onUpdateCohort={async (newCohort: string) => {
+            const res = await apiUpdateUserCohort(activeUserInstance.id, newCohort);
+            setCurrentUserRecord(res.user);
+            setUsers(res.users);
+            setAttempts(res.attempts);
+          }}
           onLogout={() => {
             setCurrentUserRecord(null);
             setScreen('auth');
@@ -368,12 +440,13 @@ export const App: React.FC = () => {
     ? examData.passages[activeQuestion.passageId]
     : undefined;
 
-  const headerBadgeTitle =
-    testMode === 'simulacro'
-      ? activeSectionConfig.title
-      : testMode === 'sprint_reading'
-      ? 'Sprint Corto · Lectura y Redacción'
-      : 'Sprint Corto · Matemáticas';
+  const headerBadgeTitle = activeSprintConfig
+    ? `${activeSprintConfig.code} · ${activeSprintConfig.title}`
+    : testMode === 'simulacro'
+    ? activeSectionConfig.title
+    : testMode === 'sprint_reading'
+    ? 'Sprint Corto · Lectura y Redacción'
+    : 'Sprint Corto · Matemáticas';
 
   return (
     <div className="min-h-dvh flex flex-col bg-[#F8FAFC] text-[#0A1128]">

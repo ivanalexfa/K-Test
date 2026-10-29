@@ -12,6 +12,10 @@ export interface BootstrapResponse {
   users: UserRecord[];
   materials: StudyMaterial[];
   attempts: TestAttemptRecord[];
+  authConfig?: {
+    alwaysRequireTeacherPin: boolean;
+    allowedDomains: string;
+  };
 }
 
 export async function fetchBootstrapData(): Promise<BootstrapResponse> {
@@ -20,6 +24,50 @@ export async function fetchBootstrapData(): Promise<BootstrapResponse> {
     throw new Error('No se pudo conectar con la base de datos SQLite (/api/bootstrap)');
   }
   return res.json();
+}
+
+export async function apiAuthenticateWithMicrosoft(payload: {
+  name: string;
+  email: string;
+  microsoftOid?: string;
+  idToken?: string;
+  accessToken?: string;
+  requestedRole: UserRole;
+  teacherPin?: string;
+  cohort?: string;
+}): Promise<{ user: UserRecord; users: UserRecord[] }> {
+  const res = await fetch('/api/auth/microsoft', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const err: any = new Error(data.error || 'Error al autenticar con Microsoft');
+    err.code = data.code;
+    throw err;
+  }
+  return data;
+}
+
+export async function apiUpdateUserCohort(
+  userId: string,
+  cohort: string
+): Promise<{
+  user: UserRecord;
+  users: UserRecord[];
+  attempts: TestAttemptRecord[];
+}> {
+  const res = await fetch(`/api/users/${userId}/cohort`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cohort }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Error al actualizar la cohorte del estudiante');
+  }
+  return data;
 }
 
 export async function apiLoginUser(
@@ -66,6 +114,10 @@ export async function apiCreateStudyMaterial(payload: {
   readingTimeMinutes: number;
   authorId: string;
   authorName: string;
+  attachmentName?: string | null;
+  attachmentMime?: string | null;
+  attachmentSize?: number | null;
+  attachmentDataBase64?: string | null;
 }): Promise<{ material: StudyMaterial; materials: StudyMaterial[] }> {
   const res = await fetch('/api/materials', {
     method: 'POST',
@@ -88,6 +140,11 @@ export async function apiUpdateStudyMaterial(
     summary: string;
     content: string;
     readingTimeMinutes: number;
+    attachmentName?: string | null;
+    attachmentMime?: string | null;
+    attachmentSize?: number | null;
+    attachmentDataBase64?: string | null;
+    removeAttachment?: boolean;
   }
 ): Promise<{ material: StudyMaterial; materials: StudyMaterial[] }> {
   const res = await fetch(`/api/materials/${id}`, {

@@ -1,8 +1,13 @@
 // @ts-nocheck
+import fs from 'node:fs';
+import path from 'node:path';
 import {
+  UPLOADS_DIR,
   getAllUsers,
+  updateUserCohort,
   loginUser,
   registerUser,
+  authenticateMicrosoftUser,
   getAllStudyMaterials,
   createStudyMaterial,
   updateStudyMaterial,
@@ -13,14 +18,15 @@ import {
 
 function readJsonBody(req: any): Promise<any> {
   return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', (chunk: any) => {
-      data += chunk;
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     });
     req.on('end', () => {
-      if (!data) return resolve({});
+      if (chunks.length === 0) return resolve({});
       try {
-        resolve(JSON.parse(data));
+        const raw = Buffer.concat(chunks).toString('utf-8');
+        resolve(JSON.parse(raw));
       } catch (err) {
         reject(err);
       }
@@ -35,6 +41,31 @@ function sendJson(res: any, statusCode: number, payload: any) {
   res.end(JSON.stringify(payload));
 }
 
+function getMimeTypeByExtension(filename: string): string {
+  const ext = path.extname(filename).toLowerCase();
+  const map: Record<string, string> = {
+    '.pdf': 'application/pdf',
+    '.doc': 'application/msword',
+    '.docx':
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.ppt': 'application/vnd.ms-powerpoint',
+    '.pptx':
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    '.xls': 'application/vnd.ms-excel',
+    '.xlsx':
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+    '.csv': 'text/csv; charset=utf-8',
+    '.txt': 'text/plain; charset=utf-8',
+  };
+  return map[ext] || 'application/octet-stream';
+}
+
 export function paaSqliteApiPlugin() {
   const attachMiddleware = (middlewares: any) => {
     middlewares.use(async (req: any, res: any, next: any) => {
@@ -47,12 +78,68 @@ export function paaSqliteApiPlugin() {
       const method = req.method || 'GET';
 
       try {
+        // Serve uploaded study material files: GET /api/uploads/:filename
+        if (method === 'GET' && pathname.startsWith('/api/uploads/')) {
+          const encodedName = pathname.replace('/api/uploads/', '');
+          const fileName = path.basename(decodeURIComponent(encodedName));
+          const filePath = path.join(UPLOADS_DIR, fileName);
+
+          if (!fs.existsSync(filePath)) {
+            return sendJson(res, 404, { error: 'Archivo adjunto no encontrado' });
+          }
+
+          const mime = getMimeTypeByExtension(fileName);
+          const stat = fs.statSync(filePath);
+          res.statusCode = 200;
+          res.setHeader('Content-Type', mime);
+          res.setHeader('Content-Length', stat.size);
+          // Inline for PDF/Images so they can be viewed in browser, attachment for Office docs
+          const isInlinePreviewable =
+            mime === 'application/pdf' || mime.startsWith('image/');
+          res.setHeader(
+            'Content-Disposition',
+            `${isInlinePreviewable ? 'inline' : 'attachment'}; filename="${encodeURIComponent(
+              fileName
+            )}"`
+          );
+
+          const stream = fs.createReadStream(filePath);
+          stream.pipe(res);
+          return;
+        }
+
         // GET /api/bootstrap
         if (method === 'GET' && pathname === '/api/bootstrap') {
           return sendJson(res, 200, {
             users: getAllUsers(),
             materials: getAllStudyMaterials(),
             attempts: getAllTestAttempts(),
+            authConfig: {
+              alwaysRequireTeacherPin:
+                (process.env.ALWAYS_REQUIRE_TEACHER_PIN || 'false')
+                  .trim()
+                  .toLowerCase() === 'true',
+              allowedDomains: process.env.ALLOWED_EMAIL_DOMAINS || '*',
+            },
+          });
+        }
+
+        // POST /api/auth/microsoft (Microsoft Entra ID / MSAL + Option 1 Teacher PIN)
+        if (method === 'POST' && pathname === '/api/auth/microsoft') {
+          const body = await readJsonBody(req);
+          const user = await authenticateMicrosoftUser({
+            name: body.name,
+            email: body.email,
+            microsoftOid: body.microsoftOid,
+            idToken: body.idToken,
+            accessToken: body.accessToken,
+            requestedRole: body.requestedRole === 'teacher' ? 'teacher' : 'student',
+            teacherPin: body.teacherPin,
+            cohort: body.cohort,
+          });
+          return sendJson(res, 200, {
+            user,
+            users: getAllUsers(),
           });
         }
 
@@ -88,6 +175,21 @@ export function paaSqliteApiPlugin() {
                 : 'Cohorte Admisión Ingeniería 2027'),
           });
           return sendJson(res, 201, { user, users: getAllUsers() });
+        }
+
+        // PUT /api/users/:id/cohort
+        if (method === 'PUT' && pathname.startsWith('/api/users/') && pathname.endsWith('/cohort')) {
+          const userId = pathname.replace('/api/users/', '').replace('/cohort', '');
+          const body = await readJsonBody(req);
+          if (!body.cohort) {
+            return sendJson(res, 400, { error: 'La cohorte es obligatoria' });
+          }
+          const updatedUser = updateUserCohort(userId, body.cohort);
+          return sendJson(res, 200, {
+            user: updatedUser,
+            users: getAllUsers(),
+            attempts: getAllTestAttempts(),
+          });
         }
 
         // GET /api/materials
@@ -143,8 +245,10 @@ export function paaSqliteApiPlugin() {
 
         return sendJson(res, 404, { error: 'Ruta API no encontrada' });
       } catch (err: any) {
-        return sendJson(res, 500, {
+        const status = err?.statusCode || 500;
+        return sendJson(res, status, {
           error: err?.message || 'Error interno en la base de datos SQLite',
+          code: err?.code,
         });
       }
     });

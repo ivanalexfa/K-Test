@@ -5,25 +5,33 @@ import {
   Clock,
   Layers,
   Zap,
-  Award,
   History,
   LogOut,
   ArrowRight,
+  ArrowLeft,
   Sigma,
   FileText,
   Sparkles,
-  CheckCircle2,
   Eye,
   GraduationCap,
+  Paperclip,
+  Download,
+  FileSpreadsheet,
+  FileImage,
+  File,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   MockPaaExamData,
   SectionType,
+  SprintConfig,
   StudyMaterial,
   TestAttemptRecord,
   TestMode,
 } from '../types/exam';
 import { StudentUser } from '../models/UserClasses';
+import { SPRINTS_CATALOG } from '../data/sprintsCatalog';
+import { KEY_ADMISSION_COHORTS } from '../data/cohortsCatalog';
 import { LatexRenderer } from './LatexRenderer';
 
 interface StudentDashboardProps {
@@ -31,12 +39,38 @@ interface StudentDashboardProps {
   examData: MockPaaExamData;
   materials: StudyMaterial[];
   allAttempts: TestAttemptRecord[];
-  onStartTest: (mode: TestMode) => void;
+  onStartTest: (mode: TestMode, sprintConfig?: SprintConfig) => void;
   onInspectAttempt: (attempt: TestAttemptRecord) => void;
+  onUpdateCohort: (newCohort: string) => Promise<void>;
   onLogout: () => void;
 }
 
 type StudentTab = 'tests' | 'materials' | 'history';
+
+function formatFileSize(bytes?: number | null): string {
+  if (!bytes || bytes <= 0) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function getFileFormatBadge(fileName?: string | null): {
+  ext: string;
+  colorClass: string;
+} {
+  if (!fileName) return { ext: 'ARCHIVO', colorClass: 'bg-slate-200 text-slate-700' };
+  const ext = (fileName.split('.').pop() || 'FILE').toUpperCase();
+  if (ext === 'PDF') return { ext: 'PDF', colorClass: 'bg-red-100 text-red-700 border-red-200' };
+  if (['DOC', 'DOCX'].includes(ext))
+    return { ext, colorClass: 'bg-blue-100 text-blue-700 border-blue-200' };
+  if (['PPT', 'PPTX'].includes(ext))
+    return { ext, colorClass: 'bg-orange-100 text-orange-700 border-orange-200' };
+  if (['XLS', 'XLSX', 'CSV'].includes(ext))
+    return { ext, colorClass: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
+  if (['PNG', 'JPG', 'JPEG', 'WEBP', 'GIF', 'SVG'].includes(ext))
+    return { ext, colorClass: 'bg-purple-100 text-purple-700 border-purple-200' };
+  return { ext, colorClass: 'bg-slate-100 text-slate-700 border-slate-200' };
+}
 
 export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   student,
@@ -45,9 +79,15 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   allAttempts,
   onStartTest,
   onInspectAttempt,
+  onUpdateCohort,
   onLogout,
 }) => {
   const [activeTab, setActiveTab] = useState<StudentTab>('tests');
+  const [updatingCohort, setUpdatingCohort] = useState<boolean>(false);
+  // Active sprint hub subject ('reading' | 'math' | null)
+  const [selectedSprintSubject, setSelectedSprintSubject] =
+    useState<SectionType | null>(null);
+
   const [materialFilter, setMaterialFilter] = useState<'all' | SectionType>('all');
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
     materials[0]?.id ?? null
@@ -56,6 +96,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   const myAttempts = student.getMyAttempts(allAttempts);
   const avgAccuracy = student.getAverageAccuracy(allAttempts);
   const bestSimulacro = student.getBestSimulacroScore(allAttempts);
+
+  const readingSprints = SPRINTS_CATALOG.filter((s) => s.section === 'reading');
+  const mathSprints = SPRINTS_CATALOG.filter((s) => s.section === 'math');
 
   const filteredMaterials =
     materialFilter === 'all'
@@ -106,7 +149,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       </header>
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-        {/* Student Summary Banner & Navigation Tabs */}
+        {/* Student Summary Banner & Symmetrical 3-Column Section Selector */}
         <section className="rounded-2xl bg-[#0A1128] text-white p-5 sm:p-7 shadow-lg border border-slate-800 relative overflow-hidden">
           <div className="absolute -right-12 -top-12 w-60 h-60 rounded-full bg-[#0052FF]/20 blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -119,27 +162,57 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 Hola, {student.name.split(' ')[0]}
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-                Estudia los materiales publicados por tus docentes, realiza{' '}
-                <strong>Simulacros Completos</strong> o entrena con{' '}
-                <strong>Sprints Cortos</strong>. Todos tus resultados se guardan en tu expediente.
+                Accede a tus pruebas de práctica, consulta guías y archivos subidos por tus docentes, o revisa tus resultados históricos.
               </p>
+
+              {/* Selector de Cohorte de Admisión Key Institute */}
+              <div className="mt-3.5 inline-flex flex-wrap items-center gap-2 bg-white/8 border border-white/15 rounded-xl px-3 py-1.5">
+                <span className="text-[11px] font-semibold text-[#00D2FF] uppercase tracking-wider">
+                  Cohorte de Admisión:
+                </span>
+                <select
+                  aria-label="Seleccionar cohorte de admisión"
+                  disabled={updatingCohort}
+                  value={student.cohort}
+                  onChange={async (e) => {
+                    const nextCohort = e.target.value;
+                    if (!nextCohort || nextCohort === student.cohort) return;
+                    try {
+                      setUpdatingCohort(true);
+                      await onUpdateCohort(nextCohort);
+                    } finally {
+                      setUpdatingCohort(false);
+                    }
+                  }}
+                  className="bg-[#0A1128] text-white text-xs font-semibold rounded-lg px-2.5 py-1 border border-white/15 focus:outline-none focus:border-[#00D2FF] cursor-pointer"
+                >
+                  {!KEY_ADMISSION_COHORTS.includes(student.cohort) && (
+                    <option value={student.cohort}>{student.cohort}</option>
+                  )}
+                  {KEY_ADMISSION_COHORTS.map((cohortName) => (
+                    <option key={cohortName} value={cohortName}>
+                      {cohortName}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Quick Student Metrics */}
             <div className="grid grid-cols-3 gap-3 sm:gap-4 shrink-0">
-              <div className="rounded-xl bg-white/6 border border-white/10 px-3.5 py-2.5">
+              <div className="rounded-xl bg-white/6 border border-white/10 px-3.5 py-2.5 text-center">
                 <div className="text-[11px] text-slate-300">Pruebas hechas</div>
                 <div className="font-display font-extrabold text-lg sm:text-xl font-mono-num text-white">
                   {myAttempts.length}
                 </div>
               </div>
-              <div className="rounded-xl bg-white/6 border border-white/10 px-3.5 py-2.5">
+              <div className="rounded-xl bg-white/6 border border-white/10 px-3.5 py-2.5 text-center">
                 <div className="text-[11px] text-slate-300">Precisión prom.</div>
                 <div className="font-display font-extrabold text-lg sm:text-xl font-mono-num text-[#00D2FF]">
                   {avgAccuracy}%
                 </div>
               </div>
-              <div className="rounded-xl bg-white/6 border border-white/10 px-3.5 py-2.5">
+              <div className="rounded-xl bg-white/6 border border-white/10 px-3.5 py-2.5 text-center">
                 <div className="text-[11px] text-slate-300">Mejor Simulacro</div>
                 <div className="font-display font-extrabold text-lg sm:text-xl font-mono-num text-emerald-400">
                   {bestSimulacro ? `${bestSimulacro} pts` : '—'}
@@ -148,50 +221,139 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             </div>
           </div>
 
-          {/* Navigation Sub-tabs */}
-          <div className="relative z-10 mt-6 pt-5 border-t border-white/10 flex flex-wrap gap-2">
+          {/* Symmetrical 3-Column Navigation Selector (Pruebas | Materiales | Resultados) */}
+          <div className="relative z-10 mt-6 pt-5 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               type="button"
-              onClick={() => setActiveTab('tests')}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              onClick={() => {
+                setActiveTab('tests');
+                setSelectedSprintSubject(null);
+              }}
+              className={`p-3.5 rounded-xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
                 activeTab === 'tests'
-                  ? 'bg-[#0052FF] text-white shadow-md shadow-[#0052FF]/30'
-                  : 'bg-white/8 text-slate-200 hover:bg-white/15'
+                  ? 'bg-[#0052FF] border-[#00D2FF]/50 text-white shadow-md shadow-[#0052FF]/30'
+                  : 'bg-white/6 border-white/10 text-slate-200 hover:bg-white/12'
               }`}
             >
-              <Layers className="w-4 h-4" />
-              <span>Apartado de Pruebas (Simulacro y Sprints)</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                    activeTab === 'tests' ? 'bg-white/20 text-white' : 'bg-white/10 text-[#00D2FF]'
+                  }`}
+                >
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-display font-bold text-sm truncate">
+                    Apartado de Pruebas
+                  </div>
+                  <div
+                    className={`text-[11px] truncate ${
+                      activeTab === 'tests' ? 'text-blue-100' : 'text-slate-400'
+                    }`}
+                  >
+                    Simulacro y {SPRINTS_CATALOG.length} Sprints
+                  </div>
+                </div>
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded-md font-mono-num text-xs font-bold shrink-0 ${
+                  activeTab === 'tests' ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-300'
+                }`}
+              >
+                {1 + SPRINTS_CATALOG.length}
+              </span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('materials')}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`p-3.5 rounded-xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
                 activeTab === 'materials'
-                  ? 'bg-[#0052FF] text-white shadow-md shadow-[#0052FF]/30'
-                  : 'bg-white/8 text-slate-200 hover:bg-white/15'
+                  ? 'bg-[#0052FF] border-[#00D2FF]/50 text-white shadow-md shadow-[#0052FF]/30'
+                  : 'bg-white/6 border-white/10 text-slate-200 hover:bg-white/12'
               }`}
             >
-              <BookOpen className="w-4 h-4" />
-              <span>Materiales de Estudio ({materials.length})</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                    activeTab === 'materials'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-white/10 text-[#00D2FF]'
+                  }`}
+                >
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-display font-bold text-sm truncate">
+                    Materiales de Estudio
+                  </div>
+                  <div
+                    className={`text-[11px] truncate ${
+                      activeTab === 'materials' ? 'text-blue-100' : 'text-slate-400'
+                    }`}
+                  >
+                    Guías y archivos adjuntos
+                  </div>
+                </div>
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded-md font-mono-num text-xs font-bold shrink-0 ${
+                  activeTab === 'materials'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-white/10 text-slate-300'
+                }`}
+              >
+                {materials.length}
+              </span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('history')}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`p-3.5 rounded-xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
                 activeTab === 'history'
-                  ? 'bg-[#0052FF] text-white shadow-md shadow-[#0052FF]/30'
-                  : 'bg-white/8 text-slate-200 hover:bg-white/15'
+                  ? 'bg-[#0052FF] border-[#00D2FF]/50 text-white shadow-md shadow-[#0052FF]/30'
+                  : 'bg-white/6 border-white/10 text-slate-200 hover:bg-white/12'
               }`}
             >
-              <History className="w-4 h-4" />
-              <span>Mis Resultados ({myAttempts.length})</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                    activeTab === 'history'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-white/10 text-[#00D2FF]'
+                  }`}
+                >
+                  <History className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-display font-bold text-sm truncate">
+                    Mis Resultados
+                  </div>
+                  <div
+                    className={`text-[11px] truncate ${
+                      activeTab === 'history' ? 'text-blue-100' : 'text-slate-400'
+                    }`}
+                  >
+                    Historial y solucionario
+                  </div>
+                </div>
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded-md font-mono-num text-xs font-bold shrink-0 ${
+                  activeTab === 'history'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-white/10 text-slate-300'
+                }`}
+              >
+                {myAttempts.length}
+              </span>
             </button>
           </div>
         </section>
 
-        {/* TAB 1: APARTADO DE PRUEBAS (SIMULACRO COMPLETO + SPRINTS CORTOS) */}
+        {/* TAB 1: APARTADO DE PRUEBAS (SIMULACRO COMPLETO + HUBS DE SPRINTS POR MATERIA) */}
         {activeTab === 'tests' && (
           <div className="space-y-8">
             {/* Full Simulacro Section */}
@@ -248,108 +410,272 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               </div>
             </div>
 
-            {/* Sprints Section (Short Focused Tests) */}
+            {/* Sprints Section: Either Subject Hub Cards OR Expanded Sprint Catalog for Selected Subject */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-display text-lg font-bold text-[#0A1128] flex items-center gap-2">
                   <Zap className="w-5 h-5 text-amber-500 fill-amber-400" />
-                  Sprints PAA (Tests Cortos de Entrenamiento Ágil)
+                  Sprints PAA por Materia (Tests Cortos de Entrenamiento)
                 </h2>
-                <span className="text-xs font-semibold text-slate-500">
-                  Enfoque por sección individual · Escala 200–800 pts
-                </span>
+                {selectedSprintSubject ? (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSprintSubject(null)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0052FF] hover:underline cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Volver a las dos materias</span>
+                  </button>
+                ) : (
+                  <span className="text-xs font-semibold text-slate-500">
+                    Selecciona un área para ver sus Sprints disponibles
+                  </span>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Reading Sprint */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/12 text-amber-800 text-xs font-bold uppercase tracking-wider">
-                        <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-                        Sprint Lectura
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-xs font-mono-num font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
-                        <Clock className="w-3.5 h-3.5 text-slate-500" />5 min ·{' '}
-                        {reading.questions.length} preguntas
-                      </span>
+              {!selectedSprintSubject ? (
+                /* Two Symmetrical Subject Hub Cards (Reading Sprints Hub vs Math Sprints Hub) */
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* Reading & Writing Sprints Hub Card */}
+                  <div className="bg-white rounded-2xl border-2 border-slate-200 hover:border-[#0052FF]/50 p-6 shadow-2xs flex flex-col justify-between transition-all">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/12 text-amber-800 text-xs font-bold uppercase tracking-wider">
+                          <BookOpen className="w-3.5 h-3.5 text-amber-600" />
+                          Área de Lenguaje
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs font-mono-num font-bold text-[#0052FF] bg-[#0052FF]/10 px-2.5 py-1 rounded-md">
+                          {readingSprints.length} Sprints disponibles
+                        </span>
+                      </div>
+
+                      <h3 className="font-display text-lg font-extrabold text-[#0A1128] mb-1.5">
+                        Sprints de Lectura y Redacción
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
+                        Accede a la colección de tests cortos de comprensión lectora científica, vocabulario en contexto y redacción indirecta con líneas numeradas.
+                      </p>
+
+                      {/* Preview of available sprints */}
+                      <div className="space-y-1.5 mb-5">
+                        {readingSprints.map((sp) => (
+                          <div
+                            key={sp.id}
+                            className="flex items-center justify-between text-xs px-3 py-2 rounded-lg bg-slate-50 border border-slate-200/80"
+                          >
+                            <span className="font-medium text-[#0A1128] truncate pr-2">
+                              <strong className="font-mono-num text-[#0052FF]">
+                                {sp.code}:
+                              </strong>{' '}
+                              {sp.title}
+                            </span>
+                            <span className="font-mono-num text-[11px] text-slate-500 shrink-0">
+                              {sp.questionIds.length} pregs · {sp.durationMinutes}m
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    <h3 className="font-display text-lg font-bold text-[#0A1128] mb-1.5">
-                      Sprint de Lectura y Redacción
-                    </h3>
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
-                      Entrena comprensión crítica de textos y redacción indirecta en una sesión corta de 5 minutos con vista dividida y líneas numeradas.
-                    </p>
+                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                      <span className="text-xs text-slate-500 font-medium">
+                        Pantalla dividida · Escala 200–800
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSprintSubject('reading')}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A1128] hover:bg-[#0052FF] text-white text-xs sm:text-sm font-bold transition-colors cursor-pointer"
+                      >
+                        <span>Ver Sprints de Lectura ({readingSprints.length})</span>
+                        <ArrowRight className="w-4 h-4 text-[#00D2FF]" />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                    <span className="text-xs text-slate-500 font-medium">
-                      2 pasajes con citas de líneas
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onStartTest('sprint_reading')}
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0A1128] hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition-colors cursor-pointer"
-                    >
-                      <span>Iniciar Sprint</span>
-                      <ArrowRight className="w-4 h-4 text-[#00D2FF]" />
-                    </button>
-                  </div>
-                </div>
+                  {/* Mathematics Sprints Hub Card */}
+                  <div className="bg-white rounded-2xl border-2 border-slate-200 hover:border-[#0052FF]/50 p-6 shadow-2xs flex flex-col justify-between transition-all">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0A1128] text-[#00D2FF] text-xs font-bold uppercase tracking-wider">
+                          <Calculator className="w-3.5 h-3.5 text-[#00D2FF]" />
+                          Área Cuantitativa
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs font-mono-num font-bold text-[#0052FF] bg-[#0052FF]/10 px-2.5 py-1 rounded-md">
+                          {mathSprints.length} Sprints disponibles
+                        </span>
+                      </div>
 
-                {/* Math Sprint */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0A1128] text-[#00D2FF] text-xs font-bold uppercase tracking-wider">
-                        <Zap className="w-3.5 h-3.5 text-[#00D2FF]" />
-                        Sprint Matemáticas
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-xs font-mono-num font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
-                        <Clock className="w-3.5 h-3.5 text-slate-500" />6 min ·{' '}
-                        {math.questions.length} preguntas
-                      </span>
+                      <h3 className="font-display text-lg font-extrabold text-[#0A1128] mb-1.5">
+                        Sprints de Matemáticas
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
+                        Accede a los entrenamientos cortos de geometría espacial, triángulos especiales, sistemas algebraicos y funciones con KaTeX y formulario PAA.
+                      </p>
+
+                      {/* Preview of available sprints */}
+                      <div className="space-y-1.5 mb-5">
+                        {mathSprints.map((sp) => (
+                          <div
+                            key={sp.id}
+                            className="flex items-center justify-between text-xs px-3 py-2 rounded-lg bg-slate-50 border border-slate-200/80"
+                          >
+                            <span className="font-medium text-[#0A1128] truncate pr-2">
+                              <strong className="font-mono-num text-[#0052FF]">
+                                {sp.code}:
+                              </strong>{' '}
+                              {sp.title}
+                            </span>
+                            <span className="font-mono-num text-[11px] text-slate-500 shrink-0">
+                              {sp.questionIds.length} pregs · {sp.durationMinutes}m
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    <h3 className="font-display text-lg font-bold text-[#0A1128] mb-1.5">
-                      Sprint de Matemáticas Aplicadas
-                    </h3>
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
-                      Resuelve problemas de geometría, volúmenes, sistemas de ecuaciones y funciones cuadráticas con soporte KaTeX y modal de fórmulas PAA.
-                    </p>
-                  </div>
-
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-medium">
-                      <Sigma className="w-3.5 h-3.5 text-[#0052FF]" />
-                      Incluye Fórmulas PAA
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onStartTest('sprint_math')}
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0A1128] hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition-colors cursor-pointer"
-                    >
-                      <span>Iniciar Sprint</span>
-                      <ArrowRight className="w-4 h-4 text-[#00D2FF]" />
-                    </button>
+                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                      <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-medium">
+                        <Sigma className="w-3.5 h-3.5 text-[#0052FF]" />
+                        Incluye Fórmulas PAA
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSprintSubject('math')}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A1128] hover:bg-[#0052FF] text-white text-xs sm:text-sm font-bold transition-colors cursor-pointer"
+                      >
+                        <span>Ver Sprints de Matemáticas ({mathSprints.length})</span>
+                        <ArrowRight className="w-4 h-4 text-[#00D2FF]" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                /* Expanded Sprint List for the Selected Subject ('reading' or 'math') */
+                <div className="bg-white rounded-2xl border-2 border-[#0052FF]/25 p-5 sm:p-6 shadow-xs space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#0A1128] text-[#00D2FF] flex items-center justify-center">
+                        {selectedSprintSubject === 'reading' ? (
+                          <BookOpen className="w-5 h-5" />
+                        ) : (
+                          <Calculator className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-display font-extrabold text-base sm:text-lg text-[#0A1128]">
+                          {selectedSprintSubject === 'reading'
+                            ? 'Catálogo de Sprints: Lectura y Redacción'
+                            : 'Catálogo de Sprints: Matemáticas'}
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Elige el Sprint específico que deseas practicar hoy.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedSprintSubject(
+                            selectedSprintSubject === 'reading' ? 'math' : 'reading'
+                          )
+                        }
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 text-xs font-semibold text-slate-600 cursor-pointer"
+                      >
+                        Cambiar a{' '}
+                        {selectedSprintSubject === 'reading' ? 'Matemáticas' : 'Lectura'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSprintSubject(null)}
+                        className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-[#0A1128] cursor-pointer"
+                      >
+                        Cerrar catálogo
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {(selectedSprintSubject === 'reading'
+                      ? readingSprints
+                      : mathSprints
+                    ).map((sprint) => (
+                      <div
+                        key={sprint.id}
+                        className="rounded-xl border border-slate-200 hover:border-[#0052FF] p-5 flex flex-col justify-between bg-[#F8FAFC]/60 hover:bg-white transition-all shadow-2xs"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-2.5">
+                            <span className="px-2.5 py-0.5 rounded-md bg-[#0A1128] text-[#00D2FF] font-mono-num text-xs font-bold">
+                              {sprint.code}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                sprint.difficulty === 'Avanzado'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : sprint.difficulty === 'Intermedio'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {sprint.difficulty}
+                            </span>
+                          </div>
+
+                          <h4 className="font-display font-bold text-base text-[#0A1128] mb-1.5">
+                            {sprint.title}
+                          </h4>
+                          <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                            {sprint.description}
+                          </p>
+
+                          <div className="flex flex-wrap gap-1.5 mb-4">
+                            {sprint.topics.map((t) => (
+                              <span
+                                key={t}
+                                className="px-2 py-0.5 rounded bg-white border border-slate-200 text-[11px] text-slate-600 font-medium"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-200/80 flex items-center justify-between gap-2">
+                          <span className="inline-flex items-center gap-1 text-xs font-mono-num font-semibold text-slate-600">
+                            <Clock className="w-3.5 h-3.5 text-[#0052FF]" />
+                            {sprint.durationMinutes} min · {sprint.questionIds.length} pregs
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => onStartTest(sprint.mode, sprint)}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#0052FF] hover:bg-[#0045D8] text-white text-xs font-bold shadow-xs cursor-pointer"
+                          >
+                            <span>Iniciar</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* TAB 2: MATERIALES DE ESTUDIO */}
+        {/* TAB 2: MATERIALES DE ESTUDIO (CON SOPORTE DE ARCHIVOS ADJUNTOS PDF, DOCX, PPTX, XLSX, PNG, JPG) */}
         {activeTab === 'materials' && (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h2 className="font-display text-lg font-bold text-[#0A1128]">
-                  Biblioteca de Materiales de Estudio PAA
+                  Biblioteca de Materiales de Estudio y Recursos Descargables
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Guías académicas y formulario comentado elaborados por los docentes de Key Institute.
+                  Guías académicas con soporte LaTeX y documentos adjuntos (PDF, Word, PowerPoint, Excel, Imágenes) publicados por tus docentes.
                 </p>
               </div>
 
@@ -404,6 +730,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 <div className="lg:col-span-5 space-y-3">
                   {filteredMaterials.map((mat) => {
                     const isSelected = activeMaterial?.id === mat.id;
+                    const badge = mat.attachmentName
+                      ? getFileFormatBadge(mat.attachmentName)
+                      : null;
+
                     return (
                       <button
                         key={mat.id}
@@ -434,15 +764,25 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                           {mat.title}
                         </h3>
                         <p className="text-xs text-slate-500 line-clamp-2">{mat.summary}</p>
-                        <div className="text-[11px] text-slate-400 mt-2">
-                          Por {mat.authorName}
+                        <div className="flex items-center justify-between gap-2 mt-2.5 pt-2 border-t border-slate-100">
+                          <span className="text-[11px] text-slate-400">
+                            Por {mat.authorName}
+                          </span>
+                          {badge && (
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-bold ${badge.colorClass}`}
+                            >
+                              <Paperclip className="w-3 h-3" />
+                              {badge.ext} adjunto
+                            </span>
+                          )}
                         </div>
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Right Reader Pane with KaTeX Support */}
+                {/* Right Reader Pane with KaTeX + Attached File Viewer/Downloader */}
                 {activeMaterial && (
                   <article className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
                     <div className="p-5 sm:p-7 bg-slate-50 border-b border-slate-200">
@@ -462,7 +802,67 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                       <p className="text-xs sm:text-sm text-slate-600 mt-1">
                         {activeMaterial.summary}
                       </p>
+
+                      {/* Attached File Download & Preview Card */}
+                      {activeMaterial.attachmentUrl && activeMaterial.attachmentName && (
+                        <div className="mt-4 p-3.5 rounded-xl bg-white border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span
+                              className={`px-2.5 py-1 rounded-lg border text-xs font-extrabold shrink-0 ${
+                                getFileFormatBadge(activeMaterial.attachmentName).colorClass
+                              }`}
+                            >
+                              {getFileFormatBadge(activeMaterial.attachmentName).ext}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="font-bold text-xs sm:text-sm text-[#0A1128] truncate">
+                                {activeMaterial.attachmentName}
+                              </div>
+                              <div className="text-[11px] text-slate-500">
+                                Archivo adjunto del docente{' '}
+                                {activeMaterial.attachmentSize
+                                  ? `· ${formatFileSize(activeMaterial.attachmentSize)}`
+                                  : ''}
+                              </div>
+                            </div>
+                          </div>
+
+                          <a
+                            href={activeMaterial.attachmentUrl}
+                            download={activeMaterial.attachmentName}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0052FF] hover:bg-[#0045D8] text-white text-xs font-bold shadow-xs transition-colors shrink-0"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Descargar / Abrir</span>
+                          </a>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Inline Preview for Image or PDF Attachments */}
+                    {activeMaterial.attachmentUrl &&
+                      activeMaterial.attachmentMime?.startsWith('image/') && (
+                        <div className="p-4 bg-slate-100/70 border-b border-slate-200 flex justify-center">
+                          <img
+                            src={activeMaterial.attachmentUrl}
+                            alt={activeMaterial.attachmentName || 'Imagen adjunta'}
+                            className="max-h-96 rounded-xl border border-slate-200 shadow-xs object-contain"
+                          />
+                        </div>
+                      )}
+
+                    {activeMaterial.attachmentUrl &&
+                      activeMaterial.attachmentMime === 'application/pdf' && (
+                        <div className="p-4 bg-slate-100/70 border-b border-slate-200">
+                          <iframe
+                            src={activeMaterial.attachmentUrl}
+                            title={activeMaterial.attachmentName || 'Vista previa PDF'}
+                            className="w-full h-96 rounded-xl border border-slate-200 bg-white"
+                          />
+                        </div>
+                      )}
 
                     <div className="p-5 sm:p-7 text-sm sm:text-[15px] text-slate-800 leading-relaxed space-y-3">
                       <LatexRenderer content={activeMaterial.content} />
