@@ -21,6 +21,7 @@ import {
 import {
   fetchBootstrapData,
   apiAuthenticateWithMicrosoft,
+  apiAuthenticateWithGoogle,
   apiUpdateUserCohort,
   apiCreateStudyMaterial,
   apiUpdateStudyMaterial,
@@ -271,6 +272,22 @@ export const App: React.FC = () => {
     setScreen('portal');
   };
 
+  const handleGoogleLogin = async (payload: {
+    name: string;
+    email: string;
+    googleId?: string;
+    idToken?: string;
+    accessToken?: string;
+    requestedRole: UserRole;
+    teacherPin?: string;
+    cohort?: string;
+  }) => {
+    const res = await apiAuthenticateWithGoogle(payload);
+    setUsers(res.users);
+    setCurrentUserRecord(res.user);
+    setScreen('portal');
+  };
+
   const handleStartTest = (mode: TestMode, sprintCfg?: SprintConfig) => {
     setTestMode(mode);
     setActiveSprintConfig(sprintCfg ?? null);
@@ -348,6 +365,7 @@ export const App: React.FC = () => {
         users={users}
         onSelectUser={handleSelectUser}
         onMicrosoftLogin={handleMicrosoftLogin}
+        onGoogleLogin={handleGoogleLogin}
       />
     );
   }
