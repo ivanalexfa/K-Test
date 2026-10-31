@@ -98,6 +98,11 @@ try {
 } catch {
   // Column already exists
 }
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN google_id TEXT;`);
+} catch {
+  // Column already exists
+}
 
 // Safe migration for file attachments in study_materials (pdf, docx, pptx, xlsx, png, jpg, etc.)
 try {
@@ -710,6 +715,7 @@ export function getAllUsers() {
          role,
          cohort,
          microsoft_oid as microsoftOid,
+         google_id as googleId,
          auth_provider as authProvider,
          created_at as createdAt
        FROM users
@@ -731,6 +737,7 @@ export function updateUserCohort(userId: string, cohort: string) {
          role,
          cohort,
          microsoft_oid as microsoftOid,
+         google_id as googleId,
          auth_provider as authProvider,
          created_at as createdAt
        FROM users
@@ -761,6 +768,28 @@ function isEmailDomainAllowed(email: string): { allowed: boolean; allowedList: s
   if (!rawRule || rawRule === '*') {
     return { allowed: true, allowedList: ['*'] };
   }
+  const allowedList = rawRule
+    .split(',')
+    .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
+    .filter(Boolean);
+
+  const emailDomain = email.split('@')[1]?.toLowerCase() || '';
+  return {
+    allowed: allowedList.includes(emailDomain),
+    allowedList,
+  };
+}
+
+/**
+ * Checks whether a Teacher email belongs exclusively to Key Institute's institutional domains
+ */
+function isTeacherInstitutionalDomain(email: string): {
+  allowed: boolean;
+  allowedList: string[];
+} {
+  const rawRule = (
+    process.env.TEACHER_EMAIL_DOMAINS || 'keyinstitute.com,keyinstitute.edu.sv'
+  ).trim();
   const allowedList = rawRule
     .split(',')
     .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
@@ -893,6 +922,18 @@ export async function authenticateMicrosoftUser(payload: {
 
   // 3. Handle Option 1 Role Resolution (Student vs Teacher + PIN)
   if (payload.requestedRole === 'teacher') {
+    const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
+    if (!teacherDomainCheck.allowed) {
+      const err: any = new Error(
+        `Acceso restringido: Los docentes solo pueden ingresar con su correo institucional (${teacherDomainCheck.allowedList
+          .map((d) => `@${d}`)
+          .join(' o ')}).`
+      );
+      err.statusCode = 403;
+      err.code = 'INSTITUTIONAL_EMAIL_REQUIRED';
+      throw err;
+    }
+
     const isAlreadyRegisteredTeacher = existingUser?.role === 'teacher';
     const needsPinValidation = !isAlreadyRegisteredTeacher || alwaysRequirePin;
 
@@ -988,6 +1029,231 @@ export async function authenticateMicrosoftUser(payload: {
       `SELECT
          id, name, email, role, cohort,
          microsoft_oid as microsoftOid,
+         google_id as googleId,
+         auth_provider as authProvider,
+         created_at as createdAt
+       FROM users
+       WHERE LOWER(email) = ?`
+    )
+    .get(verifiedEmail);
+
+  return finalUser;
+}
+
+/**
+ * Verifies a Google access_token against Google's OAuth2 v3 userinfo endpoint
+ */
+async function verifyGoogleAccessToken(accessToken: string) {
+  const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err: any = new Error(
+      'Google rechazó el token de acceso. Autenticación no válida.'
+    );
+    err.statusCode = 401;
+    throw err;
+  }
+
+  const profile: any = await response.json();
+  return {
+    googleId: profile.sub,
+    name: profile.name || profile.given_name || '',
+    email: (profile.email || '').toLowerCase(),
+  };
+}
+
+/**
+ * Authenticates or auto-provisions a Google Identity user, supporting account linking
+ * by email and enforcing the teacher PIN when requested.
+ */
+export async function authenticateGoogleUser(payload: {
+  name: string;
+  email: string;
+  googleId?: string;
+  idToken?: string;
+  accessToken?: string;
+  requestedRole: 'student' | 'teacher';
+  teacherPin?: string;
+  cohort?: string;
+}) {
+  let verifiedEmail = (payload.email || '').trim().toLowerCase();
+  let verifiedName = (payload.name || '').trim();
+  let verifiedGoogleId = payload.googleId || '';
+
+  // 1. If real accessToken was provided, verify live with Google userinfo API
+  if (payload.accessToken) {
+    try {
+      const gProfile = await verifyGoogleAccessToken(payload.accessToken);
+      verifiedEmail = gProfile.email || verifiedEmail;
+      verifiedName = gProfile.name || verifiedName;
+      verifiedGoogleId = gProfile.googleId || verifiedGoogleId;
+    } catch (e) {
+      if (!verifiedEmail) throw e;
+    }
+  } else if (payload.idToken) {
+    const claims = decodeJwtPayload(payload.idToken);
+    if (claims) {
+      verifiedEmail = (claims.email || verifiedEmail).trim().toLowerCase();
+      verifiedName = (claims.name || verifiedName).trim();
+      verifiedGoogleId = claims.sub || verifiedGoogleId;
+    }
+  }
+
+  if (!verifiedEmail || !verifiedEmail.includes('@')) {
+    const err: any = new Error('Google no devolvió un correo válido.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (!verifiedName) {
+    verifiedName = verifiedEmail.split('@')[0].replace(/[._]/g, ' ');
+  }
+
+  // 2. Validate institutional domain if restricted in .env
+  const domainCheck = isEmailDomainAllowed(verifiedEmail);
+  if (!domainCheck.allowed) {
+    const err: any = new Error(
+      `El correo ${verifiedEmail} no pertenece a los dominios autorizados (${domainCheck.allowedList
+        .map((d) => `@${d}`)
+        .join(', ')}).`
+    );
+    err.statusCode = 403;
+    throw err;
+  }
+
+  // 3. Lookup existing user by email
+  const existingUser: any = db
+    .prepare(
+      `SELECT
+         id, name, email, role, cohort,
+         microsoft_oid as microsoftOid,
+         google_id as googleId,
+         auth_provider as authProvider,
+         created_at as createdAt
+       FROM users
+       WHERE LOWER(email) = ?`
+    )
+    .get(verifiedEmail);
+
+  const expectedTeacherPin = (
+    process.env.TEACHER_ACCESS_PIN || 'DOCENTE-PAA-2026'
+  ).trim();
+  const alwaysRequirePin =
+    (process.env.ALWAYS_REQUIRE_TEACHER_PIN || 'false').trim().toLowerCase() ===
+    'true';
+
+  // 4. Role & Teacher PIN validation
+  if (payload.requestedRole === 'teacher') {
+    const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
+    if (!teacherDomainCheck.allowed) {
+      const err: any = new Error(
+        `Acceso restringido: Los docentes solo pueden ingresar con su correo institucional (${teacherDomainCheck.allowedList
+          .map((d) => `@${d}`)
+          .join(' o ')}).`
+      );
+      err.statusCode = 403;
+      err.code = 'INSTITUTIONAL_EMAIL_REQUIRED';
+      throw err;
+    }
+
+    const isAlreadyRegisteredTeacher = existingUser?.role === 'teacher';
+    const needsPinValidation = !isAlreadyRegisteredTeacher || alwaysRequirePin;
+
+    if (needsPinValidation) {
+      const providedPin = (payload.teacherPin || '').trim();
+      if (!providedPin) {
+        const err: any = new Error(
+          'Esta cuenta aún no está registrada como Docente. Ingresa el Código/PIN de Cátedra Docente para autorizar el acceso.'
+        );
+        err.statusCode = 403;
+        err.code = 'PIN_REQUIRED';
+        throw err;
+      }
+
+      if (providedPin !== expectedTeacherPin) {
+        const err: any = new Error(
+          'Código/PIN de Cátedra Docente incorrecto. Verifica la clave institucional e inténtalo de nuevo.'
+        );
+        err.statusCode = 403;
+        err.code = 'INVALID_PIN';
+        throw err;
+      }
+    }
+
+    if (existingUser) {
+      const updatedCohort =
+        existingUser.role === 'teacher'
+          ? existingUser.cohort
+          : payload.cohort || 'Cátedra Key Institute · Google';
+
+      db.prepare(
+        `UPDATE users
+         SET role = 'teacher',
+             name = ?,
+             cohort = ?,
+             google_id = COALESCE(NULLIF(?, ''), google_id),
+             auth_provider = CASE WHEN auth_provider = 'microsoft' THEN 'hybrid' ELSE 'google' END
+         WHERE id = ?`
+      ).run(verifiedName, updatedCohort, verifiedGoogleId, existingUser.id);
+    } else {
+      const id = `tch-${crypto.randomUUID().slice(0, 8)}`;
+      const createdAt = new Date().toISOString();
+      const cohort =
+        payload.cohort?.trim() || 'Cátedra Key Institute · Google';
+
+      db.prepare(
+        `INSERT INTO users (id, name, email, password, role, cohort, google_id, auth_provider, created_at)
+         VALUES (?, ?, ?, 'GOOGLE_OAUTH', 'teacher', ?, ?, 'google', ?)`
+      ).run(
+        id,
+        verifiedName,
+        verifiedEmail,
+        cohort,
+        verifiedGoogleId || `goog-${id}`,
+        createdAt
+      );
+    }
+  } else {
+    // requestedRole === 'student'
+    if (existingUser) {
+      db.prepare(
+        `UPDATE users
+         SET name = ?,
+             google_id = COALESCE(NULLIF(?, ''), google_id),
+             auth_provider = CASE WHEN auth_provider = 'microsoft' THEN 'hybrid' ELSE 'google' END
+         WHERE id = ?`
+      ).run(verifiedName, verifiedGoogleId, existingUser.id);
+    } else {
+      const id = `stu-${crypto.randomUUID().slice(0, 8)}`;
+      const createdAt = new Date().toISOString();
+      const cohort =
+        payload.cohort?.trim() ||
+        'Cohorte Estudiantil Key Institute · Google';
+
+      db.prepare(
+        `INSERT INTO users (id, name, email, password, role, cohort, google_id, auth_provider, created_at)
+         VALUES (?, ?, ?, 'GOOGLE_OAUTH', 'student', ?, ?, 'google', ?)`
+      ).run(
+        id,
+        verifiedName,
+        verifiedEmail,
+        cohort,
+        verifiedGoogleId || `goog-${id}`,
+        createdAt
+      );
+    }
+  }
+
+  const finalUser = db
+    .prepare(
+      `SELECT
+         id, name, email, role, cohort,
+         microsoft_oid as microsoftOid,
+         google_id as googleId,
          auth_provider as authProvider,
          created_at as createdAt
        FROM users

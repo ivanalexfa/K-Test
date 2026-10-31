@@ -50,6 +50,30 @@ export async function apiAuthenticateWithMicrosoft(payload: {
   return data;
 }
 
+export async function apiAuthenticateWithGoogle(payload: {
+  name: string;
+  email: string;
+  googleId?: string;
+  idToken?: string;
+  accessToken?: string;
+  requestedRole: UserRole;
+  teacherPin?: string;
+  cohort?: string;
+}): Promise<{ user: UserRecord; users: UserRecord[] }> {
+  const res = await fetch('/api/auth/google', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const err: any = new Error(data.error || 'Error al autenticar con Google');
+    err.code = data.code;
+    throw err;
+  }
+  return data;
+}
+
 export async function apiUpdateUserCohort(
   userId: string,
   cohort: string

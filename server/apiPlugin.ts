@@ -8,6 +8,7 @@ import {
   loginUser,
   registerUser,
   authenticateMicrosoftUser,
+  authenticateGoogleUser,
   getAllStudyMaterials,
   createStudyMaterial,
   updateStudyMaterial,
@@ -131,6 +132,25 @@ export function paaSqliteApiPlugin() {
             name: body.name,
             email: body.email,
             microsoftOid: body.microsoftOid,
+            idToken: body.idToken,
+            accessToken: body.accessToken,
+            requestedRole: body.requestedRole === 'teacher' ? 'teacher' : 'student',
+            teacherPin: body.teacherPin,
+            cohort: body.cohort,
+          });
+          return sendJson(res, 200, {
+            user,
+            users: getAllUsers(),
+          });
+        }
+
+        // POST /api/auth/google (Google Identity Services + Option 1 Teacher PIN)
+        if (method === 'POST' && pathname === '/api/auth/google') {
+          const body = await readJsonBody(req);
+          const user = await authenticateGoogleUser({
+            name: body.name,
+            email: body.email,
+            googleId: body.googleId,
             idToken: body.idToken,
             accessToken: body.accessToken,
             requestedRole: body.requestedRole === 'teacher' ? 'teacher' : 'student',
