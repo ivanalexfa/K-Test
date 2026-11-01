@@ -364,24 +364,26 @@ export const AuthView: React.FC<AuthViewProps> = ({
         </div>
       </header>
 
-      {/* Hero Section with Centered Minimalist Login Card */}
-      <section className="relative bg-[#0A1128] text-white pt-10 pb-20 sm:pt-14 sm:pb-24 px-4 sm:px-6 overflow-hidden">
-        {/* Ambient Key Institute Glows */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[650px] h-[300px] bg-[#0052FF]/25 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 right-10 w-80 h-80 bg-[#00D2FF]/10 blur-[100px] pointer-events-none" />
+      {/* Unified Canvas: Hero + Showcase in one continuous, seamless gradient from header to page bottom */}
+      <div className="relative flex-1 flex flex-col bg-gradient-to-b from-[#0A1128] via-[#080E24] to-[#050A18] overflow-hidden">
+        {/* Continuous Ambient Key Institute Glows spanning the entire page */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[450px] bg-[#0052FF]/25 blur-[140px] pointer-events-none" />
+        <div className="absolute top-1/3 -right-24 w-[480px] h-[480px] bg-[#00D2FF]/10 blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-10 -left-20 w-[460px] h-[460px] bg-[#0052FF]/15 blur-[140px] pointer-events-none" />
 
-        <div className="relative z-10 max-w-3xl mx-auto text-center mb-8 sm:mb-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#0052FF]/25 border border-[#00D2FF]/35 text-[#00D2FF] text-xs font-bold uppercase tracking-wider mb-4">
-            Plataforma de Preparación y Diagnóstico PAA
+        {/* Hero Section with Centered Minimalist Login Card */}
+        <section className="relative z-10 pt-10 pb-6 sm:pt-14 sm:pb-8 px-4 sm:px-6">
+          <div className="max-w-3xl mx-auto text-center mb-8 sm:mb-10">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#0052FF]/25 border border-[#00D2FF]/35 text-[#00D2FF] text-xs font-bold uppercase tracking-wider mb-4">
+              Plataforma de Preparación y Diagnóstico PAA
+            </div>
+            <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight mb-3">
+              Entrena tu mente para la ingeniería del futuro
+            </h1>
           </div>
-          <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight mb-3">
-            Entrena tu mente para la ingeniería del futuro
-          </h1>
-          
-        </div>
 
-        {/* Centered Login Card */}
-        <div className="relative z-10 max-w-md mx-auto bg-white text-[#0A1128] rounded-2xl shadow-2xl border border-white/15 overflow-hidden">
+          {/* Centered Login Card */}
+          <div className="max-w-md mx-auto bg-white text-[#0A1128] rounded-2xl shadow-2xl border border-white/15 overflow-hidden">
           {/* Role Switcher Tabs */}
           <div className="p-2 bg-slate-100 border-b border-slate-200 grid grid-cols-2 gap-1.5">
             <button
@@ -512,7 +514,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       </section>
 
       {/* Welcome Landing Showcase Section: What Awaits Inside */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 -mt-10 pb-14 relative z-20 space-y-10">
+      <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 pt-4 pb-16 space-y-10">
         {/* 3 Symmetrical Pillars of the Platform (Compact: Icon + Title) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Pillar 1: Full PAA Simulacro */}
@@ -614,6 +616,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </div>
         )}
       </main>
+      </div>
 
       {/* Fallback Microsoft SSO Simulator Modal (only if VITE_MSAL_CLIENT_ID is empty) */}
       <dialog
