@@ -35,8 +35,8 @@ function loadEnvFile() {
 }
 loadEnvFile();
 function getTursoConfig() {
-  const rawUrl = process.env.TURSO_DATABASE_URL || process.env.turso_database_url || process.env.TURSO_URL || "";
-  const rawToken = process.env.TURSO_AUTH_TOKEN || process.env.turso_auth_token || process.env.TURSO_TOKEN || "";
+  const rawUrl = process.env.TURSO_DATABASE_URL || process.env.turso_database_url || process.env.TURSO_URL || process.env.turso_url || process.env.URL_TURSO || process.env.url_turso || "";
+  const rawToken = process.env.TURSO_AUTH_TOKEN || process.env.turso_auth_token || process.env.TURSO_TOKEN || process.env.turso_token || process.env.TOKEN_TURSO || process.env.token_turso || "";
   const url = rawUrl.replace(/^['"]|['"]$/g, "").trim();
   const token = rawToken.replace(/^['"]|['"]$/g, "").trim();
   return { url, token };
@@ -1531,8 +1531,7 @@ async function handleApiRequest(req, res) {
   }
   try {
     if (method === "GET" && (pathname === "/api/health" || pathname === "/api")) {
-      const urlEnv = (process.env.TURSO_DATABASE_URL || process.env.turso_database_url || "").trim();
-      const tokenEnv = (process.env.TURSO_AUTH_TOKEN || process.env.turso_auth_token || "").trim();
+      const { url: urlEnv, token: tokenEnv } = getTursoConfig();
       const detectedKeys = Object.keys(process.env).filter(
         (k) => /turso|database|token/i.test(k)
       );

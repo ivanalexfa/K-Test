@@ -39,11 +39,17 @@ export function getTursoConfig(): { url: string; token: string } {
     process.env.TURSO_DATABASE_URL ||
     process.env.turso_database_url ||
     process.env.TURSO_URL ||
+    process.env.turso_url ||
+    process.env.URL_TURSO ||
+    process.env.url_turso ||
     '';
   const rawToken =
     process.env.TURSO_AUTH_TOKEN ||
     process.env.turso_auth_token ||
     process.env.TURSO_TOKEN ||
+    process.env.turso_token ||
+    process.env.TOKEN_TURSO ||
+    process.env.token_turso ||
     '';
 
   const url = rawUrl.replace(/^['"]|['"]$/g, '').trim();
