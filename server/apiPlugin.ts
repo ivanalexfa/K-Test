@@ -17,7 +17,7 @@ import {
   getAllTestAttempts,
   createTestAttempt,
 } from './database';
-import { isTursoConfigured } from './dbDriver';
+import { isTursoConfigured, getTursoConfig } from './dbDriver';
 
 function readJsonBody(req: any): Promise<any> {
   if (req.body !== undefined && req.body !== null) {
@@ -197,8 +197,7 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
   try {
     // GET /api/health or GET /api (Diagnostic endpoint)
         if (method === 'GET' && (pathname === '/api/health' || pathname === '/api')) {
-      const urlEnv = (process.env.TURSO_DATABASE_URL || process.env.turso_database_url || '').trim();
-      const tokenEnv = (process.env.TURSO_AUTH_TOKEN || process.env.turso_auth_token || '').trim();
+      const { url: urlEnv, token: tokenEnv } = getTursoConfig();
       const detectedKeys = Object.keys(process.env).filter((k) =>
         /turso|database|token/i.test(k)
       );
