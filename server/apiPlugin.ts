@@ -196,10 +196,22 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
 
   try {
     // GET /api/health or GET /api (Diagnostic endpoint)
-    if (method === 'GET' && (pathname === '/api/health' || pathname === '/api')) {
+        if (method === 'GET' && (pathname === '/api/health' || pathname === '/api')) {
+      const urlEnv = (process.env.TURSO_DATABASE_URL || process.env.turso_database_url || '').trim();
+      const tokenEnv = (process.env.TURSO_AUTH_TOKEN || process.env.turso_auth_token || '').trim();
+      const detectedKeys = Object.keys(process.env).filter((k) =>
+        /turso|database|token/i.test(k)
+      );
       sendJson(res, 200, {
         status: 'ok',
         tursoConfigured: isTursoConfigured(),
+        diagnostics: {
+          hasTursoUrl: Boolean(urlEnv),
+          urlPrefix: urlEnv ? urlEnv.slice(0, 15) + '...' : null,
+          hasTursoToken: Boolean(tokenEnv),
+          tokenLength: tokenEnv.length,
+          detectedEnvKeys: detectedKeys,
+        },
         environment: process.env.NODE_ENV || 'production',
         timestamp: new Date().toISOString(),
       });
