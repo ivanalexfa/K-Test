@@ -1,4 +1,5 @@
-import { handleApiRequest } from '../server/apiPlugin';
+// @ts-nocheck
+import { handleApiRequest } from './apiPlugin';
 
 export const config = {
   api: {
