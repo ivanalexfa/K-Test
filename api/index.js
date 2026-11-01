@@ -34,14 +34,20 @@ function loadEnvFile() {
   }
 }
 loadEnvFile();
+function getTursoConfig() {
+  const rawUrl = process.env.TURSO_DATABASE_URL || process.env.turso_database_url || process.env.TURSO_URL || "";
+  const rawToken = process.env.TURSO_AUTH_TOKEN || process.env.turso_auth_token || process.env.TURSO_TOKEN || "";
+  const url = rawUrl.replace(/^['"]|['"]$/g, "").trim();
+  const token = rawToken.replace(/^['"]|['"]$/g, "").trim();
+  return { url, token };
+}
 function isTursoConfigured() {
-  const url = (process.env.TURSO_DATABASE_URL || "").trim();
-  const token = (process.env.TURSO_AUTH_TOKEN || "").trim();
+  const { url, token } = getTursoConfig();
   return Boolean(url && token && !url.includes("xxxx"));
 }
 function getTursoPipelineUrl() {
-  const rawUrl = (process.env.TURSO_DATABASE_URL || "").trim();
-  const httpsUrl = rawUrl.replace(/^libsql:\/\//i, "https://").replace(/^wss:\/\//i, "https://").replace(/\/+$/, "");
+  const { url } = getTursoConfig();
+  const httpsUrl = url.replace(/^libsql:\/\//i, "https://").replace(/^wss:\/\//i, "https://").replace(/\/+$/, "");
   return `${httpsUrl}/v2/pipeline`;
 }
 function toHranaArg(val) {
@@ -83,7 +89,7 @@ function parseHranaResult(result) {
 }
 async function executeTursoPipeline(statements) {
   const pipelineUrl = getTursoPipelineUrl();
-  const token = (process.env.TURSO_AUTH_TOKEN || "").trim();
+  const { token } = getTursoConfig();
   const requests = statements.map((s) => ({
     type: "execute",
     stmt: {
@@ -1525,9 +1531,21 @@ async function handleApiRequest(req, res) {
   }
   try {
     if (method === "GET" && (pathname === "/api/health" || pathname === "/api")) {
+      const urlEnv = (process.env.TURSO_DATABASE_URL || process.env.turso_database_url || "").trim();
+      const tokenEnv = (process.env.TURSO_AUTH_TOKEN || process.env.turso_auth_token || "").trim();
+      const detectedKeys = Object.keys(process.env).filter(
+        (k) => /turso|database|token/i.test(k)
+      );
       sendJson(res, 200, {
         status: "ok",
         tursoConfigured: isTursoConfigured(),
+        diagnostics: {
+          hasTursoUrl: Boolean(urlEnv),
+          urlPrefix: urlEnv ? urlEnv.slice(0, 15) + "..." : null,
+          hasTursoToken: Boolean(tokenEnv),
+          tokenLength: tokenEnv.length,
+          detectedEnvKeys: detectedKeys
+        },
         environment: process.env.NODE_ENV || "production",
         timestamp: (/* @__PURE__ */ new Date()).toISOString()
       });

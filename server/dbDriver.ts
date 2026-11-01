@@ -30,15 +30,38 @@ loadEnvFile();
 /**
  * Returns true when Turso Cloud credentials (TURSO_DATABASE_URL & TURSO_AUTH_TOKEN) are configured.
  */
+/**
+ * Retrieves and sanitizes Turso credentials from environment variables.
+ * Handles uppercase/lowercase variants, accidental quotes, and whitespace.
+ */
+export function getTursoConfig(): { url: string; token: string } {
+  const rawUrl =
+    process.env.TURSO_DATABASE_URL ||
+    process.env.turso_database_url ||
+    process.env.TURSO_URL ||
+    '';
+  const rawToken =
+    process.env.TURSO_AUTH_TOKEN ||
+    process.env.turso_auth_token ||
+    process.env.TURSO_TOKEN ||
+    '';
+
+  const url = rawUrl.replace(/^['"]|['"]$/g, '').trim();
+  const token = rawToken.replace(/^['"]|['"]$/g, '').trim();
+  return { url, token };
+}
+
+/**
+ * Returns true when Turso Cloud credentials (TURSO_DATABASE_URL & TURSO_AUTH_TOKEN) are configured.
+ */
 export function isTursoConfigured(): boolean {
-  const url = (process.env.TURSO_DATABASE_URL || '').trim();
-  const token = (process.env.TURSO_AUTH_TOKEN || '').trim();
+  const { url, token } = getTursoConfig();
   return Boolean(url && token && !url.includes('xxxx'));
 }
 
 function getTursoPipelineUrl(): string {
-  const rawUrl = (process.env.TURSO_DATABASE_URL || '').trim();
-  const httpsUrl = rawUrl
+  const { url } = getTursoConfig();
+  const httpsUrl = url
     .replace(/^libsql:\/\//i, 'https://')
     .replace(/^wss:\/\//i, 'https://')
     .replace(/\/+$/, '');
@@ -88,7 +111,7 @@ async function executeTursoPipeline(
   statements: { sql: string; args?: any[] }[]
 ): Promise<any[]> {
   const pipelineUrl = getTursoPipelineUrl();
-  const token = (process.env.TURSO_AUTH_TOKEN || '').trim();
+  const { token } = getTursoConfig();
 
   const requests: any[] = statements.map((s) => ({
     type: 'execute',
