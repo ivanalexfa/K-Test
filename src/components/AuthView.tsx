@@ -3,7 +3,6 @@ import {
   GraduationCap,
   BookOpenCheck,
   ArrowRight,
-  Sparkles,
   ChevronDown,
   ChevronUp,
   CheckCircle2,
@@ -357,10 +356,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <KTestLogo theme="dark" variant="full" />
 
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-slate-200 border border-white/15">
-            <Sparkles className="w-3.5 h-3.5 text-[#00D2FF]" />
-            Powering Engineers for Life
-          </span>
+          
         </div>
       </header>
 
@@ -377,10 +373,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight mb-3">
             Entrena tu mente para la ingeniería del futuro
           </h1>
-          <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            Domina las áreas de Lectura Crítica, Redacción Académica y Razonamiento
-            Matemático con simulacros reales, sprints cortos y acompañamiento docente.
-          </p>
+          
         </div>
 
         {/* Centered Login Card */}
@@ -428,11 +421,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   ? 'Ingresa al Portal de Estudiantes'
                   : 'Ingresa al Panel de Cátedra'}
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                {roleTab === 'student'
-                  ? 'Accede con tu cuenta de Google o Microsoft para guardar tu progreso.'
-                  : 'Acceso exclusivo para cátedra con tu correo institucional.'}
-              </p>
+              
             </div>
 
             {error && (
@@ -464,17 +453,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
             {/* Teacher Institutional Notice */}
             {roleTab === 'teacher' && (
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/80 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#0A1128]">
-                  <span className="w-2 h-2 rounded-full bg-[#0052FF] shrink-0" />
-                  <span>Acceso exclusivo para el cuerpo docente</span>
-                </div>
-                <p className="text-[12px] text-slate-600 leading-relaxed">
-                  Inicia sesión con tu correo institucional (
-                  <strong className="text-[#0A1128] font-semibold">@keyinstitute.edu.sv</strong> o{' '}
-                  <strong className="text-[#0A1128] font-semibold">@keyinstitute.com</strong>
-                  ). Acceso directo sin necesidad de PIN de cátedra.
-                </p>
+              <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-100 text-slate-600 text-xs text-center border border-slate-200/80">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0052FF] shrink-0" />
+                <span>Acceso exclusivo con correo institucional (<strong>@keyinstitute.edu.sv</strong> / <strong>@keyinstitute.com</strong>)</span>
               </div>
             )}
 
@@ -524,77 +505,50 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
       {/* Welcome Landing Showcase Section: What Awaits Inside */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 -mt-10 pb-14 relative z-20 space-y-10">
-        {/* 3 Symmetrical Pillars of the Platform */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* 3 Symmetrical Pillars of the Platform (Compact: Icon + Title) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Pillar 1: Full PAA Simulacro */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-[#0052FF]/10 border border-[#0052FF]/20 flex items-center justify-center shrink-0">
+              <SimulacroEngineIcon size={22} />
+            </div>
             <div>
-              <div className="w-10 h-10 rounded-lg bg-[#0052FF]/10 border border-[#0052FF]/20 flex items-center justify-center mb-4">
-                <SimulacroEngineIcon size={24} />
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0052FF]">
-                Experiencia Oficial College Board
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#0052FF] block">
+                Experiencia Oficial
               </span>
-              <h3 className="font-display text-lg font-extrabold text-[#0A1128] mt-1 mb-2">
+              <h3 className="font-display text-sm sm:text-base font-extrabold text-[#0A1128]">
                 Simulacros Completos PAA
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Practica bajo las mismas condiciones del examen real: vista dividida
-                con pasajes de líneas numeradas en Lectura y módulo de Matemáticas
-                con formulario geométrico interactivo.
-              </p>
-            </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
-              <span>Lectura + Matemáticas</span>
-              <span className="font-mono-num text-[#0A1128]">Escala 400–1600</span>
             </div>
           </div>
 
           {/* Pillar 2: Focused Sprints / Práctica Asíncrona */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] border border-[#10B981]/20 flex items-center justify-center shrink-0">
+              <AsyncTrainerIcon size={22} />
+            </div>
             <div>
-              <div className="w-10 h-10 rounded-lg bg-[#ECFDF5] border border-[#10B981]/20 flex items-center justify-center mb-4">
-                <AsyncTrainerIcon size={24} />
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">
                 Entrenamiento Diario Ágil
               </span>
-              <h3 className="font-display text-lg font-extrabold text-[#0A1128] mt-1 mb-2">
+              <h3 className="font-display text-sm sm:text-base font-extrabold text-[#0A1128]">
                 Sprints Cortos por Materia
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                ¿Tienes pocos minutos? Elige entre múltiples Sprints especializados
-                en vocabulario contextual, redacción indirecta, volúmenes 3D,
-                triángulos notables o modelos algebraicos.
-              </p>
-            </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
-              <span>Sesiones de 3 a 6 min</span>
-              <span className="font-mono-num text-[#0A1128]">Por dificultad</span>
             </div>
           </div>
 
           {/* Pillar 3: Teacher Diagnostic & Study Materials */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-[#F1F5F9] border border-[#CBD5E1] flex items-center justify-center shrink-0">
+              <TeacherDiagnosticIcon size={22} />
+            </div>
             <div>
-              <div className="w-10 h-10 rounded-lg bg-[#F1F5F9] border border-[#CBD5E1] flex items-center justify-center mb-4">
-                <TeacherDiagnosticIcon size={24} />
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0052FF]">
-                Diagnóstico y Acompañamiento Docente
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#0052FF] block">
+                Diagnóstico y Acompañamiento
               </span>
-              <h3 className="font-display text-lg font-extrabold text-[#0A1128] mt-1 mb-2">
+              <h3 className="font-display text-sm sm:text-base font-extrabold text-[#0A1128]">
                 Materiales y Solucionarios
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Consulta guías teóricas, descarga presentaciones y ejercicios
-                subidos por tus profesores, y revisa la justificación matemática
-                paso a paso de cada reactivo finalizado.
-              </p>
-            </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
-              <span>Guías + Archivos Adjuntos</span>
-              <span className="font-mono-num text-[#0A1128]">KaTeX / PDF / Office</span>
             </div>
           </div>
         </div>

@@ -393,7 +393,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     Simulacro Oficial PAA: Lectura y Redacción + Matemáticas
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    Recorre en orden secuencial estricto el <strong>Módulo 1 (Lectura y Redacción)</strong> con pantalla dividida y líneas numeradas, seguido del <strong>Módulo 2 (Matemáticas)</strong> con ecuaciones LaTeX y hoja oficial de fórmulas geométricas.
+                    Simulacro oficial en 2 módulos cronometrados: Lectura y Redacción + Matemáticas.
                   </p>
 
                   <div className="flex flex-wrap gap-2 pt-1 text-xs text-slate-600">
@@ -469,26 +469,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                         Accede a la colección de tests cortos de comprensión lectora científica, vocabulario en contexto y redacción indirecta con líneas numeradas.
                       </p>
 
-                      {/* Preview of available sprints */}
-                      <div className="space-y-1.5 mb-5">
-                        {readingSprints.map((sp) => (
-                          <div
-                            key={sp.id}
-                            className="flex items-center justify-between text-xs px-3 py-2 rounded-lg bg-slate-50 border border-slate-200/80"
-                          >
-                            <span className="font-medium text-[#0A1128] truncate pr-2">
-                              <strong className="font-mono-num text-[#0052FF]">
-                                {sp.code}:
-                              </strong>{' '}
-                              {sp.title}
-                            </span>
-                            <span className="font-mono-num text-[11px] text-slate-500 shrink-0">
-                              {sp.questionIds.length} pregs · {sp.durationMinutes}m
-                            </span>
-                          </div>
-                        ))}
                       </div>
-                    </div>
 
                     <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
                       <span className="text-xs text-slate-500 font-medium">
@@ -525,26 +506,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                         Accede a los entrenamientos cortos de geometría espacial, triángulos especiales, sistemas algebraicos y funciones con KaTeX y formulario PAA.
                       </p>
 
-                      {/* Preview of available sprints */}
-                      <div className="space-y-1.5 mb-5">
-                        {mathSprints.map((sp) => (
-                          <div
-                            key={sp.id}
-                            className="flex items-center justify-between text-xs px-3 py-2 rounded-lg bg-slate-50 border border-slate-200/80"
-                          >
-                            <span className="font-medium text-[#0A1128] truncate pr-2">
-                              <strong className="font-mono-num text-[#0052FF]">
-                                {sp.code}:
-                              </strong>{' '}
-                              {sp.title}
-                            </span>
-                            <span className="font-mono-num text-[11px] text-slate-500 shrink-0">
-                              {sp.questionIds.length} pregs · {sp.durationMinutes}m
-                            </span>
-                          </div>
-                        ))}
                       </div>
-                    </div>
 
                     <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
                       <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-medium">
