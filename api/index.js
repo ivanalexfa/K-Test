@@ -888,8 +888,6 @@ async function authenticateMicrosoftUser(payload) {
      WHERE LOWER(email) = ?`,
     [verifiedEmail]
   );
-  const expectedTeacherPin = (process.env.TEACHER_ACCESS_PIN || "DOCENTE-PAA-2026").trim();
-  const alwaysRequirePin = (process.env.ALWAYS_REQUIRE_TEACHER_PIN || "false").trim().toLowerCase() === "true";
   if (payload.requestedRole === "teacher") {
     const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
     if (!teacherDomainCheck.allowed) {
@@ -899,27 +897,6 @@ async function authenticateMicrosoftUser(payload) {
       err.statusCode = 403;
       err.code = "INSTITUTIONAL_EMAIL_REQUIRED";
       throw err;
-    }
-    const isAlreadyRegisteredTeacher = existingUser?.role === "teacher";
-    const needsPinValidation = !isAlreadyRegisteredTeacher || alwaysRequirePin;
-    if (needsPinValidation) {
-      const providedPin = (payload.teacherPin || "").trim();
-      if (!providedPin) {
-        const err = new Error(
-          "Esta cuenta a\xFAn no est\xE1 registrada como Docente. Ingresa el C\xF3digo/PIN de C\xE1tedra Docente para autorizar el acceso."
-        );
-        err.statusCode = 403;
-        err.code = "PIN_REQUIRED";
-        throw err;
-      }
-      if (providedPin !== expectedTeacherPin) {
-        const err = new Error(
-          "C\xF3digo/PIN de C\xE1tedra Docente incorrecto. Verifica la clave institucional e int\xE9ntalo de nuevo."
-        );
-        err.statusCode = 403;
-        err.code = "INVALID_PIN";
-        throw err;
-      }
     }
     if (existingUser) {
       const updatedCohort = existingUser.role === "teacher" ? existingUser.cohort : payload.cohort || "C\xE1tedra Key Institute \xB7 Microsoft 365";
@@ -1045,8 +1022,6 @@ async function authenticateGoogleUser(payload) {
      WHERE LOWER(email) = ?`,
     [verifiedEmail]
   );
-  const expectedTeacherPin = (process.env.TEACHER_ACCESS_PIN || "DOCENTE-PAA-2026").trim();
-  const alwaysRequirePin = (process.env.ALWAYS_REQUIRE_TEACHER_PIN || "false").trim().toLowerCase() === "true";
   if (payload.requestedRole === "teacher") {
     const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
     if (!teacherDomainCheck.allowed) {
@@ -1056,27 +1031,6 @@ async function authenticateGoogleUser(payload) {
       err.statusCode = 403;
       err.code = "INSTITUTIONAL_EMAIL_REQUIRED";
       throw err;
-    }
-    const isAlreadyRegisteredTeacher = existingUser?.role === "teacher";
-    const needsPinValidation = !isAlreadyRegisteredTeacher || alwaysRequirePin;
-    if (needsPinValidation) {
-      const providedPin = (payload.teacherPin || "").trim();
-      if (!providedPin) {
-        const err = new Error(
-          "Esta cuenta a\xFAn no est\xE1 registrada como Docente. Ingresa el C\xF3digo/PIN de C\xE1tedra Docente para autorizar el acceso."
-        );
-        err.statusCode = 403;
-        err.code = "PIN_REQUIRED";
-        throw err;
-      }
-      if (providedPin !== expectedTeacherPin) {
-        const err = new Error(
-          "C\xF3digo/PIN de C\xE1tedra Docente incorrecto. Verifica la clave institucional e int\xE9ntalo de nuevo."
-        );
-        err.statusCode = 403;
-        err.code = "INVALID_PIN";
-        throw err;
-      }
     }
     if (existingUser) {
       const updatedCohort = existingUser.role === "teacher" ? existingUser.cohort : payload.cohort || "C\xE1tedra Key Institute \xB7 Google";

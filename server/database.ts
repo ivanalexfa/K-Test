@@ -760,13 +760,6 @@ export async function authenticateMicrosoftUser(payload: {
     [verifiedEmail]
   );
 
-  const expectedTeacherPin = (
-    process.env.TEACHER_ACCESS_PIN || 'DOCENTE-PAA-2026'
-  ).trim();
-  const alwaysRequirePin =
-    (process.env.ALWAYS_REQUIRE_TEACHER_PIN || 'false').trim().toLowerCase() ===
-    'true';
-
   if (payload.requestedRole === 'teacher') {
     const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
     if (!teacherDomainCheck.allowed) {
@@ -778,30 +771,6 @@ export async function authenticateMicrosoftUser(payload: {
       err.statusCode = 403;
       err.code = 'INSTITUTIONAL_EMAIL_REQUIRED';
       throw err;
-    }
-
-    const isAlreadyRegisteredTeacher = existingUser?.role === 'teacher';
-    const needsPinValidation = !isAlreadyRegisteredTeacher || alwaysRequirePin;
-
-    if (needsPinValidation) {
-      const providedPin = (payload.teacherPin || '').trim();
-      if (!providedPin) {
-        const err: any = new Error(
-          'Esta cuenta aún no está registrada como Docente. Ingresa el Código/PIN de Cátedra Docente para autorizar el acceso.'
-        );
-        err.statusCode = 403;
-        err.code = 'PIN_REQUIRED';
-        throw err;
-      }
-
-      if (providedPin !== expectedTeacherPin) {
-        const err: any = new Error(
-          'Código/PIN de Cátedra Docente incorrecto. Verifica la clave institucional e inténtalo de nuevo.'
-        );
-        err.statusCode = 403;
-        err.code = 'INVALID_PIN';
-        throw err;
-      }
     }
 
     if (existingUser) {
@@ -965,13 +934,6 @@ export async function authenticateGoogleUser(payload: {
     [verifiedEmail]
   );
 
-  const expectedTeacherPin = (
-    process.env.TEACHER_ACCESS_PIN || 'DOCENTE-PAA-2026'
-  ).trim();
-  const alwaysRequirePin =
-    (process.env.ALWAYS_REQUIRE_TEACHER_PIN || 'false').trim().toLowerCase() ===
-    'true';
-
   if (payload.requestedRole === 'teacher') {
     const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
     if (!teacherDomainCheck.allowed) {
@@ -983,30 +945,6 @@ export async function authenticateGoogleUser(payload: {
       err.statusCode = 403;
       err.code = 'INSTITUTIONAL_EMAIL_REQUIRED';
       throw err;
-    }
-
-    const isAlreadyRegisteredTeacher = existingUser?.role === 'teacher';
-    const needsPinValidation = !isAlreadyRegisteredTeacher || alwaysRequirePin;
-
-    if (needsPinValidation) {
-      const providedPin = (payload.teacherPin || '').trim();
-      if (!providedPin) {
-        const err: any = new Error(
-          'Esta cuenta aún no está registrada como Docente. Ingresa el Código/PIN de Cátedra Docente para autorizar el acceso.'
-        );
-        err.statusCode = 403;
-        err.code = 'PIN_REQUIRED';
-        throw err;
-      }
-
-      if (providedPin !== expectedTeacherPin) {
-        const err: any = new Error(
-          'Código/PIN de Cátedra Docente incorrecto. Verifica la clave institucional e inténtalo de nuevo.'
-        );
-        err.statusCode = 403;
-        err.code = 'INVALID_PIN';
-        throw err;
-      }
     }
 
     if (existingUser) {

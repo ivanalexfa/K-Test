@@ -130,7 +130,7 @@ async function runTests() {
         email: 'a.martinez@keyinstitute.edu.sv',
         googleId: 'google-prof-777',
         requestedRole: 'teacher',
-        teacherPin: 'DOCENTE-PAA-2026',
+
       },
     });
     console.log('  2.3 POST /api/auth/google (rewrite):', resGoogle.statusCode, JSON.parse(resGoogle.body).user?.email, 'Role:', JSON.parse(resGoogle.body).user?.role);
@@ -288,27 +288,45 @@ async function runTests() {
         email: 'docente.externo@gmail.com',
         googleId: 'goog-ext-001',
         requestedRole: 'teacher',
-        teacherPin: 'DOCENTE-PAA-2026',
+
       },
     });
     console.log('  4.10 POST /api/auth/google teacher non-institutional email:', resTeacherNonInst.statusCode, JSON.parse(resTeacherNonInst.body).code);
     if (resTeacherNonInst.statusCode !== 403) throw new Error('Non-institutional teacher email should return 403');
 
-    // 4.11 Teacher role with invalid PIN (403 Forbidden)
-    const resTeacherBadPin = await invokeHandler(indexHandler, {
+    // 4.11 Institutional teacher login succeeds without PIN (200 OK)
+    const resTeacherNoPin = await invokeHandler(indexHandler, {
       url: '/api/index.js?__pathname=/api/auth/google',
       method: 'POST',
       query: { __pathname: '/api/auth/google' },
       body: {
-        name: 'Docente Con Pin Erroneo',
+        name: 'Docente Nuevo Sin Pin',
         email: 'docente.nuevo@keyinstitute.edu.sv',
-        googleId: 'goog-badpin-002',
+        googleId: 'goog-nopin-002',
         requestedRole: 'teacher',
-        teacherPin: 'PIN-INCORRECTO-1234',
       },
     });
-    console.log('  4.11 POST /api/auth/google teacher wrong PIN:', resTeacherBadPin.statusCode, JSON.parse(resTeacherBadPin.body).code);
-    if (resTeacherBadPin.statusCode !== 403) throw new Error('Wrong teacher PIN should return 403');
+    console.log('  4.11 POST /api/auth/google teacher without PIN:', resTeacherNoPin.statusCode, JSON.parse(resTeacherNoPin.body).user?.role);
+    if (resTeacherNoPin.statusCode !== 200 || JSON.parse(resTeacherNoPin.body).user?.role !== 'teacher') {
+      throw new Error('Institutional teacher should login successfully without PIN');
+    }
+
+    // 4.11b Institutional teacher via Microsoft succeeds without PIN (200 OK)
+    const resMsTeacher = await invokeHandler(indexHandler, {
+      url: '/api/index.js?__pathname=/api/auth/microsoft',
+      method: 'POST',
+      query: { __pathname: '/api/auth/microsoft' },
+      body: {
+        name: 'Dra. Carmen Key',
+        email: 'carmen.key@keyinstitute.com',
+        microsoftOid: 'ms-prof-999',
+        requestedRole: 'teacher',
+      },
+    });
+    console.log('  4.11b POST /api/auth/microsoft teacher without PIN:', resMsTeacher.statusCode, JSON.parse(resMsTeacher.body).user?.role);
+    if (resMsTeacher.statusCode !== 200 || JSON.parse(resMsTeacher.body).user?.role !== 'teacher') {
+      throw new Error('Institutional Microsoft teacher should login successfully without PIN');
+    }
 
     // 4.12 Empty identifier validations on dynamic routes
     const resEmptyMatPut = await invokeHandler(indexHandler, {

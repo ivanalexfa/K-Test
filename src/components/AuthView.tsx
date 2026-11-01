@@ -8,7 +8,7 @@ import {
   ChevronUp,
   CheckCircle2,
   AlertCircle,
-  Lock,
+
   X,
   Layers,
   Zap,
@@ -118,8 +118,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [selectedCohort, setSelectedCohort] = useState<string>(
     KEY_ADMISSION_COHORTS[0]
   );
-  const [teacherPin, setTeacherPin] = useState<string>('');
-  const [pinRequiredHighlight, setPinRequiredHighlight] = useState<boolean>(false);
+
+
   const [error, setError] = useState<string | null>(null);
   const [loadingMs, setLoadingMs] = useState<boolean>(false);
   const [loadingGoogle, setLoadingGoogle] = useState<boolean>(false);
@@ -184,7 +184,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     identity: GoogleIdentityPayload
   ) => {
     setError(null);
-    setPinRequiredHighlight(false);
+
 
     if (roleTab === 'teacher' && !isInstitutionalTeacherEmail(identity.email)) {
       setError(
@@ -205,7 +205,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         idToken: identity.idToken,
         accessToken: identity.accessToken,
         requestedRole: roleTab,
-        teacherPin: roleTab === 'teacher' ? teacherPin : undefined,
+
         cohort:
           roleTab === 'student'
             ? selectedCohort
@@ -213,9 +213,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
       });
       setIsGoogleSimModalOpen(false);
     } catch (err: any) {
-      if (err?.code === 'PIN_REQUIRED' || err?.code === 'INVALID_PIN') {
-        setPinRequiredHighlight(true);
-      }
       setError(
         err?.message || 'No se pudo completar el inicio de sesión con Google.'
       );
@@ -227,7 +224,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   const handleClickGoogleLogin = async () => {
     setError(null);
-    setPinRequiredHighlight(false);
+
 
     if (realGoogleActive) {
       try {
@@ -235,7 +232,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         const identity = await triggerRealGooglePopup();
         await completeBackendGoogleHandshake(identity);
       } catch (err: any) {
-        setError(
+      setError(
           err?.message || 'El inicio de sesión con Google fue cancelado o falló.'
         );
       } finally {
@@ -272,7 +269,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     identity: MicrosoftIdentityPayload
   ) => {
     setError(null);
-    setPinRequiredHighlight(false);
+
 
     if (roleTab === 'teacher' && !isInstitutionalTeacherEmail(identity.email)) {
       setError(
@@ -293,7 +290,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         idToken: identity.idToken,
         accessToken: identity.accessToken,
         requestedRole: roleTab,
-        teacherPin: roleTab === 'teacher' ? teacherPin : undefined,
+
         cohort:
           roleTab === 'student'
             ? selectedCohort
@@ -301,9 +298,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
       });
       setIsMsSimModalOpen(false);
     } catch (err: any) {
-      if (err?.code === 'PIN_REQUIRED' || err?.code === 'INVALID_PIN') {
-        setPinRequiredHighlight(true);
-      }
       setError(
         err?.message || 'No se pudo completar el inicio de sesión con Microsoft.'
       );
@@ -315,7 +309,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   const handleClickMicrosoftLogin = async () => {
     setError(null);
-    setPinRequiredHighlight(false);
+
 
     if (realMsalActive) {
       try {
@@ -323,7 +317,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         const identity = await triggerRealMicrosoftPopup();
         await completeBackendMicrosoftHandshake(identity);
       } catch (err: any) {
-        setError(
+      setError(
           err?.message || 'El inicio de sesión con Microsoft fue cancelado o falló.'
         );
       } finally {
@@ -398,7 +392,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               onClick={() => {
                 setRoleTab('student');
                 setError(null);
-                setPinRequiredHighlight(false);
+            
               }}
               className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 roleTab === 'student'
@@ -468,43 +462,18 @@ export const AuthView: React.FC<AuthViewProps> = ({
               </div>
             )}
 
-            {/* Teacher Access PIN Box */}
+            {/* Teacher Institutional Notice */}
             {roleTab === 'teacher' && (
-              <div
-                className={`p-4 rounded-xl border transition-all ${
-                  pinRequiredHighlight
-                    ? 'border-amber-500 bg-amber-50/70'
-                    : 'border-slate-200 bg-slate-50/80'
-                }`}
-              >
-                <label className="flex items-center justify-between text-xs font-bold text-[#0A1128] mb-1.5">
-                  <span className="flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-[#0052FF]" />
-                    PIN de Cátedra Docente
-                  </span>
-                  <span className="text-[10px] font-normal text-slate-500">
-                    1.er registro
-                  </span>
-                </label>
-                <input
-                  type="password"
-                  value={teacherPin}
-                  onChange={(e) => setTeacherPin(e.target.value)}
-                  placeholder="Ingresa tu PIN de cátedra"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-sm font-mono focus:outline-none focus:border-[#0052FF]"
-                />
-                <p className="mt-2 text-[11px] text-slate-500 flex items-center gap-1.5">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#0052FF] shrink-0" />
-                  <span>
-                    Requiere dominio institucional{' '}
-                    <strong className="font-semibold text-[#0A1128]">
-                      @keyinstitute.com
-                    </strong>{' '}
-                    o{' '}
-                    <strong className="font-semibold text-[#0A1128]">
-                      @keyinstitute.edu.sv
-                    </strong>
-                  </span>
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/80 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#0A1128]">
+                  <span className="w-2 h-2 rounded-full bg-[#0052FF] shrink-0" />
+                  <span>Acceso exclusivo para el cuerpo docente</span>
+                </div>
+                <p className="text-[12px] text-slate-600 leading-relaxed">
+                  Inicia sesión con tu correo institucional (
+                  <strong className="text-[#0A1128] font-semibold">@keyinstitute.edu.sv</strong> o{' '}
+                  <strong className="text-[#0A1128] font-semibold">@keyinstitute.com</strong>
+                  ). Acceso directo sin necesidad de PIN de cátedra.
                 </p>
               </div>
             )}

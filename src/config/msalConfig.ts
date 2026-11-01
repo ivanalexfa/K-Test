@@ -27,8 +27,8 @@ export function isRealMsalConfigured(): boolean {
  * Disappears naturally in production when VITE_ENABLE_DEMO_ACCOUNTS=false or PROD build.
  */
 export function isDemoAccountsEnabled(): boolean {
-  const flag = (env.VITE_ENABLE_DEMO_ACCOUNTS ?? 'true').toString().toLowerCase();
-  return flag !== 'false';
+  const flag = (env.VITE_ENABLE_DEMO_ACCOUNTS ?? 'false').toString().toLowerCase();
+  return flag === 'true';
 }
 
 export const msalConfig: Configuration = {
