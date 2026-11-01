@@ -167,6 +167,15 @@ export function getUploadsDir(): string {
   }
 }
 
+export function resetLocalDbInstance() {
+  if (localDbInstance && typeof localDbInstance.close === 'function') {
+    try {
+      localDbInstance.close();
+    } catch {}
+  }
+  localDbInstance = null;
+}
+
 function getLocalSqliteDb(): any {
   if (localDbInstance) return localDbInstance;
 
@@ -191,10 +200,11 @@ function getLocalSqliteDb(): any {
     );
     err.statusCode = 500;
     err.code = 'SQLITE_NOT_AVAILABLE';
-    throw err;
   }
 
-  const repoDbPath = path.resolve(process.cwd(), 'data', 'paa_platform.sqlite');
+  const repoDbPath =
+    process.env.SQLITE_DB_PATH ||
+    path.resolve(process.cwd(), 'data', 'paa_platform.sqlite');
 
   let activeDbPath = repoDbPath;
   if (isVercel) {

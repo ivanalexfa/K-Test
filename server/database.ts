@@ -15,6 +15,12 @@ export const UPLOADS_DIR = getUploadsDir();
 
 let dbInitPromise: Promise<void> | null = null;
 
+export { resetLocalDbInstance } from './dbDriver';
+
+export function resetDbInitPromise() {
+  dbInitPromise = null;
+}
+
 export async function ensureDbReady(): Promise<void> {
   if (!dbInitPromise) {
     dbInitPromise = initializeSchemaAndSeed().catch((err) => {

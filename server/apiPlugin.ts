@@ -27,15 +27,25 @@ function readJsonBody(req: any): Promise<any> {
     if (typeof req.body === 'string') {
       try {
         return Promise.resolve(req.body.trim() ? JSON.parse(req.body) : {});
-      } catch (e) {
-        return Promise.reject(e);
+      } catch (e: any) {
+        const err: any = new Error(
+          `Formato JSON inválido en el cuerpo de la petición: ${e.message}`
+        );
+        err.statusCode = 400;
+        err.code = 'INVALID_JSON_BODY';
+        return Promise.reject(err);
       }
     }
     if (Buffer.isBuffer(req.body)) {
       try {
         return Promise.resolve(JSON.parse(req.body.toString('utf-8')));
-      } catch (e) {
-        return Promise.reject(e);
+      } catch (e: any) {
+        const err: any = new Error(
+          `Formato JSON inválido en el cuerpo de la petición: ${e.message}`
+        );
+        err.statusCode = 400;
+        err.code = 'INVALID_JSON_BODY';
+        return Promise.reject(err);
       }
     }
   }
@@ -54,8 +64,13 @@ function readJsonBody(req: any): Promise<any> {
       try {
         const raw = Buffer.concat(chunks).toString('utf-8');
         resolve(raw.trim() ? JSON.parse(raw) : {});
-      } catch (err) {
-        reject(err);
+      } catch (err: any) {
+        const parseErr: any = new Error(
+          `Formato JSON inválido en el cuerpo de la petición: ${err.message}`
+        );
+        parseErr.statusCode = 400;
+        parseErr.code = 'INVALID_JSON_BODY';
+        reject(parseErr);
       }
     });
     req.on('error', reject);
@@ -95,20 +110,89 @@ function getMimeTypeByExtension(filename: string): string {
 }
 
 export async function handleApiRequest(req: any, res: any): Promise<boolean> {
-  const rawPath =
-    req.headers?.['x-forwarded-uri'] ||
-    req.headers?.['x-matched-path'] ||
-    req.originalUrl ||
-    req.url ||
+  const urlObj = new URL(req.url || '/', 'http://localhost');
+  const queryParam = req.query?.__pathname;
+  const queryPathname =
+    (typeof queryParam === 'string' && queryParam) ||
+    (Array.isArray(queryParam) && typeof queryParam[0] === 'string' && queryParam[0]) ||
+    urlObj.searchParams.get('__pathname');
+
+  const catchAllParam = req.query?.path;
+  const catchAllPath = Array.isArray(catchAllParam)
+    ? catchAllParam.join('/')
+    : typeof catchAllParam === 'string'
+      ? catchAllParam
+      : '';
+  const catchAllPathname = catchAllPath
+    ? (catchAllPath.startsWith('/api')
+        ? catchAllPath
+        : '/api/' + (catchAllPath.startsWith('/') ? catchAllPath.slice(1) : catchAllPath))
+    : '';
+
+  const rawCandidate =
+    queryPathname ||
+    catchAllPathname ||
+    (typeof req.headers?.['x-forwarded-uri'] === 'string'
+      ? req.headers['x-forwarded-uri']
+      : '') ||
+    (typeof req.headers?.['x-matched-path'] === 'string'
+      ? req.headers['x-matched-path']
+      : '') ||
+    (typeof req.originalUrl === 'string' ? req.originalUrl : '') ||
+    urlObj.pathname ||
     '/';
 
-  const urlObj = new URL(rawPath, 'http://localhost');
-  let pathname = urlObj.pathname;
-  if (!pathname.startsWith('/api')) {
+  // Strip query parameters and hash fragments to prevent route-matching pollution
+  let pathname = rawCandidate.split('?')[0].split('#')[0].trim() || '/';
+
+  // Collapse consecutive slashes into single slashes (e.g. /api//health -> /api/health)
+  pathname = pathname.replace(/\/+/g, '/');
+
+  // Ensure path starts with /api
+  if (pathname === '/' || pathname === '') {
+    pathname = '/api';
+  } else if (!pathname.startsWith('/api')) {
     pathname = '/api' + (pathname.startsWith('/') ? pathname : '/' + pathname);
   }
 
-  const method = req.method || 'GET';
+  // Strip trailing slashes on sub-routes (e.g. /api/health/ -> /api/health, /api/ -> /api)
+  while (pathname.length > 4 && pathname.endsWith('/')) {
+    pathname = pathname.slice(0, -1);
+  }
+
+  // Canonicalize function-name aliases to /api
+  if (
+    pathname === '/api/index' ||
+    pathname === '/api/index.js' ||
+    pathname === '/api/[...path]' ||
+    pathname === '/api/[...path].js'
+  ) {
+    pathname = '/api';
+  }
+
+  const method = (req.method || 'GET').toUpperCase();
+
+  // Inject standard CORS headers on all API responses
+  if (typeof res.setHeader === 'function') {
+    res.setHeader('Access-Control-Allow-Origin', req.headers?.origin || '*');
+    res.setHeader(
+      'Access-Control-Allow-Methods',
+      'GET, POST, PUT, DELETE, OPTIONS'
+    );
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      req.headers?.['access-control-request-headers'] ||
+        'Content-Type, Authorization, X-Requested-With, Accept'
+    );
+    res.setHeader('Access-Control-Max-Age', '86400');
+  }
+
+  // Handle CORS pre-flight OPTIONS request immediately
+  if (method === 'OPTIONS') {
+    res.statusCode = 204;
+    res.end();
+    return true;
+  }
 
   try {
     // GET /api/health or GET /api (Diagnostic endpoint)
@@ -124,8 +208,22 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
 
     // Serve uploaded study material files: GET /api/uploads/:filename
     if (method === 'GET' && pathname.startsWith('/api/uploads/')) {
-      const encodedName = pathname.replace('/api/uploads/', '');
-      const fileName = path.basename(decodeURIComponent(encodedName));
+      const encodedName = pathname.replace('/api/uploads/', '').trim();
+      if (!encodedName) {
+        sendJson(res, 400, { error: 'Nombre de archivo requerido' });
+        return true;
+      }
+      let decodedName: string;
+      try {
+        decodedName = decodeURIComponent(encodedName);
+      } catch {
+        decodedName = encodedName;
+      }
+      const fileName = path.basename(decodedName).trim();
+      if (!fileName || fileName === '.' || fileName === '..') {
+        sendJson(res, 400, { error: 'Nombre de archivo inválido' });
+        return true;
+      }
       const filePath = path.join(UPLOADS_DIR, fileName);
 
       if (fs.existsSync(filePath)) {
@@ -274,7 +372,19 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
       pathname.startsWith('/api/users/') &&
       pathname.endsWith('/cohort')
     ) {
-      const userId = pathname.replace('/api/users/', '').replace('/cohort', '');
+      const match = pathname.match(/^\/api\/users\/(.+)\/cohort$/);
+      let userId = '';
+      if (match && match[1]) {
+        try {
+          userId = decodeURIComponent(match[1]).trim();
+        } catch {
+          userId = match[1].trim();
+        }
+      }
+      if (!userId) {
+        sendJson(res, 400, { error: 'Identificador de usuario obligatorio' });
+        return true;
+      }
       const body = await readJsonBody(req);
       if (!body.cohort) {
         sendJson(res, 400, { error: 'La cohorte es obligatoria' });
@@ -314,7 +424,16 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
 
     // PUT /api/materials/:id
     if (method === 'PUT' && pathname.startsWith('/api/materials/')) {
-      const id = pathname.replace('/api/materials/', '');
+      let id = '';
+      try {
+        id = decodeURIComponent(pathname.replace('/api/materials/', '')).trim();
+      } catch {
+        id = pathname.replace('/api/materials/', '').trim();
+      }
+      if (!id) {
+        sendJson(res, 400, { error: 'Identificador de material obligatorio' });
+        return true;
+      }
       const body = await readJsonBody(req);
       const updated = await updateStudyMaterial(id, body);
       const materials = await getAllStudyMaterials();
@@ -327,7 +446,16 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
 
     // DELETE /api/materials/:id
     if (method === 'DELETE' && pathname.startsWith('/api/materials/')) {
-      const id = pathname.replace('/api/materials/', '');
+      let id = '';
+      try {
+        id = decodeURIComponent(pathname.replace('/api/materials/', '')).trim();
+      } catch {
+        id = pathname.replace('/api/materials/', '').trim();
+      }
+      if (!id) {
+        sendJson(res, 400, { error: 'Identificador de material obligatorio' });
+        return true;
+      }
       await deleteStudyMaterial(id);
       const materials = await getAllStudyMaterials();
       sendJson(res, 200, { materials });
@@ -336,7 +464,20 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
 
     // GET /api/attempts
     if (method === 'GET' && pathname === '/api/attempts') {
-      const userId = urlObj.searchParams.get('userId') || undefined;
+      const queryUserId = req.query?.userId;
+      const rawUserId =
+        (typeof queryUserId === 'string' && queryUserId) ||
+        (Array.isArray(queryUserId) && typeof queryUserId[0] === 'string' && queryUserId[0]) ||
+        urlObj.searchParams.get('userId') ||
+        undefined;
+      let userId: string | undefined = undefined;
+      if (rawUserId) {
+        try {
+          userId = decodeURIComponent(rawUserId).trim() || undefined;
+        } catch {
+          userId = rawUserId.trim() || undefined;
+        }
+      }
       const attempts = await getAllTestAttempts(userId);
       sendJson(res, 200, { attempts });
       return true;
@@ -371,7 +512,8 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
 export function paaSqliteApiPlugin() {
   const attachMiddleware = (middlewares: any) => {
     middlewares.use(async (req: any, res: any, next: any) => {
-      if (!req.url || !req.url.startsWith('/api/')) {
+      const reqUrl = req.url || '';
+      if (!reqUrl.startsWith('/api/') && reqUrl !== '/api' && !reqUrl.startsWith('/api?')) {
         return next();
       }
       const handled = await handleApiRequest(req, res);

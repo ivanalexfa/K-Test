@@ -14,3 +14,6 @@ data/*.sqlite-wal
 .env.local
 .DS_Store
 Thumbs.db
+
+# Agent workspaces and internal run logs
+.agents/
