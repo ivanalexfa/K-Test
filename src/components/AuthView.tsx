@@ -455,7 +455,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {roleTab === 'teacher' && (
               <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-100 text-slate-600 text-xs text-center border border-slate-200/80">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#0052FF] shrink-0" />
-                <span>Acceso exclusivo con correo institucional (<strong>@keyinstitute.edu.sv</strong> / <strong>@keyinstitute.com</strong>)</span>
+                <span>Acceso exclusivo con correo institucional (<strong>@keyinstitute.edu.sv</strong>)</span>
               </div>
             )}
 

@@ -649,9 +649,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 <h2 className="font-display text-lg font-bold text-[#0A1128]">
                   Biblioteca de Materiales de Estudio y Recursos Descargables
                 </h2>
-                <p className="text-xs text-slate-500">
-                  Guías académicas con soporte LaTeX y documentos adjuntos (PDF, Word, PowerPoint, Excel, Imágenes) publicados por tus docentes.
-                </p>
+                
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -856,9 +854,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               <h2 className="font-display text-lg font-bold text-[#0A1128]">
                 Historial de Pruebas Guardadas ({myAttempts.length})
               </h2>
-              <p className="text-xs text-slate-500">
-                Registro cruzado de tu usuario con todas las pruebas (Simulacros y Sprints) almacenadas en la base de datos SQLite.
-              </p>
+              
             </div>
 
             {myAttempts.length === 0 ? (

@@ -418,7 +418,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 Centro de Control Académico y Analítica PAA
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-                Cruza el desempeño de cada estudiante en Simulacros y Sprints, y publica Materiales de Estudio con archivos adjuntos (`PDF`, `DOCX`, `PPTX`, `XLSX`, `PNG`, `JPG`).
+                Cruza el desempeño de cada estudiante en Simulacros y Sprints, y publica Materiales de Estudio.
               </p>
             </div>
 
@@ -889,9 +889,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                     Matriz de Resultados Filtrados ({filteredAttempts.length}{' '}
                     {filteredAttempts.length === 1 ? 'registro' : 'registros'})
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    Haz clic sobre el nombre de cualquier estudiante en la tabla para abrir su ficha individual desplegable.
-                  </p>
+                  
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
