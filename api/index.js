@@ -168,9 +168,8 @@ function getLocalSqliteDb() {
     );
     err.statusCode = 500;
     err.code = "SQLITE_NOT_AVAILABLE";
-    throw err;
   }
-  const repoDbPath = path.resolve(process.cwd(), "data", "paa_platform.sqlite");
+  const repoDbPath = process.env.SQLITE_DB_PATH || path.resolve(process.cwd(), "data", "paa_platform.sqlite");
   let activeDbPath = repoDbPath;
   if (isVercel) {
     const tmpDir = path.join("/tmp", "ktest-data");
@@ -1412,14 +1411,24 @@ function readJsonBody(req) {
       try {
         return Promise.resolve(req.body.trim() ? JSON.parse(req.body) : {});
       } catch (e) {
-        return Promise.reject(e);
+        const err = new Error(
+          `Formato JSON inv\xE1lido en el cuerpo de la petici\xF3n: ${e.message}`
+        );
+        err.statusCode = 400;
+        err.code = "INVALID_JSON_BODY";
+        return Promise.reject(err);
       }
     }
     if (Buffer.isBuffer(req.body)) {
       try {
         return Promise.resolve(JSON.parse(req.body.toString("utf-8")));
       } catch (e) {
-        return Promise.reject(e);
+        const err = new Error(
+          `Formato JSON inv\xE1lido en el cuerpo de la petici\xF3n: ${e.message}`
+        );
+        err.statusCode = 400;
+        err.code = "INVALID_JSON_BODY";
+        return Promise.reject(err);
       }
     }
   }
@@ -1437,7 +1446,12 @@ function readJsonBody(req) {
         const raw = Buffer.concat(chunks).toString("utf-8");
         resolve(raw.trim() ? JSON.parse(raw) : {});
       } catch (err) {
-        reject(err);
+        const parseErr = new Error(
+          `Formato JSON inv\xE1lido en el cuerpo de la petici\xF3n: ${err.message}`
+        );
+        parseErr.statusCode = 400;
+        parseErr.code = "INVALID_JSON_BODY";
+        reject(parseErr);
       }
     });
     req.on("error", reject);
@@ -1472,15 +1486,43 @@ function getMimeTypeByExtension(filename) {
 }
 async function handleApiRequest(req, res) {
   const urlObj = new URL(req.url || "/", "http://localhost");
-  const queryPathname = typeof req.query?.__pathname === "string" && req.query.__pathname || urlObj.searchParams.get("__pathname");
-  let pathname = queryPathname || (typeof req.headers?.["x-forwarded-uri"] === "string" ? req.headers["x-forwarded-uri"].split("?")[0] : "") || urlObj.pathname || "/";
-  if (pathname === "/api/index" || pathname === "/api/index.js") {
+  const queryParam = req.query?.__pathname;
+  const queryPathname = typeof queryParam === "string" && queryParam || Array.isArray(queryParam) && typeof queryParam[0] === "string" && queryParam[0] || urlObj.searchParams.get("__pathname");
+  const catchAllParam = req.query?.path;
+  const catchAllPath = Array.isArray(catchAllParam) ? catchAllParam.join("/") : typeof catchAllParam === "string" ? catchAllParam : "";
+  const catchAllPathname = catchAllPath ? catchAllPath.startsWith("/api") ? catchAllPath : "/api/" + (catchAllPath.startsWith("/") ? catchAllPath.slice(1) : catchAllPath) : "";
+  const rawCandidate = queryPathname || catchAllPathname || (typeof req.headers?.["x-forwarded-uri"] === "string" ? req.headers["x-forwarded-uri"] : "") || (typeof req.headers?.["x-matched-path"] === "string" ? req.headers["x-matched-path"] : "") || (typeof req.originalUrl === "string" ? req.originalUrl : "") || urlObj.pathname || "/";
+  let pathname = rawCandidate.split("?")[0].split("#")[0].trim() || "/";
+  pathname = pathname.replace(/\/+/g, "/");
+  if (pathname === "/" || pathname === "") {
     pathname = "/api";
-  }
-  if (!pathname.startsWith("/api")) {
+  } else if (!pathname.startsWith("/api")) {
     pathname = "/api" + (pathname.startsWith("/") ? pathname : "/" + pathname);
   }
-  const method = req.method || "GET";
+  while (pathname.length > 4 && pathname.endsWith("/")) {
+    pathname = pathname.slice(0, -1);
+  }
+  if (pathname === "/api/index" || pathname === "/api/index.js" || pathname === "/api/[...path]" || pathname === "/api/[...path].js") {
+    pathname = "/api";
+  }
+  const method = (req.method || "GET").toUpperCase();
+  if (typeof res.setHeader === "function") {
+    res.setHeader("Access-Control-Allow-Origin", req.headers?.origin || "*");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      req.headers?.["access-control-request-headers"] || "Content-Type, Authorization, X-Requested-With, Accept"
+    );
+    res.setHeader("Access-Control-Max-Age", "86400");
+  }
+  if (method === "OPTIONS") {
+    res.statusCode = 204;
+    res.end();
+    return true;
+  }
   try {
     if (method === "GET" && (pathname === "/api/health" || pathname === "/api")) {
       sendJson(res, 200, {
@@ -1492,8 +1534,22 @@ async function handleApiRequest(req, res) {
       return true;
     }
     if (method === "GET" && pathname.startsWith("/api/uploads/")) {
-      const encodedName = pathname.replace("/api/uploads/", "");
-      const fileName = path3.basename(decodeURIComponent(encodedName));
+      const encodedName = pathname.replace("/api/uploads/", "").trim();
+      if (!encodedName) {
+        sendJson(res, 400, { error: "Nombre de archivo requerido" });
+        return true;
+      }
+      let decodedName;
+      try {
+        decodedName = decodeURIComponent(encodedName);
+      } catch {
+        decodedName = encodedName;
+      }
+      const fileName = path3.basename(decodedName).trim();
+      if (!fileName || fileName === "." || fileName === "..") {
+        sendJson(res, 400, { error: "Nombre de archivo inv\xE1lido" });
+        return true;
+      }
       const filePath = path3.join(UPLOADS_DIR, fileName);
       if (fs3.existsSync(filePath)) {
         const mime2 = getMimeTypeByExtension(fileName);
@@ -1612,7 +1668,19 @@ async function handleApiRequest(req, res) {
       return true;
     }
     if (method === "PUT" && pathname.startsWith("/api/users/") && pathname.endsWith("/cohort")) {
-      const userId = pathname.replace("/api/users/", "").replace("/cohort", "");
+      const match = pathname.match(/^\/api\/users\/(.+)\/cohort$/);
+      let userId = "";
+      if (match && match[1]) {
+        try {
+          userId = decodeURIComponent(match[1]).trim();
+        } catch {
+          userId = match[1].trim();
+        }
+      }
+      if (!userId) {
+        sendJson(res, 400, { error: "Identificador de usuario obligatorio" });
+        return true;
+      }
       const body = await readJsonBody(req);
       if (!body.cohort) {
         sendJson(res, 400, { error: "La cohorte es obligatoria" });
@@ -1646,7 +1714,16 @@ async function handleApiRequest(req, res) {
       return true;
     }
     if (method === "PUT" && pathname.startsWith("/api/materials/")) {
-      const id = pathname.replace("/api/materials/", "");
+      let id = "";
+      try {
+        id = decodeURIComponent(pathname.replace("/api/materials/", "")).trim();
+      } catch {
+        id = pathname.replace("/api/materials/", "").trim();
+      }
+      if (!id) {
+        sendJson(res, 400, { error: "Identificador de material obligatorio" });
+        return true;
+      }
       const body = await readJsonBody(req);
       const updated = await updateStudyMaterial(id, body);
       const materials = await getAllStudyMaterials();
@@ -1657,14 +1734,32 @@ async function handleApiRequest(req, res) {
       return true;
     }
     if (method === "DELETE" && pathname.startsWith("/api/materials/")) {
-      const id = pathname.replace("/api/materials/", "");
+      let id = "";
+      try {
+        id = decodeURIComponent(pathname.replace("/api/materials/", "")).trim();
+      } catch {
+        id = pathname.replace("/api/materials/", "").trim();
+      }
+      if (!id) {
+        sendJson(res, 400, { error: "Identificador de material obligatorio" });
+        return true;
+      }
       await deleteStudyMaterial(id);
       const materials = await getAllStudyMaterials();
       sendJson(res, 200, { materials });
       return true;
     }
     if (method === "GET" && pathname === "/api/attempts") {
-      const userId = urlObj.searchParams.get("userId") || void 0;
+      const queryUserId = req.query?.userId;
+      const rawUserId = typeof queryUserId === "string" && queryUserId || Array.isArray(queryUserId) && typeof queryUserId[0] === "string" && queryUserId[0] || urlObj.searchParams.get("userId") || void 0;
+      let userId = void 0;
+      if (rawUserId) {
+        try {
+          userId = decodeURIComponent(rawUserId).trim() || void 0;
+        } catch {
+          userId = rawUserId.trim() || void 0;
+        }
+      }
       const attempts = await getAllTestAttempts(userId);
       sendJson(res, 200, { attempts });
       return true;
