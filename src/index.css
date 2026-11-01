@@ -1,6 +1,30 @@
 @import "tailwindcss";
 @import "katex/dist/katex.min.css";
 
+/*
+ * ============================================================================
+ * K-TEST (BY KEY INSTITUTE) · DESIGN SYSTEM & BRAND ASSETS REGISTRY
+ * ============================================================================
+ * Paleta Oficial:
+ *   - Deep Navy:     #0A1128
+ *   - Electric Blue: #0052FF (Hover: #0045D8)
+ *   - Tech Cyan:     #00D2FF
+ *   - Surface Light: #F8FAFC / #FFFFFF
+ *
+ * Activos Oficiales de Marca e Iconografía Dedicada (Uso Obligatorio):
+ *   1. Logotipo Oficial: `src/components/brand/KTestLogo.tsx`
+ *      - `<KTestLogo variant="full" | "mark-only" theme="dark" | "light" />`
+ *   2. Iconografía Bitono Semántica (24x24): `src/components/brand/KTestIcons.tsx`
+ *      - `<SimulacroEngineIcon />`   -> Simulacro en Condiciones Reales
+ *      - `<AsyncTrainerIcon />`      -> Práctica Asíncrona / Sprints Cortos
+ *      - `<TeacherDiagnosticIcon />` -> Diagnóstico y Analítica del Profesor
+ *      - `<MathPAAIcon />`           -> Insignia de Área: Matemáticas PAA
+ *      - `<VerbalPAAIcon />`         -> Insignia de Área: Lectura y Redacción
+ *      - `<StrikeOptionIcon />`      -> Herramienta para tachar/descartar opciones
+ *      - `<KeyHintIcon />`           -> Botón de Pista / Asistencia Guiada
+ * ============================================================================
+ */
+
 @layer base {
   :root {
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;

@@ -18,12 +18,23 @@ import {
 import { UserRecord, UserRole } from '../types/exam';
 import { instantiateUserClass } from '../models/UserClasses';
 import { KEY_ADMISSION_COHORTS } from '../data/cohortsCatalog';
+import { KTestLogo } from './brand/KTestLogo';
+import {
+  SimulacroEngineIcon,
+  AsyncTrainerIcon,
+  TeacherDiagnosticIcon,
+} from './brand/KTestIcons';
 import {
   isDemoAccountsEnabled,
   isRealMsalConfigured,
   MicrosoftIdentityPayload,
   triggerRealMicrosoftPopup,
 } from '../config/msalConfig';
+import {
+  isRealGoogleConfigured,
+  GoogleIdentityPayload,
+  triggerRealGooglePopup,
+} from '../config/googleConfig';
 
 interface AuthViewProps {
   users: UserRecord[];
@@ -32,6 +43,16 @@ interface AuthViewProps {
     name: string;
     email: string;
     microsoftOid?: string;
+    idToken?: string;
+    accessToken?: string;
+    requestedRole: UserRole;
+    teacherPin?: string;
+    cohort?: string;
+  }) => Promise<void>;
+  onGoogleLogin: (payload: {
+    name: string;
+    email: string;
+    googleId?: string;
     idToken?: string;
     accessToken?: string;
     requestedRole: UserRole;
@@ -51,10 +72,47 @@ const MicrosoftLogoSvg: React.FC<{ className?: string }> = ({
   </svg>
 );
 
+const GoogleLogoSvg: React.FC<{ className?: string }> = ({
+  className = 'w-5 h-5',
+}) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+    <path
+      fill="#4285F4"
+      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3h3.88c2.27-2.09 3.66-5.17 3.66-9.09z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.09C3.25 21.37 7.32 24 12 24z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.28 14.32A7.18 7.18 0 0 1 4.9 12c0-.81.14-1.59.38-2.32V6.59H1.26A11.96 11.96 0 0 0 0 12c0 1.92.45 3.74 1.26 5.41l4.02-3.09z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.32 0 3.25 2.63 1.26 6.59l4.02 3.09c.95-2.83 3.6-4.93 6.72-4.93z"
+    />
+  </svg>
+);
+
+const INSTITUTIONAL_TEACHER_DOMAINS = (
+  ((import.meta as any).env?.VITE_TEACHER_EMAIL_DOMAINS as string) ||
+  'keyinstitute.com,keyinstitute.edu.sv'
+)
+  .split(',')
+  .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
+  .filter(Boolean);
+
+function isInstitutionalTeacherEmail(email: string): boolean {
+  const domain = email.trim().toLowerCase().split('@')[1] || '';
+  return INSTITUTIONAL_TEACHER_DOMAINS.includes(domain);
+}
+
 export const AuthView: React.FC<AuthViewProps> = ({
   users,
   onSelectUser,
   onMicrosoftLogin,
+  onGoogleLogin,
 }) => {
   const [roleTab, setRoleTab] = useState<UserRole>('student');
   const [selectedCohort, setSelectedCohort] = useState<string>(
@@ -64,6 +122,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [pinRequiredHighlight, setPinRequiredHighlight] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingMs, setLoadingMs] = useState<boolean>(false);
+  const [loadingGoogle, setLoadingGoogle] = useState<boolean>(false);
+
+  // Fallback Simulator Modal (Google)
+  const [isGoogleSimModalOpen, setIsGoogleSimModalOpen] = useState<boolean>(false);
+  const googleDialogRef = useRef<HTMLDialogElement | null>(null);
+  const googleDialogTitleId = useId();
+  const realGoogleActive = isRealGoogleConfigured();
 
   // Collapsible Developer / Demo Accounts section
   const [demoPanelOpen, setDemoPanelOpen] = useState<boolean>(false);
@@ -115,11 +180,110 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
   }, []);
 
+  const completeBackendGoogleHandshake = async (
+    identity: GoogleIdentityPayload
+  ) => {
+    setError(null);
+    setPinRequiredHighlight(false);
+
+    if (roleTab === 'teacher' && !isInstitutionalTeacherEmail(identity.email)) {
+      setError(
+        `Acceso restringido: Los docentes solo pueden ingresar con su correo institucional (${INSTITUTIONAL_TEACHER_DOMAINS.map(
+          (d) => `@${d}`
+        ).join(' o ')}).`
+      );
+      setIsGoogleSimModalOpen(false);
+      return;
+    }
+
+    setLoadingGoogle(true);
+    try {
+      await onGoogleLogin({
+        name: identity.name,
+        email: identity.email,
+        googleId: identity.googleId,
+        idToken: identity.idToken,
+        accessToken: identity.accessToken,
+        requestedRole: roleTab,
+        teacherPin: roleTab === 'teacher' ? teacherPin : undefined,
+        cohort:
+          roleTab === 'student'
+            ? selectedCohort
+            : 'Cátedra Académica Key Institute',
+      });
+      setIsGoogleSimModalOpen(false);
+    } catch (err: any) {
+      if (err?.code === 'PIN_REQUIRED' || err?.code === 'INVALID_PIN') {
+        setPinRequiredHighlight(true);
+      }
+      setError(
+        err?.message || 'No se pudo completar el inicio de sesión con Google.'
+      );
+      setIsGoogleSimModalOpen(false);
+    } finally {
+      setLoadingGoogle(false);
+    }
+  };
+
+  const handleClickGoogleLogin = async () => {
+    setError(null);
+    setPinRequiredHighlight(false);
+
+    if (realGoogleActive) {
+      try {
+        setLoadingGoogle(true);
+        const identity = await triggerRealGooglePopup();
+        await completeBackendGoogleHandshake(identity);
+      } catch (err: any) {
+        setError(
+          err?.message || 'El inicio de sesión con Google fue cancelado o falló.'
+        );
+      } finally {
+        setLoadingGoogle(false);
+      }
+    } else {
+      const defaultAcc =
+        roleTab === 'student'
+          ? students[0] || {
+              name: 'Sofía Martínez',
+              email: 'sofia.martinez@gmail.com',
+            }
+          : teachers[0] || {
+              name: 'Dr. Roberto Méndez',
+              email: 'roberto.mendez@keyinstitute.com',
+            };
+      setSimName(defaultAcc.name);
+      setSimEmail(defaultAcc.email);
+      setIsGoogleSimModalOpen(true);
+    }
+  };
+
+  const handleSimulatedGoogleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!simEmail.trim()) return;
+    await completeBackendGoogleHandshake({
+      name: simName.trim() || simEmail.split('@')[0],
+      email: simEmail.trim().toLowerCase(),
+      googleId: `google-sim-${simEmail.trim().toLowerCase()}`,
+    });
+  };
+
   const completeBackendMicrosoftHandshake = async (
     identity: MicrosoftIdentityPayload
   ) => {
     setError(null);
     setPinRequiredHighlight(false);
+
+    if (roleTab === 'teacher' && !isInstitutionalTeacherEmail(identity.email)) {
+      setError(
+        `Acceso restringido: Los docentes solo pueden ingresar con su correo institucional (${INSTITUTIONAL_TEACHER_DOMAINS.map(
+          (d) => `@${d}`
+        ).join(' o ')}).`
+      );
+      setIsMsSimModalOpen(false);
+      return;
+    }
+
     setLoadingMs(true);
     try {
       await onMicrosoftLogin({
@@ -197,19 +361,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       {/* Top Institutional Bar */}
       <header className="bg-[#0A1128] text-white border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#0052FF] flex items-center justify-center font-display font-extrabold text-base text-white shadow-md shadow-[#0052FF]/30">
-              K
-            </div>
-            <div>
-              <div className="font-display font-bold text-sm tracking-wider uppercase">
-                KEY INSTITUTE
-              </div>
-              <div className="text-[11px] text-[#00D2FF] tracking-wide">
-                Instituto Kriete de Ingeniería y Ciencias
-              </div>
-            </div>
-          </div>
+          <KTestLogo theme="dark" variant="full" />
 
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-slate-200 border border-white/15">
             <Sparkles className="w-3.5 h-3.5 text-[#00D2FF]" />
@@ -284,8 +436,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
               </h2>
               <p className="text-xs text-slate-500 mt-1">
                 {roleTab === 'student'
-                  ? 'Accede con tu cuenta de Microsoft para guardar tu progreso.'
-                  : 'Accede con tu cuenta institucional de Microsoft.'}
+                  ? 'Accede con tu cuenta de Google o Microsoft para guardar tu progreso.'
+                  : 'Acceso exclusivo para cátedra con tu correo institucional.'}
               </p>
             </div>
 
@@ -341,22 +493,62 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   placeholder="Ingresa tu PIN de cátedra"
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-sm font-mono focus:outline-none focus:border-[#0052FF]"
                 />
+                <p className="mt-2 text-[11px] text-slate-500 flex items-center gap-1.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#0052FF] shrink-0" />
+                  <span>
+                    Requiere dominio institucional{' '}
+                    <strong className="font-semibold text-[#0A1128]">
+                      @keyinstitute.com
+                    </strong>{' '}
+                    o{' '}
+                    <strong className="font-semibold text-[#0A1128]">
+                      @keyinstitute.edu.sv
+                    </strong>
+                  </span>
+                </p>
               </div>
             )}
 
-            {/* Primary Microsoft Login Button */}
-            <button
-              type="button"
-              disabled={loadingMs}
-              onClick={handleClickMicrosoftLogin}
-              className="w-full py-3.5 px-5 rounded-xl bg-[#0A1128] hover:bg-[#0052FF] text-white font-display font-bold text-sm sm:text-base shadow-lg flex items-center justify-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60"
-            >
-              <MicrosoftLogoSvg className="w-5 h-5 shrink-0" />
-              <span>
-                {loadingMs ? 'Conectando...' : 'Continuar con Microsoft'}
-              </span>
-              <ArrowRight className="w-4 h-4 text-[#00D2FF]" />
-            </button>
+            {/* Symmetrical Dual Login Buttons: Google + Microsoft */}
+            <div className="space-y-3 pt-1">
+              <button
+                type="button"
+                disabled={loadingGoogle || loadingMs}
+                onClick={handleClickGoogleLogin}
+                className="w-full py-3.5 px-5 rounded-xl bg-white hover:bg-slate-50 text-[#0A1128] border-2 border-slate-200 hover:border-[#0052FF]/40 font-display font-bold text-sm sm:text-base shadow-xs grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60"
+              >
+                <GoogleLogoSvg className="w-5 h-5 shrink-0" />
+                <span className="text-center">
+                  {loadingGoogle
+                    ? 'Conectando con Google...'
+                    : 'Continuar con Google'}
+                </span>
+                <ArrowRight className="w-4 h-4 text-[#0052FF] justify-self-end" />
+              </button>
+
+              <div className="flex items-center gap-3.5 py-1" role="separator">
+                <div className="h-px flex-1 bg-slate-200" />
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest select-none leading-none">
+                  o bien
+                </span>
+                <div className="h-px flex-1 bg-slate-200" />
+              </div>
+
+              <button
+                type="button"
+                disabled={loadingGoogle || loadingMs}
+                onClick={handleClickMicrosoftLogin}
+                className="w-full py-3.5 px-5 rounded-xl bg-[#0A1128] hover:bg-[#0052FF] text-white border-2 border-[#0A1128] hover:border-[#0052FF] font-display font-bold text-sm sm:text-base shadow-lg grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60"
+              >
+                <MicrosoftLogoSvg className="w-5 h-5 shrink-0" />
+                <span className="text-center">
+                  {loadingMs
+                    ? 'Conectando con Microsoft...'
+                    : 'Continuar con Microsoft'}
+                </span>
+                <ArrowRight className="w-4 h-4 text-[#00D2FF] justify-self-end" />
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -368,8 +560,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
           {/* Pillar 1: Full PAA Simulacro */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
             <div>
-              <div className="w-11 h-11 rounded-xl bg-[#0052FF]/10 text-[#0052FF] flex items-center justify-center mb-4">
-                <Layers className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-lg bg-[#0052FF]/10 border border-[#0052FF]/20 flex items-center justify-center mb-4">
+                <SimulacroEngineIcon size={24} />
               </div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#0052FF]">
                 Experiencia Oficial College Board
@@ -389,13 +581,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </div>
           </div>
 
-          {/* Pillar 2: Focused Sprints */}
+          {/* Pillar 2: Focused Sprints / Práctica Asíncrona */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
             <div>
-              <div className="w-11 h-11 rounded-xl bg-[#0A1128] text-[#00D2FF] flex items-center justify-center mb-4">
-                <Zap className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-lg bg-[#ECFDF5] border border-[#10B981]/20 flex items-center justify-center mb-4">
+                <AsyncTrainerIcon size={24} />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
                 Entrenamiento Diario Ágil
               </span>
               <h3 className="font-display text-lg font-extrabold text-[#0A1128] mt-1 mb-2">
@@ -413,14 +605,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </div>
           </div>
 
-          {/* Pillar 3: Study Materials & Step-by-Step Feedback */}
+          {/* Pillar 3: Teacher Diagnostic & Study Materials */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-md flex flex-col justify-between">
             <div>
-              <div className="w-11 h-11 rounded-xl bg-[#0052FF]/10 text-[#0052FF] flex items-center justify-center mb-4">
-                <Compass className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-lg bg-[#F1F5F9] border border-[#CBD5E1] flex items-center justify-center mb-4">
+                <TeacherDiagnosticIcon size={24} />
               </div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#0052FF]">
-                Acompañamiento Docente
+                Diagnóstico y Acompañamiento Docente
               </span>
               <h3 className="font-display text-lg font-extrabold text-[#0A1128] mt-1 mb-2">
                 Materiales y Solucionarios

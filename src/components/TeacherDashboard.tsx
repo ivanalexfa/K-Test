@@ -31,6 +31,12 @@ import {
 import { TeacherUser } from '../models/UserClasses';
 import { SPRINTS_CATALOG } from '../data/sprintsCatalog';
 import { KEY_ADMISSION_COHORTS } from '../data/cohortsCatalog';
+import { KTestLogo } from './brand/KTestLogo';
+import {
+  TeacherDiagnosticIcon,
+  MathPAAIcon,
+  VerbalPAAIcon,
+} from './brand/KTestIcons';
 import { LatexRenderer } from './LatexRenderer';
 
 interface TeacherDashboardProps {
@@ -370,20 +376,16 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       <header className="sticky top-0 z-30 bg-[#0A1128] text-white border-b border-white/10 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#0052FF] flex items-center justify-center font-display font-extrabold text-base text-white shrink-0">
-              K
-            </div>
-            <div className="min-w-0">
+            <KTestLogo theme="dark" variant="full" />
+            <div className="hidden md:block h-6 w-px bg-white/15" />
+            <div className="hidden md:block min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-display font-bold text-sm tracking-wider uppercase">
-                  KEY INSTITUTE
-                </span>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#00D2FF]/20 text-[#00D2FF] border border-[#00D2FF]/30">
                   <BookOpenCheck className="w-3 h-3" />
                   Panel Docente
                 </span>
               </div>
-              <div className="text-xs text-slate-300 truncate">
+              <div className="text-xs text-slate-300 truncate mt-0.5">
                 {teacher.name} · <span className="text-slate-400">{teacher.cohort}</span>
               </div>
             </div>
@@ -532,14 +534,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             {/* Search & Multi-Criteria Filter Bar (Designed for dozens/hundreds of students) */}
             <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-2xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <h2 className="font-display text-base sm:text-lg font-bold text-[#0A1128] flex items-center gap-2">
-                    <Filter className="w-5 h-5 text-[#0052FF]" />
-                    Buscador de Estudiantes y Filtros de Evaluaciones
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Busca un alumno específico para desplegar su ficha académica o filtra la matriz por Cohorte de Admisión, Sprint específico o Nivel de Desempeño.
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#F1F5F9] border border-[#CBD5E1] flex items-center justify-center shrink-0">
+                    <TeacherDiagnosticIcon size={24} />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-base sm:text-lg font-bold text-[#0A1128]">
+                      Diagnóstico del Profesor · Buscador y Filtros de Evaluaciones
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Busca un alumno específico para desplegar su ficha académica o filtra la matriz por Cohorte de Admisión, Sprint específico o Nivel de Desempeño.
+                    </p>
+                  </div>
                 </div>
 
                 {(selectedStudentId !== 'all' ||

@@ -18,12 +18,53 @@ export interface BootstrapResponse {
   };
 }
 
-export async function fetchBootstrapData(): Promise<BootstrapResponse> {
-  const res = await fetch('/api/bootstrap');
-  if (!res.ok) {
-    throw new Error('No se pudo conectar con la base de datos SQLite (/api/bootstrap)');
+async function safeFetchJson<T = any>(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  fallbackError = 'Error de comunicación con el servidor'
+): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(input, init);
+  } catch (networkErr: any) {
+    throw new Error(
+      `No se pudo conectar con el servidor: ${networkErr?.message || 'Error de red'}`
+    );
   }
-  return res.json();
+
+  const text = await res.text();
+  let data: any = null;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    const cleanPreview = text
+      ? text
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .slice(0, 200)
+          .trim()
+      : '';
+    const err: any = new Error(cleanPreview || fallbackError);
+    err.statusCode = res.status;
+    throw err;
+  }
+
+  if (!res.ok) {
+    const err: any = new Error(data?.error || fallbackError);
+    if (data?.code) err.code = data.code;
+    err.statusCode = res.status;
+    throw err;
+  }
+
+  return data as T;
+}
+
+export async function fetchBootstrapData(): Promise<BootstrapResponse> {
+  return safeFetchJson<BootstrapResponse>(
+    '/api/bootstrap',
+    undefined,
+    'No se pudo conectar con la base de datos (/api/bootstrap)'
+  );
 }
 
 export async function apiAuthenticateWithMicrosoft(payload: {
@@ -36,18 +77,36 @@ export async function apiAuthenticateWithMicrosoft(payload: {
   teacherPin?: string;
   cohort?: string;
 }): Promise<{ user: UserRecord; users: UserRecord[] }> {
-  const res = await fetch('/api/auth/microsoft', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    const err: any = new Error(data.error || 'Error al autenticar con Microsoft');
-    err.code = data.code;
-    throw err;
-  }
-  return data;
+  return safeFetchJson(
+    '/api/auth/microsoft',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    'Error al autenticar con Microsoft'
+  );
+}
+
+export async function apiAuthenticateWithGoogle(payload: {
+  name: string;
+  email: string;
+  googleId?: string;
+  idToken?: string;
+  accessToken?: string;
+  requestedRole: UserRole;
+  teacherPin?: string;
+  cohort?: string;
+}): Promise<{ user: UserRecord; users: UserRecord[] }> {
+  return safeFetchJson(
+    '/api/auth/google',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    'Error al autenticar con Google'
+  );
 }
 
 export async function apiUpdateUserCohort(
@@ -58,31 +117,30 @@ export async function apiUpdateUserCohort(
   users: UserRecord[];
   attempts: TestAttemptRecord[];
 }> {
-  const res = await fetch(`/api/users/${userId}/cohort`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cohort }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'Error al actualizar la cohorte del estudiante');
-  }
-  return data;
+  return safeFetchJson(
+    `/api/users/${userId}/cohort`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cohort }),
+    },
+    'Error al actualizar la cohorte del estudiante'
+  );
 }
 
 export async function apiLoginUser(
   email: string,
   password?: string
 ): Promise<UserRecord> {
-  const res = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'Error al iniciar sesión');
-  }
+  const data = await safeFetchJson<{ user: UserRecord }>(
+    '/api/auth/login',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    },
+    'Error al iniciar sesión'
+  );
   return data.user;
 }
 
@@ -93,16 +151,15 @@ export async function apiRegisterUser(payload: {
   role: UserRole;
   cohort: string;
 }): Promise<{ user: UserRecord; users: UserRecord[] }> {
-  const res = await fetch('/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'Error al registrar usuario');
-  }
-  return data;
+  return safeFetchJson(
+    '/api/auth/register',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    'Error al registrar usuario'
+  );
 }
 
 export async function apiCreateStudyMaterial(payload: {
@@ -119,16 +176,15 @@ export async function apiCreateStudyMaterial(payload: {
   attachmentSize?: number | null;
   attachmentDataBase64?: string | null;
 }): Promise<{ material: StudyMaterial; materials: StudyMaterial[] }> {
-  const res = await fetch('/api/materials', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'Error al guardar material de estudio');
-  }
-  return data;
+  return safeFetchJson(
+    '/api/materials',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    'Error al guardar material de estudio'
+  );
 }
 
 export async function apiUpdateStudyMaterial(
@@ -147,29 +203,27 @@ export async function apiUpdateStudyMaterial(
     removeAttachment?: boolean;
   }
 ): Promise<{ material: StudyMaterial; materials: StudyMaterial[] }> {
-  const res = await fetch(`/api/materials/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'Error al actualizar material de estudio');
-  }
-  return data;
+  return safeFetchJson(
+    `/api/materials/${id}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    'Error al actualizar material de estudio'
+  );
 }
 
 export async function apiDeleteStudyMaterial(
   id: string
 ): Promise<{ materials: StudyMaterial[] }> {
-  const res = await fetch(`/api/materials/${id}`, {
-    method: 'DELETE',
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'Error al eliminar material');
-  }
-  return data;
+  return safeFetchJson(
+    `/api/materials/${id}`,
+    {
+      method: 'DELETE',
+    },
+    'Error al eliminar material'
+  );
 }
 
 export async function apiSaveTestAttempt(payload: {
@@ -187,14 +241,13 @@ export async function apiSaveTestAttempt(payload: {
   durationSeconds: number;
   answers: Record<string, OptionId>;
 }): Promise<{ attempt: TestAttemptRecord; attempts: TestAttemptRecord[] }> {
-  const res = await fetch('/api/attempts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'Error al guardar resultado en la base de datos');
-  }
-  return data;
+  return safeFetchJson(
+    '/api/attempts',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    'Error al guardar resultado en la base de datos'
+  );
 }

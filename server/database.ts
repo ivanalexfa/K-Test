@@ -1,161 +1,135 @@
 // @ts-nocheck
-import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {
+  dbAll,
+  dbGet,
+  dbRun,
+  dbBatch,
+  getUploadsDir,
+  isTursoConfigured,
+} from './dbDriver';
 
-// Load .env variables into process.env if present
-function loadEnvFile() {
-  const envPath = path.resolve(process.cwd(), '.env');
-  if (!fs.existsSync(envPath)) return;
-  const content = fs.readFileSync(envPath, 'utf-8');
-  for (const rawLine of content.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('#')) continue;
-    const eqIdx = line.indexOf('=');
-    if (eqIdx === -1) continue;
-    const key = line.slice(0, eqIdx).trim();
-    const val = line.slice(eqIdx + 1).trim();
-    if (!(key in process.env)) {
-      process.env[key] = val;
+export const UPLOADS_DIR = getUploadsDir();
+
+let dbInitPromise: Promise<void> | null = null;
+
+export async function ensureDbReady(): Promise<void> {
+  if (!dbInitPromise) {
+    dbInitPromise = initializeSchemaAndSeed().catch((err) => {
+      dbInitPromise = null;
+      throw err;
+    });
+  }
+  return dbInitPromise;
+}
+
+async function initializeSchemaAndSeed(): Promise<void> {
+  await dbBatch([
+    {
+      sql: `CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT NOT NULL CHECK(role IN ('student', 'teacher')),
+        cohort TEXT NOT NULL,
+        microsoft_oid TEXT,
+        google_id TEXT,
+        auth_provider TEXT DEFAULT 'local',
+        created_at TEXT NOT NULL
+      )`,
+    },
+    {
+      sql: `CREATE TABLE IF NOT EXISTS study_materials (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        section TEXT NOT NULL CHECK(section IN ('reading', 'math')),
+        category TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        content TEXT NOT NULL,
+        reading_time_minutes INTEGER NOT NULL,
+        author_id TEXT NOT NULL,
+        author_name TEXT NOT NULL,
+        attachment_name TEXT,
+        attachment_mime TEXT,
+        attachment_size INTEGER,
+        attachment_url TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+      )`,
+    },
+    {
+      sql: `CREATE TABLE IF NOT EXISTS test_attempts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        mode TEXT NOT NULL CHECK(mode IN ('simulacro', 'sprint_reading', 'sprint_math')),
+        mode_title TEXT NOT NULL,
+        reading_correct INTEGER NOT NULL,
+        reading_total INTEGER NOT NULL,
+        math_correct INTEGER NOT NULL,
+        math_total INTEGER NOT NULL,
+        total_correct INTEGER NOT NULL,
+        total_questions INTEGER NOT NULL,
+        percentage INTEGER NOT NULL,
+        scaled_score INTEGER NOT NULL,
+        duration_seconds INTEGER NOT NULL,
+        answers_json TEXT NOT NULL,
+        completed_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )`,
+    },
+    {
+      sql: `CREATE TABLE IF NOT EXISTS uploaded_files (
+        filename TEXT PRIMARY KEY,
+        mime_type TEXT NOT NULL,
+        size INTEGER NOT NULL,
+        data_base64 TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )`,
+    },
+  ]);
+
+  // Safe column migrations for pre-existing local SQLite databases
+  const migrationCols = [
+    `ALTER TABLE users ADD COLUMN microsoft_oid TEXT`,
+    `ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'local'`,
+    `ALTER TABLE users ADD COLUMN google_id TEXT`,
+    `ALTER TABLE study_materials ADD COLUMN attachment_name TEXT`,
+    `ALTER TABLE study_materials ADD COLUMN attachment_mime TEXT`,
+    `ALTER TABLE study_materials ADD COLUMN attachment_size INTEGER`,
+    `ALTER TABLE study_materials ADD COLUMN attachment_url TEXT`,
+  ];
+
+  for (const sql of migrationCols) {
+    try {
+      await dbRun(sql);
+    } catch {
+      // Column already exists
     }
+  }
+
+  await seedDatabaseIfEmpty();
+
+  const isCleanProductionSeed =
+    isTursoConfigured() ||
+    (process.env.VITE_ENABLE_DEMO_ACCOUNTS || 'true').trim().toLowerCase() === 'false';
+
+  if (!isCleanProductionSeed) {
+    await ensureScaleSampleData();
   }
 }
 
-loadEnvFile();
+async function seedDatabaseIfEmpty() {
+  const countRow: any = await dbGet('SELECT COUNT(*) as total FROM users');
+  if (countRow && Number(countRow.total) > 0) return;
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+  const isCleanProductionSeed =
+    isTursoConfigured() ||
+    (process.env.VITE_ENABLE_DEMO_ACCOUNTS || 'true').trim().toLowerCase() === 'false';
 
-export const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
-
-const DB_PATH = path.join(DATA_DIR, 'paa_platform.sqlite');
-const db = new DatabaseSync(DB_PATH);
-
-// Initialize relational tables
-db.exec(`
-  PRAGMA foreign_keys = ON;
-
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    role TEXT NOT NULL CHECK(role IN ('student', 'teacher')),
-    cohort TEXT NOT NULL,
-    microsoft_oid TEXT,
-    auth_provider TEXT DEFAULT 'local',
-    created_at TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS study_materials (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    section TEXT NOT NULL CHECK(section IN ('reading', 'math')),
-    category TEXT NOT NULL,
-    summary TEXT NOT NULL,
-    content TEXT NOT NULL,
-    reading_time_minutes INTEGER NOT NULL,
-    author_id TEXT NOT NULL,
-    author_name TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-
-  CREATE TABLE IF NOT EXISTS test_attempts (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    mode TEXT NOT NULL CHECK(mode IN ('simulacro', 'sprint_reading', 'sprint_math')),
-    mode_title TEXT NOT NULL,
-    reading_correct INTEGER NOT NULL,
-    reading_total INTEGER NOT NULL,
-    math_correct INTEGER NOT NULL,
-    math_total INTEGER NOT NULL,
-    total_correct INTEGER NOT NULL,
-    total_questions INTEGER NOT NULL,
-    percentage INTEGER NOT NULL,
-    scaled_score INTEGER NOT NULL,
-    duration_seconds INTEGER NOT NULL,
-    answers_json TEXT NOT NULL,
-    completed_at TEXT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-`);
-
-// Safe migration for existing databases created before Microsoft SSO columns
-try {
-  db.exec(`ALTER TABLE users ADD COLUMN microsoft_oid TEXT;`);
-} catch {
-  // Column already exists
-}
-try {
-  db.exec(`ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'local';`);
-} catch {
-  // Column already exists
-}
-
-// Safe migration for file attachments in study_materials (pdf, docx, pptx, xlsx, png, jpg, etc.)
-try {
-  db.exec(`ALTER TABLE study_materials ADD COLUMN attachment_name TEXT;`);
-} catch {}
-try {
-  db.exec(`ALTER TABLE study_materials ADD COLUMN attachment_mime TEXT;`);
-} catch {}
-try {
-  db.exec(`ALTER TABLE study_materials ADD COLUMN attachment_size INTEGER;`);
-} catch {}
-try {
-  db.exec(`ALTER TABLE study_materials ADD COLUMN attachment_url TEXT;`);
-} catch {}
-
-function seedDatabaseIfEmpty() {
-  const countRow = db.prepare('SELECT COUNT(*) as total FROM users').get();
-  if (countRow && countRow.total > 0) return;
-
-  const insertUser = db.prepare(`
-    INSERT INTO users (id, name, email, password, role, cohort, microsoft_oid, auth_provider, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  const users = [
-    [
-      'stu-1',
-      'Sofía Martínez',
-      'sofia.martinez@keyinstitute.edu.sv',
-      'key2026',
-      'student',
-      'Cohorte Admisión Ingeniería 2027 · Grupo A',
-      'ms-oid-sofia-001',
-      'microsoft',
-      '2026-10-15T08:30:00Z',
-    ],
-    [
-      'stu-2',
-      'Diego Alejandro Rivas',
-      'diego.rivas@keyinstitute.edu.sv',
-      'key2026',
-      'student',
-      'Cohorte Admisión Ingeniería 2027 · Grupo A',
-      'ms-oid-diego-002',
-      'microsoft',
-      '2026-10-16T09:15:00Z',
-    ],
-    [
-      'stu-3',
-      'Valeria Cáceres',
-      'valeria.caceres@keyinstitute.edu.sv',
-      'key2026',
-      'student',
-      'Cohorte Admisión Ciencias Computacionales · Grupo B',
-      'ms-oid-valeria-003',
-      'microsoft',
-      '2026-10-18T14:00:00Z',
-    ],
+  const facultyTeachers = [
     [
       'tch-1',
       'Dr. Roberto Méndez',
@@ -180,16 +154,54 @@ function seedDatabaseIfEmpty() {
     ],
   ];
 
-  for (const u of users) {
-    insertUser.run(...u);
-  }
+  const demoStudents = isCleanProductionSeed
+    ? []
+    : [
+        [
+          'stu-1',
+          'Sofía Martínez',
+          'sofia.martinez@keyinstitute.edu.sv',
+          'key2026',
+          'student',
+          'Ingeniería en Ciencias de la Computación · Admisión 2027',
+          'ms-oid-sofia-001',
+          'microsoft',
+          '2026-10-15T08:30:00Z',
+        ],
+        [
+          'stu-2',
+          'Diego Alejandro Rivas',
+          'diego.rivas@keyinstitute.edu.sv',
+          'key2026',
+          'student',
+          'Ingeniería Mecatrónica y Robótica · Admisión 2027',
+          'ms-oid-diego-002',
+          'microsoft',
+          '2026-10-16T09:15:00Z',
+        ],
+        [
+          'stu-3',
+          'Valeria Cáceres',
+          'valeria.caceres@keyinstitute.edu.sv',
+          'key2026',
+          'student',
+          'Ingeniería Aeroespacial y Ciencias Aplicadas · Admisión 2027',
+          'ms-oid-valeria-003',
+          'microsoft',
+          '2026-10-18T14:00:00Z',
+        ],
+      ];
 
-  const insertMaterial = db.prepare(`
-    INSERT INTO study_materials (
-      id, title, section, category, summary, content,
-      reading_time_minutes, author_id, author_name, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+  const users = [...demoStudents, ...facultyTeachers];
+  const statements: { sql: string; args?: any[] }[] = [];
+
+  for (const u of users) {
+    statements.push({
+      sql: `INSERT OR IGNORE INTO users (id, name, email, password, role, cohort, microsoft_oid, auth_provider, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: u,
+    });
+  }
 
   const materials = [
     [
@@ -276,179 +288,185 @@ Cuando dos proposiciones independientes contrastan capacidades complementarias �
   ];
 
   for (const m of materials) {
-    insertMaterial.run(...m);
+    statements.push({
+      sql: `INSERT OR IGNORE INTO study_materials (
+              id, title, section, category, summary, content,
+              reading_time_minutes, author_id, author_name, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: m,
+    });
   }
 
-  const insertAttempt = db.prepare(`
-    INSERT INTO test_attempts (
-      id, user_id, mode, mode_title,
-      reading_correct, reading_total, math_correct, math_total,
-      total_correct, total_questions, percentage, scaled_score,
-      duration_seconds, answers_json, completed_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+  if (!isCleanProductionSeed) {
+    const sampleAttempts = [
+      [
+        'att-1',
+        'stu-1',
+        'simulacro',
+        'Simulacro Oficial PAA (Test Completo)',
+        5,
+        5,
+        4,
+        5,
+        9,
+        10,
+        90,
+        1480,
+        740,
+        JSON.stringify({
+          'read-1': 'B',
+          'read-2': 'C',
+          'read-3': 'B',
+          'read-4': 'A',
+          'read-5': 'B',
+          'math-1': 'C',
+          'math-2': 'A',
+          'math-3': 'C',
+          'math-4': 'A',
+          'math-5': 'A',
+        }),
+        '2026-10-26T16:20:00Z',
+      ],
+      [
+        'att-2',
+        'stu-1',
+        'sprint_math',
+        'Sprint de Matemáticas (Test Corto)',
+        0,
+        0,
+        5,
+        5,
+        5,
+        5,
+        100,
+        800,
+        245,
+        JSON.stringify({
+          'math-1': 'C',
+          'math-2': 'A',
+          'math-3': 'C',
+          'math-4': 'A',
+          'math-5': 'B',
+        }),
+        '2026-10-27T18:10:00Z',
+      ],
+      [
+        'att-3',
+        'stu-2',
+        'simulacro',
+        'Simulacro Oficial PAA (Test Completo)',
+        3,
+        5,
+        4,
+        5,
+        7,
+        10,
+        70,
+        1240,
+        890,
+        JSON.stringify({
+          'read-1': 'B',
+          'read-2': 'A',
+          'read-3': 'B',
+          'read-4': 'B',
+          'read-5': 'B',
+          'math-1': 'C',
+          'math-2': 'A',
+          'math-3': 'C',
+          'math-4': 'B',
+          'math-5': 'B',
+        }),
+        '2026-10-27T11:40:00Z',
+      ],
+      [
+        'att-4',
+        'stu-2',
+        'sprint_reading',
+        'Sprint de Lectura y Redacción (Test Corto)',
+        4,
+        5,
+        0,
+        0,
+        4,
+        5,
+        80,
+        680,
+        210,
+        JSON.stringify({
+          'read-1': 'B',
+          'read-2': 'C',
+          'read-3': 'B',
+          'read-4': 'A',
+          'read-5': 'A',
+        }),
+        '2026-10-28T09:15:00Z',
+      ],
+      [
+        'att-5',
+        'stu-3',
+        'simulacro',
+        'Simulacro Oficial PAA (Test Completo)',
+        4,
+        5,
+        5,
+        5,
+        9,
+        10,
+        90,
+        1480,
+        685,
+        JSON.stringify({
+          'read-1': 'B',
+          'read-2': 'C',
+          'read-3': 'A',
+          'read-4': 'A',
+          'read-5': 'B',
+          'math-1': 'C',
+          'math-2': 'A',
+          'math-3': 'C',
+          'math-4': 'A',
+          'math-5': 'B',
+        }),
+        '2026-10-28T15:05:00Z',
+      ],
+    ];
 
-  const sampleAttempts = [
-    [
-      'att-1',
-      'stu-1',
-      'simulacro',
-      'Simulacro Oficial PAA (Test Completo)',
-      5,
-      5,
-      4,
-      5,
-      9,
-      10,
-      90,
-      1480,
-      740,
-      JSON.stringify({
-        'read-1': 'B',
-        'read-2': 'C',
-        'read-3': 'B',
-        'read-4': 'A',
-        'read-5': 'B',
-        'math-1': 'C',
-        'math-2': 'A',
-        'math-3': 'C',
-        'math-4': 'A',
-        'math-5': 'A',
-      }),
-      '2026-10-26T16:20:00Z',
-    ],
-    [
-      'att-2',
-      'stu-1',
-      'sprint_math',
-      'Sprint de Matemáticas (Test Corto)',
-      0,
-      0,
-      5,
-      5,
-      5,
-      5,
-      100,
-      800,
-      245,
-      JSON.stringify({
-        'math-1': 'C',
-        'math-2': 'A',
-        'math-3': 'C',
-        'math-4': 'A',
-        'math-5': 'B',
-      }),
-      '2026-10-27T18:10:00Z',
-    ],
-    [
-      'att-3',
-      'stu-2',
-      'simulacro',
-      'Simulacro Oficial PAA (Test Completo)',
-      3,
-      5,
-      4,
-      5,
-      7,
-      10,
-      70,
-      1240,
-      890,
-      JSON.stringify({
-        'read-1': 'B',
-        'read-2': 'A',
-        'read-3': 'B',
-        'read-4': 'B',
-        'read-5': 'B',
-        'math-1': 'C',
-        'math-2': 'A',
-        'math-3': 'C',
-        'math-4': 'B',
-        'math-5': 'B',
-      }),
-      '2026-10-27T11:40:00Z',
-    ],
-    [
-      'att-4',
-      'stu-2',
-      'sprint_reading',
-      'Sprint de Lectura y Redacción (Test Corto)',
-      4,
-      5,
-      0,
-      0,
-      4,
-      5,
-      80,
-      680,
-      210,
-      JSON.stringify({
-        'read-1': 'B',
-        'read-2': 'C',
-        'read-3': 'B',
-        'read-4': 'A',
-        'read-5': 'A',
-      }),
-      '2026-10-28T09:15:00Z',
-    ],
-    [
-      'att-5',
-      'stu-3',
-      'simulacro',
-      'Simulacro Oficial PAA (Test Completo)',
-      4,
-      5,
-      5,
-      5,
-      9,
-      10,
-      90,
-      1480,
-      685,
-      JSON.stringify({
-        'read-1': 'B',
-        'read-2': 'C',
-        'read-3': 'A',
-        'read-4': 'A',
-        'read-5': 'B',
-        'math-1': 'C',
-        'math-2': 'A',
-        'math-3': 'C',
-        'math-4': 'A',
-        'math-5': 'B',
-      }),
-      '2026-10-28T15:05:00Z',
-    ],
-  ];
-
-  for (const att of sampleAttempts) {
-    insertAttempt.run(...att);
+    for (const att of sampleAttempts) {
+      statements.push({
+        sql: `INSERT OR IGNORE INTO test_attempts (
+                id, user_id, mode, mode_title,
+                reading_correct, reading_total, math_correct, math_total,
+                total_correct, total_questions, percentage, scaled_score,
+                duration_seconds, answers_json, completed_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: att,
+      });
+    }
   }
+
+  await dbBatch(statements);
 }
 
-seedDatabaseIfEmpty();
-
-function ensureScaleSampleData() {
-  const stuCountRow: any = db
-    .prepare("SELECT COUNT(*) as total FROM users WHERE role = 'student'")
-    .get();
-  if (stuCountRow && stuCountRow.total >= 10) return;
-
-  // Normalize first 3 students to official Key Institute admission cohorts
-  db.prepare("UPDATE users SET cohort = ? WHERE id = 'stu-1'").run(
-    'Ingeniería en Ciencias de la Computación · Admisión 2027'
+async function ensureScaleSampleData() {
+  const stuCountRow: any = await dbGet(
+    "SELECT COUNT(*) as total FROM users WHERE role = 'student'"
   );
-  db.prepare("UPDATE users SET cohort = ? WHERE id = 'stu-2'").run(
-    'Ingeniería Mecatrónica y Robótica · Admisión 2027'
-  );
-  db.prepare("UPDATE users SET cohort = ? WHERE id = 'stu-3'").run(
-    'Ingeniería Aeroespacial y Ciencias Aplicadas · Admisión 2027'
-  );
+  if (stuCountRow && Number(stuCountRow.total) >= 10) return;
 
-  const insertUserIgnore = db.prepare(`
-    INSERT OR IGNORE INTO users (id, name, email, password, role, cohort, microsoft_oid, auth_provider, created_at)
-    VALUES (?, ?, ?, 'MICROSOFT_SSO', 'student', ?, ?, 'microsoft', ?)
-  `);
+  const statements: { sql: string; args?: any[] }[] = [
+    {
+      sql: "UPDATE users SET cohort = ? WHERE id = 'stu-1'",
+      args: ['Ingeniería en Ciencias de la Computación · Admisión 2027'],
+    },
+    {
+      sql: "UPDATE users SET cohort = ? WHERE id = 'stu-2'",
+      args: ['Ingeniería Mecatrónica y Robótica · Admisión 2027'],
+    },
+    {
+      sql: "UPDATE users SET cohort = ? WHERE id = 'stu-3'",
+      args: ['Ingeniería Aeroespacial y Ciencias Aplicadas · Admisión 2027'],
+    },
+  ];
 
   const extraStudents = [
     [
@@ -526,221 +544,56 @@ function ensureScaleSampleData() {
   ];
 
   for (const s of extraStudents) {
-    insertUserIgnore.run(...s);
+    statements.push({
+      sql: `INSERT OR IGNORE INTO users (id, name, email, password, role, cohort, microsoft_oid, auth_provider, created_at)
+            VALUES (?, ?, ?, 'MICROSOFT_SSO', 'student', ?, ?, 'microsoft', ?)`,
+      args: s,
+    });
   }
 
-  const insertAttemptIgnore = db.prepare(`
-    INSERT OR IGNORE INTO test_attempts (
-      id, user_id, mode, mode_title,
-      reading_correct, reading_total, math_correct, math_total,
-      total_correct, total_questions, percentage, scaled_score,
-      duration_seconds, answers_json, completed_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  const extraAttempts = [
-    [
-      'att-6',
-      'stu-4',
-      'simulacro',
-      'Simulacro Oficial PAA (Test Completo)',
-      4,
-      5,
-      4,
-      5,
-      8,
-      10,
-      80,
-      1360,
-      780,
-      JSON.stringify({
-        'read-1': 'B',
-        'read-2': 'C',
-        'read-3': 'B',
-        'read-4': 'A',
-        'read-5': 'A',
-        'math-1': 'C',
-        'math-2': 'A',
-        'math-3': 'C',
-        'math-4': 'A',
-        'math-5': 'A',
-      }),
-      '2026-10-28T10:15:00Z',
-    ],
-    [
-      'att-7',
-      'stu-5',
-      'sprint_math',
-      'SPRINT M-01: Geometría Espacial, Volúmenes y Triángulos Especiales',
-      0,
-      0,
-      3,
-      3,
-      3,
-      3,
-      100,
-      800,
-      195,
-      JSON.stringify({ 'math-1': 'C', 'math-2': 'A', 'math-5': 'B' }),
-      '2026-10-28T11:30:00Z',
-    ],
-    [
-      'att-8',
-      'stu-6',
-      'sprint_reading',
-      'SPRINT L-01: Comprensión Científica: Vocabulario en Contexto e Inferencia',
-      2,
-      3,
-      0,
-      0,
-      2,
-      3,
-      67,
-      600,
-      210,
-      JSON.stringify({ 'read-1': 'B', 'read-2': 'C', 'read-3': 'A' }),
-      '2026-10-28T14:20:00Z',
-    ],
-    [
-      'att-9',
-      'stu-7',
-      'simulacro',
-      'Simulacro Oficial PAA (Test Completo)',
-      5,
-      5,
-      5,
-      5,
-      10,
-      10,
-      100,
-      1600,
-      710,
-      JSON.stringify({
-        'read-1': 'B',
-        'read-2': 'C',
-        'read-3': 'B',
-        'read-4': 'A',
-        'read-5': 'B',
-        'math-1': 'C',
-        'math-2': 'A',
-        'math-3': 'C',
-        'math-4': 'A',
-        'math-5': 'B',
-      }),
-      '2026-10-28T16:45:00Z',
-    ],
-    [
-      'att-10',
-      'stu-8',
-      'sprint_math',
-      'SPRINT M-02: Álgebra Estratégica: Sistemas y Modelos Cuadráticos',
-      0,
-      0,
-      2,
-      2,
-      2,
-      2,
-      100,
-      800,
-      140,
-      JSON.stringify({ 'math-3': 'C', 'math-4': 'A' }),
-      '2026-10-28T17:30:00Z',
-    ],
-    [
-      'att-11',
-      'stu-9',
-      'simulacro',
-      'Simulacro Oficial PAA (Test Completo)',
-      3,
-      5,
-      2,
-      5,
-      5,
-      10,
-      50,
-      1000,
-      920,
-      JSON.stringify({
-        'read-1': 'B',
-        'read-2': 'C',
-        'read-3': 'D',
-        'read-4': 'A',
-        'read-5': 'C',
-        'math-1': 'A',
-        'math-2': 'A',
-        'math-3': 'C',
-        'math-4': 'B',
-        'math-5': 'D',
-      }),
-      '2026-10-29T08:05:00Z',
-    ],
-    [
-      'att-12',
-      'stu-10',
-      'sprint_reading',
-      'SPRINT L-02: Redacción Indirecta: Concisión, Normativa y Conectores',
-      2,
-      2,
-      0,
-      0,
-      2,
-      2,
-      100,
-      800,
-      125,
-      JSON.stringify({ 'read-4': 'A', 'read-5': 'B' }),
-      '2026-10-29T08:40:00Z',
-    ],
-  ];
-
-  for (const a of extraAttempts) {
-    insertAttemptIgnore.run(...a);
-  }
+  await dbBatch(statements);
 }
 
-ensureScaleSampleData();
-
-export function getAllUsers() {
-  const rows = db
-    .prepare(
-      `SELECT
-         id,
-         name,
-         email,
-         role,
-         cohort,
-         microsoft_oid as microsoftOid,
-         auth_provider as authProvider,
-         created_at as createdAt
-       FROM users
-       ORDER BY role ASC, name ASC`
-    )
-    .all();
-  return rows;
+export async function getAllUsers() {
+  await ensureDbReady();
+  return dbAll(
+    `SELECT
+       id,
+       name,
+       email,
+       role,
+       cohort,
+       microsoft_oid as microsoftOid,
+       google_id as googleId,
+       auth_provider as authProvider,
+       created_at as createdAt
+     FROM users
+     ORDER BY role ASC, name ASC`
+  );
 }
 
-export function updateUserCohort(userId: string, cohort: string) {
-  db.prepare(`UPDATE users SET cohort = ? WHERE id = ?`).run(cohort.trim(), userId);
-  db.prepare(`UPDATE test_attempts SET user_id = user_id WHERE user_id = ?`).run(userId);
-  return db
-    .prepare(
-      `SELECT
-         id,
-         name,
-         email,
-         role,
-         cohort,
-         microsoft_oid as microsoftOid,
-         auth_provider as authProvider,
-         created_at as createdAt
-       FROM users
-       WHERE id = ?`
-    )
-    .get(userId);
+export async function updateUserCohort(userId: string, cohort: string) {
+  await ensureDbReady();
+  await dbRun(`UPDATE users SET cohort = ? WHERE id = ?`, [cohort.trim(), userId]);
+  return dbGet(
+    `SELECT
+       id,
+       name,
+       email,
+       role,
+       cohort,
+       microsoft_oid as microsoftOid,
+       google_id as googleId,
+       auth_provider as authProvider,
+       created_at as createdAt
+     FROM users
+     WHERE id = ?`,
+    [userId]
+  );
 }
 
 /**
- * Decodes JWT payload (for Microsoft Entra ID idToken verification)
+ * Decodes JWT payload (for Microsoft Entra ID / Google idToken verification)
  */
 function decodeJwtPayload(token: string) {
   const parts = token.split('.');
@@ -774,8 +627,29 @@ function isEmailDomainAllowed(email: string): { allowed: boolean; allowedList: s
 }
 
 /**
+ * Checks whether a Teacher email belongs exclusively to Key Institute's institutional domains
+ */
+function isTeacherInstitutionalDomain(email: string): {
+  allowed: boolean;
+  allowedList: string[];
+} {
+  const rawRule = (
+    process.env.TEACHER_EMAIL_DOMAINS || 'keyinstitute.com,keyinstitute.edu.sv'
+  ).trim();
+  const allowedList = rawRule
+    .split(',')
+    .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
+    .filter(Boolean);
+
+  const emailDomain = email.split('@')[1]?.toLowerCase() || '';
+  return {
+    allowed: allowedList.includes(emailDomain),
+    allowedList,
+  };
+}
+
+/**
  * Verifies a real Microsoft OAuth2 accessToken directly against Microsoft Graph API
- * (https://graph.microsoft.com/v1.0/me) to guarantee cryptographic authenticity.
  */
 async function verifyTokenWithMicrosoftGraph(accessToken: string) {
   const response = await fetch('https://graph.microsoft.com/v1.0/me', {
@@ -802,7 +676,6 @@ async function verifyTokenWithMicrosoftGraph(accessToken: string) {
 
 /**
  * Authenticates or auto-provisions a Microsoft Entra ID (Office 365) user
- * implementing Option 1: Direct Student access + Teacher Role with Access PIN.
  */
 export async function authenticateMicrosoftUser(payload: {
   name: string;
@@ -814,18 +687,17 @@ export async function authenticateMicrosoftUser(payload: {
   teacherPin?: string;
   cohort?: string;
 }) {
+  await ensureDbReady();
   let verifiedEmail = (payload.email || '').trim().toLowerCase();
   let verifiedName = (payload.name || '').trim();
   let verifiedOid = payload.microsoftOid || '';
 
-  // 1. If a real Microsoft accessToken is present, verify it live against Microsoft Graph API
   if (payload.accessToken) {
     const graphProfile = await verifyTokenWithMicrosoftGraph(payload.accessToken);
     verifiedEmail = graphProfile.email || verifiedEmail;
     verifiedName = graphProfile.name || verifiedName;
     verifiedOid = graphProfile.microsoftOid || verifiedOid;
   } else if (payload.idToken) {
-    // Fallback JWT claim check if only idToken was provided
     const claims = decodeJwtPayload(payload.idToken);
     if (!claims) {
       const err: any = new Error('El token devuelto por Microsoft Entra ID es inválido.');
@@ -859,7 +731,6 @@ export async function authenticateMicrosoftUser(payload: {
     verifiedName = verifiedEmail.split('@')[0].replace(/[._]/g, ' ');
   }
 
-  // 1. Validate institutional email domain if restricted in .env
   const domainCheck = isEmailDomainAllowed(verifiedEmail);
   if (!domainCheck.allowed) {
     const err: any = new Error(
@@ -871,18 +742,17 @@ export async function authenticateMicrosoftUser(payload: {
     throw err;
   }
 
-  // 2. Lookup existing user in SQLite by email
-  const existingUser: any = db
-    .prepare(
-      `SELECT
-         id, name, email, role, cohort,
-         microsoft_oid as microsoftOid,
-         auth_provider as authProvider,
-         created_at as createdAt
-       FROM users
-       WHERE LOWER(email) = ?`
-    )
-    .get(verifiedEmail);
+  const existingUser: any = await dbGet(
+    `SELECT
+       id, name, email, role, cohort,
+       microsoft_oid as microsoftOid,
+       google_id as googleId,
+       auth_provider as authProvider,
+       created_at as createdAt
+     FROM users
+     WHERE LOWER(email) = ?`,
+    [verifiedEmail]
+  );
 
   const expectedTeacherPin = (
     process.env.TEACHER_ACCESS_PIN || 'DOCENTE-PAA-2026'
@@ -891,8 +761,19 @@ export async function authenticateMicrosoftUser(payload: {
     (process.env.ALWAYS_REQUIRE_TEACHER_PIN || 'false').trim().toLowerCase() ===
     'true';
 
-  // 3. Handle Option 1 Role Resolution (Student vs Teacher + PIN)
   if (payload.requestedRole === 'teacher') {
+    const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
+    if (!teacherDomainCheck.allowed) {
+      const err: any = new Error(
+        `Acceso restringido: Los docentes solo pueden ingresar con su correo institucional (${teacherDomainCheck.allowedList
+          .map((d) => `@${d}`)
+          .join(' o ')}).`
+      );
+      err.statusCode = 403;
+      err.code = 'INSTITUTIONAL_EMAIL_REQUIRED';
+      throw err;
+    }
+
     const isAlreadyRegisteredTeacher = existingUser?.role === 'teacher';
     const needsPinValidation = !isAlreadyRegisteredTeacher || alwaysRequirePin;
 
@@ -917,100 +798,291 @@ export async function authenticateMicrosoftUser(payload: {
       }
     }
 
-    // Validated Teacher: either update existing user to teacher or create new teacher
     if (existingUser) {
       const updatedCohort =
         existingUser.role === 'teacher'
           ? existingUser.cohort
           : payload.cohort || 'Cátedra Key Institute · Microsoft 365';
 
-      db.prepare(
+      await dbRun(
         `UPDATE users
          SET role = 'teacher',
              name = ?,
              cohort = ?,
              microsoft_oid = COALESCE(NULLIF(?, ''), microsoft_oid),
-             auth_provider = 'microsoft'
-         WHERE id = ?`
-      ).run(verifiedName, updatedCohort, verifiedOid, existingUser.id);
+             auth_provider = CASE WHEN auth_provider = 'google' THEN 'hybrid' ELSE 'microsoft' END
+         WHERE id = ?`,
+        [verifiedName, updatedCohort, verifiedOid, existingUser.id]
+      );
     } else {
       const id = `tch-${crypto.randomUUID().slice(0, 8)}`;
       const createdAt = new Date().toISOString();
       const cohort =
         payload.cohort?.trim() || 'Cátedra Key Institute · Microsoft 365';
 
-      db.prepare(
+      await dbRun(
         `INSERT INTO users (id, name, email, password, role, cohort, microsoft_oid, auth_provider, created_at)
-         VALUES (?, ?, ?, 'MICROSOFT_SSO', 'teacher', ?, ?, 'microsoft', ?)`
-      ).run(
-        id,
-        verifiedName,
-        verifiedEmail,
-        cohort,
-        verifiedOid || `ms-${id}`,
-        createdAt
+         VALUES (?, ?, ?, 'MICROSOFT_SSO', 'teacher', ?, ?, 'microsoft', ?)`,
+        [id, verifiedName, verifiedEmail, cohort, verifiedOid || `ms-${id}`, createdAt]
       );
     }
   } else {
-    // requestedRole === 'student'
     if (existingUser) {
-      db.prepare(
+      await dbRun(
         `UPDATE users
          SET name = ?,
              microsoft_oid = COALESCE(NULLIF(?, ''), microsoft_oid),
-             auth_provider = 'microsoft'
-         WHERE id = ?`
-      ).run(verifiedName, verifiedOid, existingUser.id);
+             auth_provider = CASE WHEN auth_provider = 'google' THEN 'hybrid' ELSE 'microsoft' END
+         WHERE id = ?`,
+        [verifiedName, verifiedOid, existingUser.id]
+      );
     } else {
-      // Auto-provision new student directly into SQLite
       const id = `stu-${crypto.randomUUID().slice(0, 8)}`;
       const createdAt = new Date().toISOString();
       const cohort =
         payload.cohort?.trim() ||
         'Cohorte Estudiantil Key Institute · Microsoft 365';
 
-      db.prepare(
+      await dbRun(
         `INSERT INTO users (id, name, email, password, role, cohort, microsoft_oid, auth_provider, created_at)
-         VALUES (?, ?, ?, 'MICROSOFT_SSO', 'student', ?, ?, 'microsoft', ?)`
-      ).run(
-        id,
-        verifiedName,
-        verifiedEmail,
-        cohort,
-        verifiedOid || `ms-${id}`,
-        createdAt
+         VALUES (?, ?, ?, 'MICROSOFT_SSO', 'student', ?, ?, 'microsoft', ?)`,
+        [id, verifiedName, verifiedEmail, cohort, verifiedOid || `ms-${id}`, createdAt]
       );
     }
   }
 
-  const finalUser = db
-    .prepare(
-      `SELECT
-         id, name, email, role, cohort,
-         microsoft_oid as microsoftOid,
-         auth_provider as authProvider,
-         created_at as createdAt
-       FROM users
-       WHERE LOWER(email) = ?`
-    )
-    .get(verifiedEmail);
-
-  return finalUser;
+  return dbGet(
+    `SELECT
+       id, name, email, role, cohort,
+       microsoft_oid as microsoftOid,
+       google_id as googleId,
+       auth_provider as authProvider,
+       created_at as createdAt
+     FROM users
+     WHERE LOWER(email) = ?`,
+    [verifiedEmail]
+  );
 }
 
-export function loginUser(email: string, password?: string) {
+/**
+ * Verifies a Google access_token against Google's OAuth2 v3 userinfo endpoint
+ */
+async function verifyGoogleAccessToken(accessToken: string) {
+  const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err: any = new Error(
+      'Google rechazó el token de acceso. Autenticación no válida.'
+    );
+    err.statusCode = 401;
+    throw err;
+  }
+
+  const profile: any = await response.json();
+  return {
+    googleId: profile.sub,
+    name: profile.name || profile.given_name || '',
+    email: (profile.email || '').toLowerCase(),
+  };
+}
+
+/**
+ * Authenticates or auto-provisions a Google Identity user
+ */
+export async function authenticateGoogleUser(payload: {
+  name: string;
+  email: string;
+  googleId?: string;
+  idToken?: string;
+  accessToken?: string;
+  requestedRole: 'student' | 'teacher';
+  teacherPin?: string;
+  cohort?: string;
+}) {
+  await ensureDbReady();
+  let verifiedEmail = (payload.email || '').trim().toLowerCase();
+  let verifiedName = (payload.name || '').trim();
+  let verifiedGoogleId = payload.googleId || '';
+
+  if (payload.accessToken) {
+    try {
+      const gProfile = await verifyGoogleAccessToken(payload.accessToken);
+      verifiedEmail = gProfile.email || verifiedEmail;
+      verifiedName = gProfile.name || verifiedName;
+      verifiedGoogleId = gProfile.googleId || verifiedGoogleId;
+    } catch (e) {
+      if (!verifiedEmail) throw e;
+    }
+  } else if (payload.idToken) {
+    const claims = decodeJwtPayload(payload.idToken);
+    if (claims) {
+      verifiedEmail = (claims.email || verifiedEmail).trim().toLowerCase();
+      verifiedName = (claims.name || verifiedName).trim();
+      verifiedGoogleId = claims.sub || verifiedGoogleId;
+    }
+  }
+
+  if (!verifiedEmail || !verifiedEmail.includes('@')) {
+    const err: any = new Error('Google no devolvió un correo válido.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (!verifiedName) {
+    verifiedName = verifiedEmail.split('@')[0].replace(/[._]/g, ' ');
+  }
+
+  const domainCheck = isEmailDomainAllowed(verifiedEmail);
+  if (!domainCheck.allowed) {
+    const err: any = new Error(
+      `El correo ${verifiedEmail} no pertenece a los dominios autorizados (${domainCheck.allowedList
+        .map((d) => `@${d}`)
+        .join(', ')}).`
+    );
+    err.statusCode = 403;
+    throw err;
+  }
+
+  const existingUser: any = await dbGet(
+    `SELECT
+       id, name, email, role, cohort,
+       microsoft_oid as microsoftOid,
+       google_id as googleId,
+       auth_provider as authProvider,
+       created_at as createdAt
+     FROM users
+     WHERE LOWER(email) = ?`,
+    [verifiedEmail]
+  );
+
+  const expectedTeacherPin = (
+    process.env.TEACHER_ACCESS_PIN || 'DOCENTE-PAA-2026'
+  ).trim();
+  const alwaysRequirePin =
+    (process.env.ALWAYS_REQUIRE_TEACHER_PIN || 'false').trim().toLowerCase() ===
+    'true';
+
+  if (payload.requestedRole === 'teacher') {
+    const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
+    if (!teacherDomainCheck.allowed) {
+      const err: any = new Error(
+        `Acceso restringido: Los docentes solo pueden ingresar con su correo institucional (${teacherDomainCheck.allowedList
+          .map((d) => `@${d}`)
+          .join(' o ')}).`
+      );
+      err.statusCode = 403;
+      err.code = 'INSTITUTIONAL_EMAIL_REQUIRED';
+      throw err;
+    }
+
+    const isAlreadyRegisteredTeacher = existingUser?.role === 'teacher';
+    const needsPinValidation = !isAlreadyRegisteredTeacher || alwaysRequirePin;
+
+    if (needsPinValidation) {
+      const providedPin = (payload.teacherPin || '').trim();
+      if (!providedPin) {
+        const err: any = new Error(
+          'Esta cuenta aún no está registrada como Docente. Ingresa el Código/PIN de Cátedra Docente para autorizar el acceso.'
+        );
+        err.statusCode = 403;
+        err.code = 'PIN_REQUIRED';
+        throw err;
+      }
+
+      if (providedPin !== expectedTeacherPin) {
+        const err: any = new Error(
+          'Código/PIN de Cátedra Docente incorrecto. Verifica la clave institucional e inténtalo de nuevo.'
+        );
+        err.statusCode = 403;
+        err.code = 'INVALID_PIN';
+        throw err;
+      }
+    }
+
+    if (existingUser) {
+      const updatedCohort =
+        existingUser.role === 'teacher'
+          ? existingUser.cohort
+          : payload.cohort || 'Cátedra Key Institute · Google';
+
+      await dbRun(
+        `UPDATE users
+         SET role = 'teacher',
+             name = ?,
+             cohort = ?,
+             google_id = COALESCE(NULLIF(?, ''), google_id),
+             auth_provider = CASE WHEN auth_provider = 'microsoft' THEN 'hybrid' ELSE 'google' END
+         WHERE id = ?`,
+        [verifiedName, updatedCohort, verifiedGoogleId, existingUser.id]
+      );
+    } else {
+      const id = `tch-${crypto.randomUUID().slice(0, 8)}`;
+      const createdAt = new Date().toISOString();
+      const cohort =
+        payload.cohort?.trim() || 'Cátedra Key Institute · Google';
+
+      await dbRun(
+        `INSERT INTO users (id, name, email, password, role, cohort, google_id, auth_provider, created_at)
+         VALUES (?, ?, ?, 'GOOGLE_OAUTH', 'teacher', ?, ?, 'google', ?)`,
+        [id, verifiedName, verifiedEmail, cohort, verifiedGoogleId || `goog-${id}`, createdAt]
+      );
+    }
+  } else {
+    if (existingUser) {
+      await dbRun(
+        `UPDATE users
+         SET name = ?,
+             google_id = COALESCE(NULLIF(?, ''), google_id),
+             auth_provider = CASE WHEN auth_provider = 'microsoft' THEN 'hybrid' ELSE 'google' END
+         WHERE id = ?`,
+        [verifiedName, verifiedGoogleId, existingUser.id]
+      );
+    } else {
+      const id = `stu-${crypto.randomUUID().slice(0, 8)}`;
+      const createdAt = new Date().toISOString();
+      const cohort =
+        payload.cohort?.trim() ||
+        'Cohorte Estudiantil Key Institute · Google';
+
+      await dbRun(
+        `INSERT INTO users (id, name, email, password, role, cohort, google_id, auth_provider, created_at)
+         VALUES (?, ?, ?, 'GOOGLE_OAUTH', 'student', ?, ?, 'google', ?)`,
+        [id, verifiedName, verifiedEmail, cohort, verifiedGoogleId || `goog-${id}`, createdAt]
+      );
+    }
+  }
+
+  return dbGet(
+    `SELECT
+       id, name, email, role, cohort,
+       microsoft_oid as microsoftOid,
+       google_id as googleId,
+       auth_provider as authProvider,
+       created_at as createdAt
+     FROM users
+     WHERE LOWER(email) = ?`,
+    [verifiedEmail]
+  );
+}
+
+export async function loginUser(email: string, password?: string) {
+  await ensureDbReady();
   const normalized = email.trim().toLowerCase();
-  const user = db
-    .prepare(
-      `SELECT
-         id, name, email, password, role, cohort,
-         microsoft_oid as microsoftOid,
-         auth_provider as authProvider,
-         created_at as createdAt
-       FROM users
-       WHERE LOWER(email) = ?`
-    )
-    .get(normalized);
+  const user: any = await dbGet(
+    `SELECT
+       id, name, email, password, role, cohort,
+       microsoft_oid as microsoftOid,
+       google_id as googleId,
+       auth_provider as authProvider,
+       created_at as createdAt
+     FROM users
+     WHERE LOWER(email) = ?`,
+    [normalized]
+  );
 
   if (!user) return null;
   if (password !== undefined && password !== '' && user.password !== password) {
@@ -1021,29 +1093,23 @@ export function loginUser(email: string, password?: string) {
   return safeUser;
 }
 
-export function registerUser(payload: {
+export async function registerUser(payload: {
   name: string;
   email: string;
   password?: string;
   role: 'student' | 'teacher';
   cohort: string;
 }) {
+  await ensureDbReady();
   const id = `${payload.role === 'teacher' ? 'tch' : 'stu'}-${crypto.randomUUID().slice(0, 8)}`;
   const createdAt = new Date().toISOString();
   const email = payload.email.trim().toLowerCase();
   const password = payload.password?.trim() || 'key2026';
 
-  db.prepare(
+  await dbRun(
     `INSERT INTO users (id, name, email, password, role, cohort, auth_provider, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, 'local', ?)`
-  ).run(
-    id,
-    payload.name.trim(),
-    email,
-    password,
-    payload.role,
-    payload.cohort.trim(),
-    createdAt
+     VALUES (?, ?, ?, ?, ?, ?, 'local', ?)`,
+    [id, payload.name.trim(), email, password, payload.role, payload.cohort.trim(), createdAt]
   );
 
   return {
@@ -1057,31 +1123,51 @@ export function registerUser(payload: {
   };
 }
 
-export function getAllStudyMaterials() {
-  return db
-    .prepare(
-      `SELECT
-         id,
-         title,
-         section,
-         category,
-         summary,
-         content,
-         reading_time_minutes as readingTimeMinutes,
-         author_id as authorId,
-         author_name as authorName,
-         attachment_name as attachmentName,
-         attachment_mime as attachmentMime,
-         attachment_size as attachmentSize,
-         attachment_url as attachmentUrl,
-         created_at as createdAt
-       FROM study_materials
-       ORDER BY datetime(created_at) DESC`
-    )
-    .all();
+export async function getAllStudyMaterials() {
+  await ensureDbReady();
+  return dbAll(
+    `SELECT
+       id,
+       title,
+       section,
+       category,
+       summary,
+       content,
+       reading_time_minutes as readingTimeMinutes,
+       author_id as authorId,
+       author_name as authorName,
+       attachment_name as attachmentName,
+       attachment_mime as attachmentMime,
+       attachment_size as attachmentSize,
+       attachment_url as attachmentUrl,
+       created_at as createdAt
+     FROM study_materials
+     ORDER BY datetime(created_at) DESC`
+  );
 }
 
-function saveBase64AttachmentIfPresent(payload: {
+export async function getUploadedFileFromDb(filename: string): Promise<{
+  mimeType: string;
+  size: number;
+  buffer: Buffer;
+} | null> {
+  await ensureDbReady();
+  const row: any = await dbGet(
+    `SELECT mime_type as mimeType, size, data_base64 as dataBase64
+     FROM uploaded_files
+     WHERE filename = ?`,
+    [filename]
+  );
+  if (!row || !row.dataBase64) return null;
+  const buffer = Buffer.from(row.dataBase64, 'base64');
+  return {
+    mimeType: row.mimeType || 'application/octet-stream',
+    size: Number(row.size) || buffer.length,
+    buffer,
+  };
+}
+
+async function saveBase64AttachmentIfPresent(payload: {
   attachmentName?: string | null;
   attachmentMime?: string | null;
   attachmentSize?: number | null;
@@ -1091,20 +1177,34 @@ function saveBase64AttachmentIfPresent(payload: {
   if (payload.attachmentDataBase64 && payload.attachmentName) {
     const safeName = payload.attachmentName.replace(/[^a-zA-Z0-9._-]/g, '_');
     const uniqueFileName = `${Date.now()}-${crypto.randomUUID().slice(0, 6)}-${safeName}`;
-    const filePath = path.join(UPLOADS_DIR, uniqueFileName);
 
-    // Strip optional data:*/*;base64, prefix
     const base64Clean = payload.attachmentDataBase64.includes('base64,')
       ? payload.attachmentDataBase64.split('base64,')[1]
       : payload.attachmentDataBase64;
 
     const buffer = Buffer.from(base64Clean, 'base64');
-    fs.writeFileSync(filePath, buffer);
+    const mimeType = payload.attachmentMime || 'application/octet-stream';
+    const byteSize = payload.attachmentSize || buffer.length;
+
+    // 1. Save to local disk cache if writable
+    try {
+      const filePath = path.join(UPLOADS_DIR, uniqueFileName);
+      fs.writeFileSync(filePath, buffer);
+    } catch {
+      // Ignore on read-only serverless disk
+    }
+
+    // 2. Persist in SQLite / Turso Cloud table so Vercel Serverless serves it 24/7
+    await dbRun(
+      `INSERT OR REPLACE INTO uploaded_files (filename, mime_type, size, data_base64, created_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [uniqueFileName, mimeType, byteSize, base64Clean, new Date().toISOString()]
+    );
 
     return {
       attachmentName: payload.attachmentName,
-      attachmentMime: payload.attachmentMime || 'application/octet-stream',
-      attachmentSize: payload.attachmentSize || buffer.length,
+      attachmentMime: mimeType,
+      attachmentSize: byteSize,
       attachmentUrl: `/api/uploads/${encodeURIComponent(uniqueFileName)}`,
     };
   }
@@ -1117,7 +1217,7 @@ function saveBase64AttachmentIfPresent(payload: {
   };
 }
 
-export function createStudyMaterial(payload: {
+export async function createStudyMaterial(payload: {
   title: string;
   section: 'reading' | 'math';
   category: string;
@@ -1131,38 +1231,41 @@ export function createStudyMaterial(payload: {
   attachmentSize?: number | null;
   attachmentDataBase64?: string | null;
 }) {
+  await ensureDbReady();
   const id = `mat-${crypto.randomUUID().slice(0, 8)}`;
   const createdAt = new Date().toISOString();
-  const att = saveBase64AttachmentIfPresent(payload);
+  const att = await saveBase64AttachmentIfPresent(payload);
 
-  db.prepare(
+  await dbRun(
     `INSERT INTO study_materials (
        id, title, section, category, summary, content,
        reading_time_minutes, author_id, author_name,
        attachment_name, attachment_mime, attachment_size, attachment_url,
        created_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(
-    id,
-    payload.title.trim(),
-    payload.section,
-    payload.category.trim(),
-    payload.summary.trim(),
-    payload.content.trim(),
-    Number(payload.readingTimeMinutes) || 5,
-    payload.authorId,
-    payload.authorName,
-    att.attachmentName,
-    att.attachmentMime,
-    att.attachmentSize,
-    att.attachmentUrl,
-    createdAt
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      payload.title.trim(),
+      payload.section,
+      payload.category.trim(),
+      payload.summary.trim(),
+      payload.content.trim(),
+      Number(payload.readingTimeMinutes) || 5,
+      payload.authorId,
+      payload.authorName,
+      att.attachmentName,
+      att.attachmentMime,
+      att.attachmentSize,
+      att.attachmentUrl,
+      createdAt,
+    ]
   );
 
-  return getAllStudyMaterials().find((m: any) => m.id === id);
+  const all = await getAllStudyMaterials();
+  return all.find((m: any) => m.id === id);
 }
 
-export function updateStudyMaterial(
+export async function updateStudyMaterial(
   id: string,
   payload: {
     title: string;
@@ -1179,7 +1282,9 @@ export function updateStudyMaterial(
     removeAttachment?: boolean;
   }
 ) {
-  const existing: any = getAllStudyMaterials().find((m: any) => m.id === id);
+  await ensureDbReady();
+  const allBefore = await getAllStudyMaterials();
+  const existing: any = allBefore.find((m: any) => m.id === id);
 
   let att = {
     attachmentName: existing?.attachmentName ?? null,
@@ -1196,10 +1301,10 @@ export function updateStudyMaterial(
       attachmentUrl: null,
     };
   } else if (payload.attachmentDataBase64 && payload.attachmentName) {
-    att = saveBase64AttachmentIfPresent(payload);
+    att = await saveBase64AttachmentIfPresent(payload);
   }
 
-  db.prepare(
+  await dbRun(
     `UPDATE study_materials
      SET title = ?,
          section = ?,
@@ -1211,29 +1316,34 @@ export function updateStudyMaterial(
          attachment_mime = ?,
          attachment_size = ?,
          attachment_url = ?
-     WHERE id = ?`
-  ).run(
-    payload.title.trim(),
-    payload.section,
-    payload.category.trim(),
-    payload.summary.trim(),
-    payload.content.trim(),
-    Number(payload.readingTimeMinutes) || 5,
-    att.attachmentName,
-    att.attachmentMime,
-    att.attachmentSize,
-    att.attachmentUrl,
-    id
+     WHERE id = ?`,
+    [
+      payload.title.trim(),
+      payload.section,
+      payload.category.trim(),
+      payload.summary.trim(),
+      payload.content.trim(),
+      Number(payload.readingTimeMinutes) || 5,
+      att.attachmentName,
+      att.attachmentMime,
+      att.attachmentSize,
+      att.attachmentUrl,
+      id,
+    ]
   );
-  return getAllStudyMaterials().find((m: any) => m.id === id);
+
+  const allAfter = await getAllStudyMaterials();
+  return allAfter.find((m: any) => m.id === id);
 }
 
-export function deleteStudyMaterial(id: string) {
-  db.prepare('DELETE FROM study_materials WHERE id = ?').run(id);
+export async function deleteStudyMaterial(id: string) {
+  await ensureDbReady();
+  await dbRun('DELETE FROM study_materials WHERE id = ?', [id]);
   return { deletedId: id };
 }
 
-export function getAllTestAttempts(userId?: string) {
+export async function getAllTestAttempts(userId?: string) {
+  await ensureDbReady();
   const baseQuery = `
     SELECT
       t.id,
@@ -1259,10 +1369,10 @@ export function getAllTestAttempts(userId?: string) {
   `;
 
   const rows = userId
-    ? db
-        .prepare(`${baseQuery} WHERE t.user_id = ? ORDER BY datetime(t.completed_at) DESC`)
-        .all(userId)
-    : db.prepare(`${baseQuery} ORDER BY datetime(t.completed_at) DESC`).all();
+    ? await dbAll(`${baseQuery} WHERE t.user_id = ? ORDER BY datetime(t.completed_at) DESC`, [
+        userId,
+      ])
+    : await dbAll(`${baseQuery} ORDER BY datetime(t.completed_at) DESC`);
 
   return rows.map((row: any) => {
     const { answersJson, ...rest } = row;
@@ -1279,7 +1389,7 @@ export function getAllTestAttempts(userId?: string) {
   });
 }
 
-export function createTestAttempt(payload: {
+export async function createTestAttempt(payload: {
   userId: string;
   mode: 'simulacro' | 'sprint_reading' | 'sprint_math';
   modeTitle: string;
@@ -1294,34 +1404,36 @@ export function createTestAttempt(payload: {
   durationSeconds: number;
   answers: Record<string, string>;
 }) {
+  await ensureDbReady();
   const id = `att-${crypto.randomUUID().slice(0, 8)}`;
   const completedAt = new Date().toISOString();
 
-  db.prepare(
+  await dbRun(
     `INSERT INTO test_attempts (
        id, user_id, mode, mode_title,
        reading_correct, reading_total, math_correct, math_total,
        total_correct, total_questions, percentage, scaled_score,
        duration_seconds, answers_json, completed_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(
-    id,
-    payload.userId,
-    payload.mode,
-    payload.modeTitle,
-    payload.readingCorrect,
-    payload.readingTotal,
-    payload.mathCorrect,
-    payload.mathTotal,
-    payload.totalCorrect,
-    payload.totalQuestions,
-    payload.percentage,
-    payload.scaledScore,
-    payload.durationSeconds,
-    JSON.stringify(payload.answers ?? {}),
-    completedAt
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      payload.userId,
+      payload.mode,
+      payload.modeTitle,
+      payload.readingCorrect,
+      payload.readingTotal,
+      payload.mathCorrect,
+      payload.mathTotal,
+      payload.totalCorrect,
+      payload.totalQuestions,
+      payload.percentage,
+      payload.scaledScore,
+      payload.durationSeconds,
+      JSON.stringify(payload.answers ?? {}),
+      completedAt,
+    ]
   );
 
-  const all = getAllTestAttempts();
+  const all = await getAllTestAttempts();
   return all.find((item: any) => item.id === id);
 }
