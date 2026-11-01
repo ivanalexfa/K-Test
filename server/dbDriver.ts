@@ -170,10 +170,30 @@ export function getUploadsDir(): string {
 function getLocalSqliteDb(): any {
   if (localDbInstance) return localDbInstance;
 
-  const requireFn = createRequire(import.meta.url);
-  const { DatabaseSync } = requireFn('node:sqlite');
-
   const isVercel = Boolean(process.env.VERCEL);
+  if (isVercel && !isTursoConfigured()) {
+    const err: any = new Error(
+      'Faltan las variables de entorno de Turso (TURSO_DATABASE_URL y TURSO_AUTH_TOKEN) en la configuración de Vercel. Agrégalas en Vercel -> Settings -> Environment Variables.'
+    );
+    err.statusCode = 500;
+    err.code = 'TURSO_CREDENTIALS_MISSING';
+    throw err;
+  }
+
+  let DatabaseSync: any;
+  try {
+    const requireFn = createRequire(import.meta.url);
+    const sqliteMod = requireFn('node:sqlite');
+    DatabaseSync = sqliteMod.DatabaseSync;
+  } catch {
+    const err: any = new Error(
+      'El motor node:sqlite no está disponible en este entorno Node.js. En producción sobre Vercel debes configurar TURSO_DATABASE_URL y TURSO_AUTH_TOKEN.'
+    );
+    err.statusCode = 500;
+    err.code = 'SQLITE_NOT_AVAILABLE';
+    throw err;
+  }
+
   const repoDbPath = path.resolve(process.cwd(), 'data', 'paa_platform.sqlite');
 
   let activeDbPath = repoDbPath;

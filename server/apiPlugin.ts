@@ -17,18 +17,33 @@ import {
   getAllTestAttempts,
   createTestAttempt,
 } from './database';
+import { isTursoConfigured } from './dbDriver';
 
 function readJsonBody(req: any): Promise<any> {
-  if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
-    return Promise.resolve(req.body);
-  }
-  if (typeof req.body === 'string' && req.body.trim().length > 0) {
-    try {
-      return Promise.resolve(JSON.parse(req.body));
-    } catch (e) {
-      return Promise.reject(e);
+  if (req.body !== undefined && req.body !== null) {
+    if (typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
+      return Promise.resolve(req.body);
+    }
+    if (typeof req.body === 'string') {
+      try {
+        return Promise.resolve(req.body.trim() ? JSON.parse(req.body) : {});
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+    if (Buffer.isBuffer(req.body)) {
+      try {
+        return Promise.resolve(JSON.parse(req.body.toString('utf-8')));
+      } catch (e) {
+        return Promise.reject(e);
+      }
     }
   }
+
+  if (req.readableEnded) {
+    return Promise.resolve({});
+  }
+
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     req.on('data', (chunk: Buffer) => {
@@ -38,7 +53,7 @@ function readJsonBody(req: any): Promise<any> {
       if (chunks.length === 0) return resolve({});
       try {
         const raw = Buffer.concat(chunks).toString('utf-8');
-        resolve(JSON.parse(raw));
+        resolve(raw.trim() ? JSON.parse(raw) : {});
       } catch (err) {
         reject(err);
       }
@@ -48,6 +63,7 @@ function readJsonBody(req: any): Promise<any> {
 }
 
 function sendJson(res: any, statusCode: number, payload: any) {
+  if (res.writableEnded) return;
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(JSON.stringify(payload));
@@ -79,15 +95,33 @@ function getMimeTypeByExtension(filename: string): string {
 }
 
 export async function handleApiRequest(req: any, res: any): Promise<boolean> {
-  if (!req.url || !req.url.startsWith('/api/')) {
-    return false;
+  const rawPath =
+    req.headers?.['x-forwarded-uri'] ||
+    req.headers?.['x-matched-path'] ||
+    req.originalUrl ||
+    req.url ||
+    '/';
+
+  const urlObj = new URL(rawPath, 'http://localhost');
+  let pathname = urlObj.pathname;
+  if (!pathname.startsWith('/api')) {
+    pathname = '/api' + (pathname.startsWith('/') ? pathname : '/' + pathname);
   }
 
-  const urlObj = new URL(req.url, 'http://localhost');
-  const pathname = urlObj.pathname;
   const method = req.method || 'GET';
 
   try {
+    // GET /api/health or GET /api (Diagnostic endpoint)
+    if (method === 'GET' && (pathname === '/api/health' || pathname === '/api')) {
+      sendJson(res, 200, {
+        status: 'ok',
+        tursoConfigured: isTursoConfigured(),
+        environment: process.env.NODE_ENV || 'production',
+        timestamp: new Date().toISOString(),
+      });
+      return true;
+    }
+
     // Serve uploaded study material files: GET /api/uploads/:filename
     if (method === 'GET' && pathname.startsWith('/api/uploads/')) {
       const encodedName = pathname.replace('/api/uploads/', '');
@@ -320,12 +354,14 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
       return true;
     }
 
-    sendJson(res, 404, { error: 'Ruta API no encontrada' });
+    sendJson(res, 404, {
+      error: `Ruta API no encontrada (${method} ${pathname})`,
+    });
     return true;
   } catch (err: any) {
     const status = err?.statusCode || 500;
     sendJson(res, status, {
-      error: err?.message || 'Error interno en la base de datos',
+      error: err?.message || 'Error interno en el servidor de base de datos',
       code: err?.code,
     });
     return true;
@@ -335,8 +371,11 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
 export function paaSqliteApiPlugin() {
   const attachMiddleware = (middlewares: any) => {
     middlewares.use(async (req: any, res: any, next: any) => {
+      if (!req.url || !req.url.startsWith('/api/')) {
+        return next();
+      }
       const handled = await handleApiRequest(req, res);
-      if (!handled) {
+      if (!handled && !res.writableEnded) {
         return next();
       }
     });
