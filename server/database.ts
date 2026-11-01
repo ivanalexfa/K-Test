@@ -139,7 +139,7 @@ async function seedDatabaseIfEmpty() {
     [
       'tch-1',
       'Dr. Roberto Méndez',
-      'roberto.mendez@keyinstitute.com',
+      'roberto.mendez@keyinstitute.edu.sv',
       'docente2026',
       'teacher',
       'Departamento de Matemáticas y Física Aplicada',
@@ -150,7 +150,7 @@ async function seedDatabaseIfEmpty() {
     [
       'tch-2',
       'Mtra. Elena Valladares',
-      'elena.valladares@keyinstitute.com',
+      'elena.valladares@keyinstitute.edu.sv',
       'docente2026',
       'teacher',
       'Coordinación de Lectura Crítica y Comunicación Científica',
@@ -640,7 +640,7 @@ function isTeacherInstitutionalDomain(email: string): {
   allowedList: string[];
 } {
   const rawRule = (
-    process.env.TEACHER_EMAIL_DOMAINS || 'keyinstitute.com,keyinstitute.edu.sv'
+    process.env.TEACHER_EMAIL_DOMAINS || 'keyinstitute.edu.sv'
   ).trim();
   const allowedList = rawRule
     .split(',')
@@ -935,18 +935,15 @@ export async function authenticateGoogleUser(payload: {
   );
 
   if (payload.requestedRole === 'teacher') {
-    const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
-    if (!teacherDomainCheck.allowed) {
-      const err: any = new Error(
-        `Acceso restringido: Los docentes solo pueden ingresar con su correo institucional (${teacherDomainCheck.allowedList
-          .map((d) => `@${d}`)
-          .join(' o ')}).`
-      );
-      err.statusCode = 403;
-      err.code = 'INSTITUTIONAL_EMAIL_REQUIRED';
-      throw err;
-    }
+    const err: any = new Error(
+      'Los docentes de Key Institute deben autenticarse exclusivamente a través de su cuenta Microsoft institucional (@keyinstitute.edu.sv).'
+    );
+    err.statusCode = 403;
+    err.code = 'TEACHER_MICROSOFT_EXCLUSIVE';
+    throw err;
+  }
 
+  if (payload.requestedRole === 'teacher') {
     if (existingUser) {
       const updatedCohort =
         existingUser.role === 'teacher'

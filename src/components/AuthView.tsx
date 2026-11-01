@@ -96,7 +96,7 @@ const GoogleLogoSvg: React.FC<{ className?: string }> = ({
 
 const INSTITUTIONAL_TEACHER_DOMAINS = (
   ((import.meta as any).env?.VITE_TEACHER_EMAIL_DOMAINS as string) ||
-  'keyinstitute.com,keyinstitute.edu.sv'
+  'keyinstitute.edu.sv'
 )
   .split(',')
   .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
@@ -185,11 +185,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setError(null);
 
 
-    if (roleTab === 'teacher' && !isInstitutionalTeacherEmail(identity.email)) {
+    if (roleTab === 'teacher') {
       setError(
-        `Acceso restringido: Los docentes solo pueden ingresar con su correo institucional (${INSTITUTIONAL_TEACHER_DOMAINS.map(
-          (d) => `@${d}`
-        ).join(' o ')}).`
+        'Los docentes deben ingresar exclusivamente mediante su cuenta institucional Microsoft (@keyinstitute.edu.sv).'
       );
       setIsGoogleSimModalOpen(false);
       return;
@@ -224,6 +222,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const handleClickGoogleLogin = async () => {
     setError(null);
 
+    if (roleTab === 'teacher') {
+      setError(
+        'Los docentes deben ingresar exclusivamente mediante su cuenta institucional Microsoft (@keyinstitute.edu.sv).'
+      );
+      return;
+    }
 
     if (realGoogleActive) {
       try {
@@ -246,7 +250,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             }
           : teachers[0] || {
               name: 'Dr. Roberto Méndez',
-              email: 'roberto.mendez@keyinstitute.com',
+              email: 'roberto.mendez@keyinstitute.edu.sv',
             };
       setSimName(defaultAcc.name);
       setSimEmail(defaultAcc.email);
@@ -331,7 +335,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             }
           : teachers[0] || {
               name: 'Dr. Roberto Méndez',
-              email: 'roberto.mendez@keyinstitute.com',
+              email: 'roberto.mendez@keyinstitute.edu.sv',
             };
       setSimName(defaultAcc.name);
       setSimEmail(defaultAcc.email);
@@ -350,7 +354,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   };
 
   return (
-    <div className="min-h-dvh flex flex-col bg-[#F8FAFC] text-[#0A1128]">
+    <div className="min-h-dvh flex flex-col bg-[#0A1128] text-white">
       {/* Top Institutional Bar */}
       <header className="bg-[#0A1128] text-white border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -361,7 +365,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       </header>
 
       {/* Hero Section with Centered Minimalist Login Card */}
-      <section className="relative bg-[#0A1128] text-white pt-10 pb-20 sm:pt-14 sm:pb-24 px-4 sm:px-6 overflow-hidden border-b border-slate-800">
+      <section className="relative bg-[#0A1128] text-white pt-10 pb-20 sm:pt-14 sm:pb-24 px-4 sm:px-6 overflow-hidden">
         {/* Ambient Key Institute Glows */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[650px] h-[300px] bg-[#0052FF]/25 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 right-10 w-80 h-80 bg-[#00D2FF]/10 blur-[100px] pointer-events-none" />
@@ -459,30 +463,34 @@ export const AuthView: React.FC<AuthViewProps> = ({
               </div>
             )}
 
-            {/* Symmetrical Dual Login Buttons: Google + Microsoft */}
+            {/* Login Buttons: Google is student-only, Microsoft is institutional & for both */}
             <div className="space-y-3 pt-1">
-              <button
-                type="button"
-                disabled={loadingGoogle || loadingMs}
-                onClick={handleClickGoogleLogin}
-                className="w-full py-3.5 px-5 rounded-xl bg-white hover:bg-slate-50 text-[#0A1128] border-2 border-slate-200 hover:border-[#0052FF]/40 font-display font-bold text-sm sm:text-base shadow-xs grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60"
-              >
-                <GoogleLogoSvg className="w-5 h-5 shrink-0" />
-                <span className="text-center">
-                  {loadingGoogle
-                    ? 'Conectando con Google...'
-                    : 'Continuar con Google'}
-                </span>
-                <ArrowRight className="w-4 h-4 text-[#0052FF] justify-self-end" />
-              </button>
+              {roleTab === 'student' && (
+                <>
+                  <button
+                    type="button"
+                    disabled={loadingGoogle || loadingMs}
+                    onClick={handleClickGoogleLogin}
+                    className="w-full py-3.5 px-5 rounded-xl bg-white hover:bg-slate-50 text-[#0A1128] border-2 border-slate-200 hover:border-[#0052FF]/40 font-display font-bold text-sm sm:text-base shadow-xs grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60"
+                  >
+                    <GoogleLogoSvg className="w-5 h-5 shrink-0" />
+                    <span className="text-center">
+                      {loadingGoogle
+                        ? 'Conectando con Google...'
+                        : 'Continuar con Google'}
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-[#0052FF] justify-self-end" />
+                  </button>
 
-              <div className="flex items-center gap-3.5 py-1" role="separator">
-                <div className="h-px flex-1 bg-slate-200" />
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest select-none leading-none">
-                  o bien
-                </span>
-                <div className="h-px flex-1 bg-slate-200" />
-              </div>
+                  <div className="flex items-center gap-3.5 py-1" role="separator">
+                    <div className="h-px flex-1 bg-slate-200" />
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest select-none leading-none">
+                      o bien
+                    </span>
+                    <div className="h-px flex-1 bg-slate-200" />
+                  </div>
+                </>
+              )}
 
               <button
                 type="button"

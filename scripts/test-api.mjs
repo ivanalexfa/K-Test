@@ -126,11 +126,10 @@ async function runTests() {
       method: 'POST',
       query: { __pathname: '/api/auth/google' },
       body: {
-        name: 'Dr. Alejandro Martinez',
-        email: 'a.martinez@keyinstitute.edu.sv',
-        googleId: 'google-prof-777',
-        requestedRole: 'teacher',
-
+        name: 'Carlos Estudiante Google',
+        email: 'carlos.estudiante@gmail.com',
+        googleId: 'google-student-777',
+        requestedRole: 'student',
       },
     });
     console.log('  2.3 POST /api/auth/google (rewrite):', resGoogle.statusCode, JSON.parse(resGoogle.body).user?.email, 'Role:', JSON.parse(resGoogle.body).user?.role);
@@ -291,24 +290,28 @@ async function runTests() {
 
       },
     });
-    console.log('  4.10 POST /api/auth/google teacher non-institutional email:', resTeacherNonInst.statusCode, JSON.parse(resTeacherNonInst.body).code);
+    console.log('  4.10 POST /api/auth/google teacher rejected (Microsoft only):', resTeacherNonInst.statusCode, JSON.parse(resTeacherNonInst.body).code);
     if (resTeacherNonInst.statusCode !== 403) throw new Error('Non-institutional teacher email should return 403');
 
-    // 4.11 Institutional teacher login succeeds without PIN (200 OK)
-    const resTeacherNoPin = await invokeHandler(indexHandler, {
-      url: '/api/index.js?__pathname=/api/auth/google',
+    // 4.11 Teacher with @keyinstitute.com rejected on Microsoft (must be @keyinstitute.edu.sv)
+    const resTeacherCom = await invokeHandler(indexHandler, {
+      url: '/api/index.js?__pathname=/api/auth/microsoft',
       method: 'POST',
-      query: { __pathname: '/api/auth/google' },
+      query: { __pathname: '/api/auth/microsoft' },
       body: {
-        name: 'Docente Nuevo Sin Pin',
-        email: 'docente.nuevo@keyinstitute.edu.sv',
-        googleId: 'goog-nopin-002',
+        name: 'Docente Con Dot Com',
+        email: 'docente@keyinstitute.com',
+        microsoftOid: 'ms-prof-com-1',
         requestedRole: 'teacher',
       },
     });
-    console.log('  4.11 POST /api/auth/google teacher without PIN:', resTeacherNoPin.statusCode, JSON.parse(resTeacherNoPin.body).user?.role);
-    if (resTeacherNoPin.statusCode !== 200 || JSON.parse(resTeacherNoPin.body).user?.role !== 'teacher') {
-      throw new Error('Institutional teacher should login successfully without PIN');
+    const parsedComErr = JSON.parse(resTeacherCom.body);
+    console.log('  4.11 POST /api/auth/microsoft with @keyinstitute.com:', resTeacherCom.statusCode, parsedComErr.error);
+    if (resTeacherCom.statusCode !== 403 || parsedComErr.code !== 'INSTITUTIONAL_EMAIL_REQUIRED') {
+      throw new Error('Teacher with @keyinstitute.com should return 403 INSTITUTIONAL_EMAIL_REQUIRED');
+    }
+    if (parsedComErr.error.includes('keyinstitute.com')) {
+      throw new Error('Error message must not mention keyinstitute.com');
     }
 
     // 4.11b Institutional teacher via Microsoft succeeds without PIN (200 OK)
@@ -318,7 +321,7 @@ async function runTests() {
       query: { __pathname: '/api/auth/microsoft' },
       body: {
         name: 'Dra. Carmen Key',
-        email: 'carmen.key@keyinstitute.com',
+        email: 'carmen.key@keyinstitute.edu.sv',
         microsoftOid: 'ms-prof-999',
         requestedRole: 'teacher',
       },

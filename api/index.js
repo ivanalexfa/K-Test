@@ -343,7 +343,7 @@ async function seedDatabaseIfEmpty() {
     [
       "tch-1",
       "Dr. Roberto M\xE9ndez",
-      "roberto.mendez@keyinstitute.com",
+      "roberto.mendez@keyinstitute.edu.sv",
       "docente2026",
       "teacher",
       "Departamento de Matem\xE1ticas y F\xEDsica Aplicada",
@@ -354,7 +354,7 @@ async function seedDatabaseIfEmpty() {
     [
       "tch-2",
       "Mtra. Elena Valladares",
-      "elena.valladares@keyinstitute.com",
+      "elena.valladares@keyinstitute.edu.sv",
       "docente2026",
       "teacher",
       "Coordinaci\xF3n de Lectura Cr\xEDtica y Comunicaci\xF3n Cient\xEDfica",
@@ -807,7 +807,7 @@ function isEmailDomainAllowed(email) {
   };
 }
 function isTeacherInstitutionalDomain(email) {
-  const rawRule = (process.env.TEACHER_EMAIL_DOMAINS || "keyinstitute.com,keyinstitute.edu.sv").trim();
+  const rawRule = (process.env.TEACHER_EMAIL_DOMAINS || "keyinstitute.edu.sv").trim();
   const allowedList = rawRule.split(",").map((d) => d.trim().toLowerCase().replace(/^@/, "")).filter(Boolean);
   const emailDomain = email.split("@")[1]?.toLowerCase() || "";
   return {
@@ -1023,15 +1023,14 @@ async function authenticateGoogleUser(payload) {
     [verifiedEmail]
   );
   if (payload.requestedRole === "teacher") {
-    const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
-    if (!teacherDomainCheck.allowed) {
-      const err = new Error(
-        `Acceso restringido: Los docentes solo pueden ingresar con su correo institucional (${teacherDomainCheck.allowedList.map((d) => `@${d}`).join(" o ")}).`
-      );
-      err.statusCode = 403;
-      err.code = "INSTITUTIONAL_EMAIL_REQUIRED";
-      throw err;
-    }
+    const err = new Error(
+      "Los docentes de Key Institute deben autenticarse exclusivamente a trav\xE9s de su cuenta Microsoft institucional (@keyinstitute.edu.sv)."
+    );
+    err.statusCode = 403;
+    err.code = "TEACHER_MICROSOFT_EXCLUSIVE";
+    throw err;
+  }
+  if (payload.requestedRole === "teacher") {
     if (existingUser) {
       const updatedCohort = existingUser.role === "teacher" ? existingUser.cohort : payload.cohort || "C\xE1tedra Key Institute \xB7 Google";
       await dbRun(
