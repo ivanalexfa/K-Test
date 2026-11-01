@@ -95,15 +95,22 @@ function getMimeTypeByExtension(filename: string): string {
 }
 
 export async function handleApiRequest(req: any, res: any): Promise<boolean> {
-  const rawPath =
-    req.headers?.['x-forwarded-uri'] ||
-    req.headers?.['x-matched-path'] ||
-    req.originalUrl ||
-    req.url ||
+  const urlObj = new URL(req.url || '/', 'http://localhost');
+  const queryPathname =
+    (typeof req.query?.__pathname === 'string' && req.query.__pathname) ||
+    urlObj.searchParams.get('__pathname');
+
+  let pathname =
+    queryPathname ||
+    (typeof req.headers?.['x-forwarded-uri'] === 'string'
+      ? req.headers['x-forwarded-uri'].split('?')[0]
+      : '') ||
+    urlObj.pathname ||
     '/';
 
-  const urlObj = new URL(rawPath, 'http://localhost');
-  let pathname = urlObj.pathname;
+  if (pathname === '/api/index' || pathname === '/api/index.js') {
+    pathname = '/api';
+  }
   if (!pathname.startsWith('/api')) {
     pathname = '/api' + (pathname.startsWith('/') ? pathname : '/' + pathname);
   }
