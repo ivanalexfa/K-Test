@@ -689,7 +689,7 @@ export async function authenticateMicrosoftUser(payload: {
   microsoftOid?: string;
   idToken?: string;
   accessToken?: string;
-  requestedRole: 'student' | 'teacher';
+  requestedRole?: 'student' | 'teacher';
   teacherPin?: string;
   cohort?: string;
 }) {
@@ -760,24 +760,18 @@ export async function authenticateMicrosoftUser(payload: {
     [verifiedEmail]
   );
 
-  if (payload.requestedRole === 'teacher') {
-    const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
-    if (!teacherDomainCheck.allowed) {
-      const err: any = new Error(
-        `Acceso restringido: Los docentes solo pueden ingresar con su correo institucional (${teacherDomainCheck.allowedList
-          .map((d) => `@${d}`)
-          .join(' o ')}).`
-      );
-      err.statusCode = 403;
-      err.code = 'INSTITUTIONAL_EMAIL_REQUIRED';
-      throw err;
-    }
+  // Automatic role detection:
+  // Microsoft login with @keyinstitute.edu.sv -> teacher
+  // Any other Microsoft account -> student
+  const teacherDomainCheck = isTeacherInstitutionalDomain(verifiedEmail);
+  const isTeacher = teacherDomainCheck.allowed;
 
+  if (isTeacher) {
     if (existingUser) {
       const updatedCohort =
         existingUser.role === 'teacher'
           ? existingUser.cohort
-          : payload.cohort || 'Cátedra Key Institute · Microsoft 365';
+          : 'Cátedra Key Institute · Microsoft 365';
 
       await dbRun(
         `UPDATE users
@@ -792,8 +786,7 @@ export async function authenticateMicrosoftUser(payload: {
     } else {
       const id = `tch-${crypto.randomUUID().slice(0, 8)}`;
       const createdAt = new Date().toISOString();
-      const cohort =
-        payload.cohort?.trim() || 'Cátedra Key Institute · Microsoft 365';
+      const cohort = 'Cátedra Key Institute · Microsoft 365';
 
       await dbRun(
         `INSERT INTO users (id, name, email, password, role, cohort, microsoft_oid, auth_provider, created_at)
@@ -802,21 +795,25 @@ export async function authenticateMicrosoftUser(payload: {
       );
     }
   } else {
+    // Non-institutional Microsoft accounts are students
     if (existingUser) {
+      const updatedCohort =
+        payload.cohort?.trim() || existingUser.cohort || 'Ciclo 1 2027';
+
       await dbRun(
         `UPDATE users
-         SET name = ?,
+         SET role = 'student',
+             name = ?,
+             cohort = ?,
              microsoft_oid = COALESCE(NULLIF(?, ''), microsoft_oid),
              auth_provider = CASE WHEN auth_provider = 'google' THEN 'hybrid' ELSE 'microsoft' END
          WHERE id = ?`,
-        [verifiedName, verifiedOid, existingUser.id]
+        [verifiedName, updatedCohort, verifiedOid, existingUser.id]
       );
     } else {
       const id = `stu-${crypto.randomUUID().slice(0, 8)}`;
       const createdAt = new Date().toISOString();
-      const cohort =
-        payload.cohort?.trim() ||
-        'Cohorte Estudiantil Key Institute · Microsoft 365';
+      const cohort = payload.cohort?.trim() || 'Ciclo 1 2027';
 
       await dbRun(
         `INSERT INTO users (id, name, email, password, role, cohort, microsoft_oid, auth_provider, created_at)
@@ -874,7 +871,7 @@ export async function authenticateGoogleUser(payload: {
   googleId?: string;
   idToken?: string;
   accessToken?: string;
-  requestedRole: 'student' | 'teacher';
+  requestedRole?: 'student' | 'teacher';
   teacherPin?: string;
   cohort?: string;
 }) {
@@ -934,67 +931,31 @@ export async function authenticateGoogleUser(payload: {
     [verifiedEmail]
   );
 
-  if (payload.requestedRole === 'teacher') {
-    const err: any = new Error(
-      'Los docentes de Key Institute deben autenticarse exclusivamente a través de su cuenta Microsoft institucional (@keyinstitute.edu.sv).'
+  // Google logins are always students
+  if (existingUser) {
+    const updatedCohort =
+      payload.cohort?.trim() || existingUser.cohort || 'Ciclo 1 2027';
+
+    await dbRun(
+      `UPDATE users
+       SET role = 'student',
+           name = ?,
+           cohort = ?,
+           google_id = COALESCE(NULLIF(?, ''), google_id),
+           auth_provider = CASE WHEN auth_provider = 'microsoft' THEN 'hybrid' ELSE 'google' END
+       WHERE id = ?`,
+      [verifiedName, updatedCohort, verifiedGoogleId, existingUser.id]
     );
-    err.statusCode = 403;
-    err.code = 'TEACHER_MICROSOFT_EXCLUSIVE';
-    throw err;
-  }
-
-  if (payload.requestedRole === 'teacher') {
-    if (existingUser) {
-      const updatedCohort =
-        existingUser.role === 'teacher'
-          ? existingUser.cohort
-          : payload.cohort || 'Cátedra Key Institute · Google';
-
-      await dbRun(
-        `UPDATE users
-         SET role = 'teacher',
-             name = ?,
-             cohort = ?,
-             google_id = COALESCE(NULLIF(?, ''), google_id),
-             auth_provider = CASE WHEN auth_provider = 'microsoft' THEN 'hybrid' ELSE 'google' END
-         WHERE id = ?`,
-        [verifiedName, updatedCohort, verifiedGoogleId, existingUser.id]
-      );
-    } else {
-      const id = `tch-${crypto.randomUUID().slice(0, 8)}`;
-      const createdAt = new Date().toISOString();
-      const cohort =
-        payload.cohort?.trim() || 'Cátedra Key Institute · Google';
-
-      await dbRun(
-        `INSERT INTO users (id, name, email, password, role, cohort, google_id, auth_provider, created_at)
-         VALUES (?, ?, ?, 'GOOGLE_OAUTH', 'teacher', ?, ?, 'google', ?)`,
-        [id, verifiedName, verifiedEmail, cohort, verifiedGoogleId || `goog-${id}`, createdAt]
-      );
-    }
   } else {
-    if (existingUser) {
-      await dbRun(
-        `UPDATE users
-         SET name = ?,
-             google_id = COALESCE(NULLIF(?, ''), google_id),
-             auth_provider = CASE WHEN auth_provider = 'microsoft' THEN 'hybrid' ELSE 'google' END
-         WHERE id = ?`,
-        [verifiedName, verifiedGoogleId, existingUser.id]
-      );
-    } else {
-      const id = `stu-${crypto.randomUUID().slice(0, 8)}`;
-      const createdAt = new Date().toISOString();
-      const cohort =
-        payload.cohort?.trim() ||
-        'Cohorte Estudiantil Key Institute · Google';
+    const id = `stu-${crypto.randomUUID().slice(0, 8)}`;
+    const createdAt = new Date().toISOString();
+    const cohort = payload.cohort?.trim() || 'Ciclo 1 2027';
 
-      await dbRun(
-        `INSERT INTO users (id, name, email, password, role, cohort, google_id, auth_provider, created_at)
-         VALUES (?, ?, ?, 'GOOGLE_OAUTH', 'student', ?, ?, 'google', ?)`,
-        [id, verifiedName, verifiedEmail, cohort, verifiedGoogleId || `goog-${id}`, createdAt]
-      );
-    }
+    await dbRun(
+      `INSERT INTO users (id, name, email, password, role, cohort, google_id, auth_provider, created_at)
+       VALUES (?, ?, ?, 'GOOGLE_OAUTH', 'student', ?, ?, 'google', ?)`,
+      [id, verifiedName, verifiedEmail, cohort, verifiedGoogleId || `goog-${id}`, createdAt]
+    );
   }
 
   return dbGet(

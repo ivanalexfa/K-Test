@@ -1,7 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import {
   GraduationCap,
-  BookOpenCheck,
   ArrowRight,
   ChevronDown,
   ChevronUp,
@@ -113,10 +112,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   onMicrosoftLogin,
   onGoogleLogin,
 }) => {
-  const [roleTab, setRoleTab] = useState<UserRole>('student');
-  const [selectedCohort, setSelectedCohort] = useState<string>(
-    KEY_ADMISSION_COHORTS[0]
-  );
+  const [selectedCohort, setSelectedCohort] = useState<string>('');
 
 
   const [error, setError] = useState<string | null>(null);
@@ -183,16 +179,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
     identity: GoogleIdentityPayload
   ) => {
     setError(null);
-
-
-    if (roleTab === 'teacher') {
-      setError(
-        'Los docentes deben ingresar exclusivamente mediante su cuenta institucional Microsoft (@keyinstitute.edu.sv).'
-      );
-      setIsGoogleSimModalOpen(false);
-      return;
-    }
-
     setLoadingGoogle(true);
     try {
       await onGoogleLogin({
@@ -201,19 +187,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
         googleId: identity.googleId,
         idToken: identity.idToken,
         accessToken: identity.accessToken,
-        requestedRole: roleTab,
-
-        cohort:
-          roleTab === 'student'
-            ? selectedCohort
-            : 'Cátedra Académica Key Institute',
+        requestedRole: 'student',
+        cohort: selectedCohort || 'Ciclo 1 2027',
       });
-      setIsGoogleSimModalOpen(false);
     } catch (err: any) {
       setError(
         err?.message || 'No se pudo completar el inicio de sesión con Google.'
       );
-      setIsGoogleSimModalOpen(false);
     } finally {
       setLoadingGoogle(false);
     }
@@ -222,10 +202,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const handleClickGoogleLogin = async () => {
     setError(null);
 
-    if (roleTab === 'teacher') {
-      setError(
-        'Los docentes deben ingresar exclusivamente mediante su cuenta institucional Microsoft (@keyinstitute.edu.sv).'
-      );
+    if (!selectedCohort) {
+      setError('Por favor, selecciona tu ciclo de admisión antes de continuar.');
       return;
     }
 
@@ -235,26 +213,18 @@ export const AuthView: React.FC<AuthViewProps> = ({
         const identity = await triggerRealGooglePopup();
         await completeBackendGoogleHandshake(identity);
       } catch (err: any) {
-      setError(
+        setError(
           err?.message || 'El inicio de sesión con Google fue cancelado o falló.'
         );
       } finally {
         setLoadingGoogle(false);
       }
     } else {
-      const defaultAcc =
-        roleTab === 'student'
-          ? students[0] || {
-              name: 'Sofía Martínez',
-              email: 'sofia.martinez@gmail.com',
-            }
-          : teachers[0] || {
-              name: 'Dr. Roberto Méndez',
-              email: 'roberto.mendez@keyinstitute.edu.sv',
-            };
-      setSimName(defaultAcc.name);
-      setSimEmail(defaultAcc.email);
-      setIsGoogleSimModalOpen(true);
+      await completeBackendGoogleHandshake({
+        name: 'Aspirante Estudiante',
+        email: 'estudiante.demo@gmail.com',
+        googleId: 'google-sim-demo',
+      });
     }
   };
 
@@ -272,32 +242,19 @@ export const AuthView: React.FC<AuthViewProps> = ({
     identity: MicrosoftIdentityPayload
   ) => {
     setError(null);
-
-
-    if (roleTab === 'teacher' && !isInstitutionalTeacherEmail(identity.email)) {
-      setError(
-        `Acceso restringido: Los docentes solo pueden ingresar con su correo institucional (${INSTITUTIONAL_TEACHER_DOMAINS.map(
-          (d) => `@${d}`
-        ).join(' o ')}).`
-      );
-      setIsMsSimModalOpen(false);
-      return;
-    }
-
     setLoadingMs(true);
     try {
+      const isTeacher = isInstitutionalTeacherEmail(identity.email);
       await onMicrosoftLogin({
         name: identity.name,
         email: identity.email,
         microsoftOid: identity.microsoftOid,
         idToken: identity.idToken,
         accessToken: identity.accessToken,
-        requestedRole: roleTab,
-
-        cohort:
-          roleTab === 'student'
-            ? selectedCohort
-            : 'Cátedra Académica Key Institute',
+        requestedRole: isTeacher ? 'teacher' : 'student',
+        cohort: isTeacher
+          ? 'Cátedra Key Institute · Microsoft 365'
+          : selectedCohort || 'Ciclo 1 2027',
       });
       setIsMsSimModalOpen(false);
     } catch (err: any) {
@@ -313,6 +270,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const handleClickMicrosoftLogin = async () => {
     setError(null);
 
+    if (!selectedCohort) {
+      setError('Por favor, selecciona tu ciclo de admisión antes de continuar.');
+      return;
+    }
 
     if (realMsalActive) {
       try {
@@ -320,25 +281,15 @@ export const AuthView: React.FC<AuthViewProps> = ({
         const identity = await triggerRealMicrosoftPopup();
         await completeBackendMicrosoftHandshake(identity);
       } catch (err: any) {
-      setError(
+        setError(
           err?.message || 'El inicio de sesión con Microsoft fue cancelado o falló.'
         );
       } finally {
         setLoadingMs(false);
       }
     } else {
-      const defaultAcc =
-        roleTab === 'student'
-          ? students[0] || {
-              name: 'Sofía Martínez',
-              email: 'sofia.martinez@keyinstitute.edu.sv',
-            }
-          : teachers[0] || {
-              name: 'Dr. Roberto Méndez',
-              email: 'roberto.mendez@keyinstitute.edu.sv',
-            };
-      setSimName(defaultAcc.name);
-      setSimEmail(defaultAcc.email);
+      setSimName('Sofía Martínez');
+      setSimEmail('sofia.martinez@outlook.com');
       setIsMsSimModalOpen(true);
     }
   };
@@ -384,133 +335,90 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
           {/* Centered Login Card */}
           <div className="max-w-md mx-auto bg-white text-[#0A1128] rounded-2xl shadow-2xl border border-white/15 overflow-hidden">
-          {/* Role Switcher Tabs */}
-          <div className="p-2 bg-slate-100 border-b border-slate-200 grid grid-cols-2 gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                setRoleTab('student');
-                setError(null);
-            
-              }}
-              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                roleTab === 'student'
-                  ? 'bg-[#0052FF] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-[#0A1128]'
-              }`}
-            >
-              <GraduationCap className="w-4 h-4" />
-              <span>Soy Estudiante</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setRoleTab('teacher');
-                setError(null);
-              }}
-              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                roleTab === 'teacher'
-                  ? 'bg-[#0A1128] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-[#0A1128]'
-              }`}
-            >
-              <BookOpenCheck className="w-4 h-4 text-[#00D2FF]" />
-              <span>Soy Docente</span>
-            </button>
-          </div>
-
-          <div className="p-6 sm:p-7 space-y-5">
-            <div className="text-center">
-              <h2 className="font-display font-extrabold text-lg sm:text-xl text-[#0A1128]">
-                {roleTab === 'student'
-                  ? 'Ingresa al Portal de Estudiantes'
-                  : 'Ingresa al Panel de Cátedra'}
-              </h2>
-              
-            </div>
-
-            {error && (
-              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-xs text-red-800">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                <div className="flex-1 font-medium">{error}</div>
+            <div className="p-6 sm:p-7 space-y-5">
+              <div className="text-center">
+                <h2 className="font-display font-extrabold text-xl text-[#0A1128]">
+                  Iniciar Sesión
+                </h2>
               </div>
-            )}
 
-            {/* Student Target Cohort Selector */}
-            {roleTab === 'student' && (
+              {error && (
+                <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-xs text-red-800">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <div className="flex-1 font-medium">{error}</div>
+                </div>
+              )}
+
+              {/* Ciclo de Admisión Selector (Obligatorio) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Carrera / Cohorte de Admisión a la que aspiras
+                  Ciclo de Admisión <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={selectedCohort}
-                  onChange={(e) => setSelectedCohort(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/70 text-xs sm:text-sm font-medium text-[#0A1128] focus:outline-none focus:border-[#0052FF]"
+                  onChange={(e) => {
+                    setSelectedCohort(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-medium transition-colors focus:outline-none ${
+                    !selectedCohort
+                      ? 'border-slate-300 bg-slate-50 text-slate-400 focus:border-[#0052FF]'
+                      : 'border-slate-300 bg-white text-[#0A1128] focus:border-[#0052FF]'
+                  }`}
                 >
+                  <option value="" disabled>
+                    Selecciona tu ciclo de admisión...
+                  </option>
                   {KEY_ADMISSION_COHORTS.map((c) => (
-                    <option key={c} value={c}>
+                    <option key={c} value={c} className="text-[#0A1128]">
                       {c}
                     </option>
                   ))}
                 </select>
               </div>
-            )}
 
-            {/* Teacher Institutional Notice */}
-            {roleTab === 'teacher' && (
-              <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-100 text-slate-600 text-xs text-center border border-slate-200/80">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0052FF] shrink-0" />
-                <span>Acceso exclusivo con correo institucional (<strong>@keyinstitute.edu.sv</strong>)</span>
+              {/* Login Buttons */}
+              <div className="space-y-3 pt-1">
+                <button
+                  type="button"
+                  disabled={loadingGoogle || loadingMs || !selectedCohort}
+                  onClick={handleClickGoogleLogin}
+                  className="w-full py-3.5 px-5 rounded-xl bg-white hover:bg-slate-50 text-[#0A1128] border-2 border-slate-200 hover:border-[#0052FF]/40 font-display font-bold text-sm sm:text-base shadow-xs grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-slate-200"
+                >
+                  <GoogleLogoSvg className="w-5 h-5 shrink-0" />
+                  <span className="text-center">
+                    {loadingGoogle
+                      ? 'Conectando con Google...'
+                      : 'Continuar con Google'}
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-[#0052FF] justify-self-end" />
+                </button>
+
+                <div className="flex items-center gap-3.5 py-1" role="separator">
+                  <div className="h-px flex-1 bg-slate-200" />
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest select-none leading-none">
+                    o bien
+                  </span>
+                  <div className="h-px flex-1 bg-slate-200" />
+                </div>
+
+                <button
+                  type="button"
+                  disabled={loadingGoogle || loadingMs || !selectedCohort}
+                  onClick={handleClickMicrosoftLogin}
+                  className="w-full py-3.5 px-5 rounded-xl bg-[#0A1128] hover:bg-[#0052FF] text-white border-2 border-[#0A1128] hover:border-[#0052FF] font-display font-bold text-sm sm:text-base shadow-lg grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#0A1128]"
+                >
+                  <MicrosoftLogoSvg className="w-5 h-5 shrink-0" />
+                  <span className="text-center">
+                    {loadingMs
+                      ? 'Conectando con Microsoft...'
+                      : 'Continuar con Microsoft'}
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-[#00D2FF] justify-self-end" />
+                </button>
               </div>
-            )}
-
-            {/* Login Buttons: Google is student-only, Microsoft is institutional & for both */}
-            <div className="space-y-3 pt-1">
-              {roleTab === 'student' && (
-                <>
-                  <button
-                    type="button"
-                    disabled={loadingGoogle || loadingMs}
-                    onClick={handleClickGoogleLogin}
-                    className="w-full py-3.5 px-5 rounded-xl bg-white hover:bg-slate-50 text-[#0A1128] border-2 border-slate-200 hover:border-[#0052FF]/40 font-display font-bold text-sm sm:text-base shadow-xs grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60"
-                  >
-                    <GoogleLogoSvg className="w-5 h-5 shrink-0" />
-                    <span className="text-center">
-                      {loadingGoogle
-                        ? 'Conectando con Google...'
-                        : 'Continuar con Google'}
-                    </span>
-                    <ArrowRight className="w-4 h-4 text-[#0052FF] justify-self-end" />
-                  </button>
-
-                  <div className="flex items-center gap-3.5 py-1" role="separator">
-                    <div className="h-px flex-1 bg-slate-200" />
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest select-none leading-none">
-                      o bien
-                    </span>
-                    <div className="h-px flex-1 bg-slate-200" />
-                  </div>
-                </>
-              )}
-
-              <button
-                type="button"
-                disabled={loadingGoogle || loadingMs}
-                onClick={handleClickMicrosoftLogin}
-                className="w-full py-3.5 px-5 rounded-xl bg-[#0A1128] hover:bg-[#0052FF] text-white border-2 border-[#0A1128] hover:border-[#0052FF] font-display font-bold text-sm sm:text-base shadow-lg grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-60"
-              >
-                <MicrosoftLogoSvg className="w-5 h-5 shrink-0" />
-                <span className="text-center">
-                  {loadingMs
-                    ? 'Conectando con Microsoft...'
-                    : 'Continuar con Microsoft'}
-                </span>
-                <ArrowRight className="w-4 h-4 text-[#00D2FF] justify-self-end" />
-              </button>
             </div>
           </div>
-        </div>
       </section>
 
       {/* Welcome Landing Showcase Section: What Awaits Inside */}
@@ -572,7 +480,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               className="w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100/80 flex items-center justify-between text-xs font-semibold text-slate-500 transition-colors cursor-pointer"
             >
               <span>
-                Acceso rápido de prueba ({roleTab === 'student' ? 'Estudiantes' : 'Docentes'})
+                Acceso rápido de prueba (Cuentas Demo)
               </span>
               {demoPanelOpen ? (
                 <ChevronUp className="w-4 h-4" />
@@ -583,7 +491,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
             {demoPanelOpen && (
               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 border-t border-slate-200 max-h-60 overflow-y-auto custom-scrollbar">
-                {(roleTab === 'student' ? students : teachers).map((u) => {
+                {users.map((u) => {
                   const inst = instantiateUserClass(u);
                   return (
                     <button
@@ -651,14 +559,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Correo Institucional Microsoft
+                  Correo Microsoft (Personal o Institucional)
                 </label>
                 <input
                   type="email"
                   required
                   value={simEmail}
                   onChange={(e) => setSimEmail(e.target.value)}
-                  placeholder="nombre.apellido@keyinstitute.edu.sv"
+                  placeholder="usuario@keyinstitute.edu.sv o usuario@outlook.com"
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-[#0052FF]"
                 />
               </div>

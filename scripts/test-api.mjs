@@ -277,44 +277,7 @@ async function runTests() {
     console.log('  4.9 POST /api/auth/google with invalid JSON:', resInvalidJson.statusCode, JSON.parse(resInvalidJson.body).code);
     if (resInvalidJson.statusCode !== 400) throw new Error('Invalid JSON did not return 400');
 
-    // 4.10 Teacher role with non-institutional email (403 Forbidden)
-    const resTeacherNonInst = await invokeHandler(indexHandler, {
-      url: '/api/index.js?__pathname=/api/auth/google',
-      method: 'POST',
-      query: { __pathname: '/api/auth/google' },
-      body: {
-        name: 'Docente Externo',
-        email: 'docente.externo@gmail.com',
-        googleId: 'goog-ext-001',
-        requestedRole: 'teacher',
-
-      },
-    });
-    console.log('  4.10 POST /api/auth/google teacher rejected (Microsoft only):', resTeacherNonInst.statusCode, JSON.parse(resTeacherNonInst.body).code);
-    if (resTeacherNonInst.statusCode !== 403) throw new Error('Non-institutional teacher email should return 403');
-
-    // 4.11 Teacher with @keyinstitute.com rejected on Microsoft (must be @keyinstitute.edu.sv)
-    const resTeacherCom = await invokeHandler(indexHandler, {
-      url: '/api/index.js?__pathname=/api/auth/microsoft',
-      method: 'POST',
-      query: { __pathname: '/api/auth/microsoft' },
-      body: {
-        name: 'Docente Con Dot Com',
-        email: 'docente@keyinstitute.com',
-        microsoftOid: 'ms-prof-com-1',
-        requestedRole: 'teacher',
-      },
-    });
-    const parsedComErr = JSON.parse(resTeacherCom.body);
-    console.log('  4.11 POST /api/auth/microsoft with @keyinstitute.com:', resTeacherCom.statusCode, parsedComErr.error);
-    if (resTeacherCom.statusCode !== 403 || parsedComErr.code !== 'INSTITUTIONAL_EMAIL_REQUIRED') {
-      throw new Error('Teacher with @keyinstitute.com should return 403 INSTITUTIONAL_EMAIL_REQUIRED');
-    }
-    if (parsedComErr.error.includes('keyinstitute.com')) {
-      throw new Error('Error message must not mention keyinstitute.com');
-    }
-
-    // 4.11b Institutional teacher via Microsoft succeeds without PIN (200 OK)
+    // 4.10 Microsoft with @keyinstitute.edu.sv automatically assigns teacher role
     const resMsTeacher = await invokeHandler(indexHandler, {
       url: '/api/index.js?__pathname=/api/auth/microsoft',
       method: 'POST',
@@ -323,12 +286,48 @@ async function runTests() {
         name: 'Dra. Carmen Key',
         email: 'carmen.key@keyinstitute.edu.sv',
         microsoftOid: 'ms-prof-999',
-        requestedRole: 'teacher',
       },
     });
-    console.log('  4.11b POST /api/auth/microsoft teacher without PIN:', resMsTeacher.statusCode, JSON.parse(resMsTeacher.body).user?.role);
-    if (resMsTeacher.statusCode !== 200 || JSON.parse(resMsTeacher.body).user?.role !== 'teacher') {
-      throw new Error('Institutional Microsoft teacher should login successfully without PIN');
+    const parsedMsTeacher = JSON.parse(resMsTeacher.body);
+    console.log('  4.10 POST /api/auth/microsoft with @keyinstitute.edu.sv -> auto role:', resMsTeacher.statusCode, parsedMsTeacher.user?.role);
+    if (resMsTeacher.statusCode !== 200 || parsedMsTeacher.user?.role !== 'teacher') {
+      throw new Error('Microsoft login with @keyinstitute.edu.sv must assign teacher role');
+    }
+
+    // 4.11 Microsoft with non-institutional email automatically assigns student role and cohort
+    const resMsStudent = await invokeHandler(indexHandler, {
+      url: '/api/index.js?__pathname=/api/auth/microsoft',
+      method: 'POST',
+      query: { __pathname: '/api/auth/microsoft' },
+      body: {
+        name: 'Carlos Outlook',
+        email: 'carlos.outlook@outlook.com',
+        microsoftOid: 'ms-stu-888',
+        cohort: 'Ciclo 1 2027',
+      },
+    });
+    const parsedMsStudent = JSON.parse(resMsStudent.body);
+    console.log('  4.11 POST /api/auth/microsoft non-institutional -> auto student role:', resMsStudent.statusCode, parsedMsStudent.user?.role, parsedMsStudent.user?.cohort);
+    if (resMsStudent.statusCode !== 200 || parsedMsStudent.user?.role !== 'student' || parsedMsStudent.user?.cohort !== 'Ciclo 1 2027') {
+      throw new Error('Microsoft login without @keyinstitute.edu.sv must assign student role and chosen cohort');
+    }
+
+    // 4.11b Google with any email automatically assigns student role and chosen cohort
+    const resGoogleStudent = await invokeHandler(indexHandler, {
+      url: '/api/index.js?__pathname=/api/auth/google',
+      method: 'POST',
+      query: { __pathname: '/api/auth/google' },
+      body: {
+        name: 'Ana Google',
+        email: 'ana.key@keyinstitute.edu.sv',
+        googleId: 'goog-stu-555',
+        cohort: 'Ciclo 2 2027',
+      },
+    });
+    const parsedGoogleStudent = JSON.parse(resGoogleStudent.body);
+    console.log('  4.11b POST /api/auth/google -> auto student role:', resGoogleStudent.statusCode, parsedGoogleStudent.user?.role, parsedGoogleStudent.user?.cohort);
+    if (resGoogleStudent.statusCode !== 200 || parsedGoogleStudent.user?.role !== 'student' || parsedGoogleStudent.user?.cohort !== 'Ciclo 2 2027') {
+      throw new Error('Google login must always assign student role and chosen cohort');
     }
 
     // 4.12 Empty identifier validations on dynamic routes
