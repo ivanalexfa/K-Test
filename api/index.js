@@ -1,4 +1,17 @@
 // Auto-generated self-contained Vercel Serverless Function bundle
+if (typeof process !== 'undefined' && typeof process.on === 'function') {
+  process.removeAllListeners('warning');
+  process.on('warning', (warning) => {
+    if (
+      warning &&
+      warning.name === 'DeprecationWarning' &&
+      (warning.code === 'DEP0169' || (warning.message && warning.message.includes('url.parse')))
+    ) {
+      return;
+    }
+    console.warn(warning);
+  });
+}
 
 
 // server/apiPlugin.ts
@@ -1742,6 +1755,15 @@ async function handleApiRequest(req, res) {
 }
 
 // server/vercelHandler.ts
+if (typeof process !== "undefined" && typeof process.on === "function") {
+  process.removeAllListeners("warning");
+  process.on("warning", (warning) => {
+    if (warning && warning.name === "DeprecationWarning" && (warning.code === "DEP0169" || warning.message && warning.message.includes("url.parse"))) {
+      return;
+    }
+    console.warn(warning);
+  });
+}
 var config = {
   api: {
     bodyParser: {

@@ -1,4 +1,19 @@
 // @ts-nocheck
+// Suppress benign DEP0169 warning emitted by runtime wrapper invoking legacy url.parse()
+if (typeof process !== 'undefined' && typeof process.on === 'function') {
+  process.removeAllListeners('warning');
+  process.on('warning', (warning: any) => {
+    if (
+      warning &&
+      warning.name === 'DeprecationWarning' &&
+      (warning.code === 'DEP0169' || (warning.message && warning.message.includes('url.parse')))
+    ) {
+      return;
+    }
+    console.warn(warning);
+  });
+}
+
 import { handleApiRequest } from './apiPlugin';
 
 export const config = {

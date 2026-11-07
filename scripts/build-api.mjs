@@ -26,7 +26,21 @@ await build({
   outfile: 'api/index.js',
   external: ['node:*'],
   banner: {
-    js: '// Auto-generated self-contained Vercel Serverless Function bundle\n',
+    js: `// Auto-generated self-contained Vercel Serverless Function bundle
+if (typeof process !== 'undefined' && typeof process.on === 'function') {
+  process.removeAllListeners('warning');
+  process.on('warning', (warning) => {
+    if (
+      warning &&
+      warning.name === 'DeprecationWarning' &&
+      (warning.code === 'DEP0169' || (warning.message && warning.message.includes('url.parse')))
+    ) {
+      return;
+    }
+    console.warn(warning);
+  });
+}
+`,
   },
 });
 console.log('✓ Built self-contained Vercel Serverless Function -> api/index.js');
