@@ -375,6 +375,66 @@ async function runTests() {
     console.log('  4.16 POST /api/auth/google with empty body:', resEmptyGoogleBody.statusCode, JSON.parse(resEmptyGoogleBody.body).error);
     if (resEmptyGoogleBody.statusCode !== 400) throw new Error('Empty body on Google auth should return 400');
 
+    // 4.17 First-time student registration without cohort & one-time cohort assignment
+    const resNewStudent = await invokeHandler(indexHandler, {
+      url: '/api/index.js?__pathname=/api/auth/google',
+      method: 'POST',
+      query: { __pathname: '/api/auth/google' },
+      body: {
+        name: 'Nuevo Aspirante',
+        email: 'nuevo.aspirante@gmail.com',
+        googleId: 'goog-new-aspirante-123',
+      },
+    });
+    const parsedNewStudent = JSON.parse(resNewStudent.body);
+    console.log('  4.17a New student created without initial cohort:', resNewStudent.statusCode, 'Cohort:', JSON.stringify(parsedNewStudent.user?.cohort));
+    if (resNewStudent.statusCode !== 200 || parsedNewStudent.user?.cohort !== '') {
+      throw new Error('New student must be created with empty cohort for onboarding');
+    }
+
+    const newStudentId = parsedNewStudent.user.id;
+    const resSetCohort = await invokeHandler(indexHandler, {
+      url: `/api/index.js?__pathname=/api/users/${newStudentId}/cohort`,
+      method: 'PUT',
+      query: { __pathname: `/api/users/${newStudentId}/cohort` },
+      body: { cohort: 'Ciclo 1 2027' },
+    });
+    const parsedSetCohort = JSON.parse(resSetCohort.body);
+    console.log('  4.17b Student sets cohort once (onboarding):', resSetCohort.statusCode, parsedSetCohort.user?.cohort);
+    if (resSetCohort.statusCode !== 200 || parsedSetCohort.user?.cohort !== 'Ciclo 1 2027') {
+      throw new Error('First-time student cohort assignment must succeed with 200 OK');
+    }
+
+    // 4.18 Immutability rule: student cannot alter cohort once set
+    const resAttemptAlter = await invokeHandler(indexHandler, {
+      url: `/api/index.js?__pathname=/api/users/${newStudentId}/cohort`,
+      method: 'PUT',
+      query: { __pathname: `/api/users/${newStudentId}/cohort` },
+      body: { cohort: 'Ciclo 2 2028' },
+    });
+    const parsedAttemptAlter = JSON.parse(resAttemptAlter.body);
+    console.log('  4.18 Immutability: Attempt to alter cohort rejected:', resAttemptAlter.statusCode, parsedAttemptAlter.code);
+    if (resAttemptAlter.statusCode !== 403 || parsedAttemptAlter.code !== 'COHORT_ALREADY_SET') {
+      throw new Error('Changing cohort after it has been set must return 403 COHORT_ALREADY_SET');
+    }
+
+    // 4.19 Subsequent login preserves existing locked cohort
+    const resSubsequentLogin = await invokeHandler(indexHandler, {
+      url: '/api/index.js?__pathname=/api/auth/google',
+      method: 'POST',
+      query: { __pathname: '/api/auth/google' },
+      body: {
+        name: 'Nuevo Aspirante',
+        email: 'nuevo.aspirante@gmail.com',
+        googleId: 'goog-new-aspirante-123',
+      },
+    });
+    const parsedSubsequentLogin = JSON.parse(resSubsequentLogin.body);
+    console.log('  4.19 Subsequent login preserves locked cohort:', resSubsequentLogin.statusCode, parsedSubsequentLogin.user?.cohort);
+    if (resSubsequentLogin.statusCode !== 200 || parsedSubsequentLogin.user?.cohort !== 'Ciclo 1 2027') {
+      throw new Error('Subsequent login must retain the already configured cohort');
+    }
+
     console.log('\n======================================================');
     console.log('🎉 ALL VERIFICATION TESTS PASSED SUCCESSFULLY!');
     console.log('======================================================');

@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { UserRecord, UserRole } from '../types/exam';
 import { instantiateUserClass } from '../models/UserClasses';
-import { KEY_ADMISSION_COHORTS } from '../data/cohortsCatalog';
 import { KTestLogo } from './brand/KTestLogo';
 import {
   SimulacroEngineIcon,
@@ -112,7 +111,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
   onMicrosoftLogin,
   onGoogleLogin,
 }) => {
-  const [selectedCohort, setSelectedCohort] = useState<string>('');
 
 
   const [error, setError] = useState<string | null>(null);
@@ -188,7 +186,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         idToken: identity.idToken,
         accessToken: identity.accessToken,
         requestedRole: 'student',
-        cohort: selectedCohort || 'Ciclo 1 2027',
+        cohort: '',
       });
     } catch (err: any) {
       setError(
@@ -201,11 +199,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   const handleClickGoogleLogin = async () => {
     setError(null);
-
-    if (!selectedCohort) {
-      setError('Por favor, selecciona tu ciclo de admisión antes de continuar.');
-      return;
-    }
 
     if (realGoogleActive) {
       try {
@@ -254,7 +247,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         requestedRole: isTeacher ? 'teacher' : 'student',
         cohort: isTeacher
           ? 'Cátedra Key Institute · Microsoft 365'
-          : selectedCohort || 'Ciclo 1 2027',
+          : '',
       });
       setIsMsSimModalOpen(false);
     } catch (err: any) {
@@ -269,11 +262,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   const handleClickMicrosoftLogin = async () => {
     setError(null);
-
-    if (!selectedCohort) {
-      setError('Por favor, selecciona tu ciclo de admisión antes de continuar.');
-      return;
-    }
 
     if (realMsalActive) {
       try {
@@ -349,39 +337,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 </div>
               )}
 
-              {/* Ciclo de Admisión Selector (Obligatorio) */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Ciclo de Admisión <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={selectedCohort}
-                  onChange={(e) => {
-                    setSelectedCohort(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-medium transition-colors focus:outline-none ${
-                    !selectedCohort
-                      ? 'border-slate-300 bg-slate-50 text-slate-400 focus:border-[#0052FF]'
-                      : 'border-slate-300 bg-white text-[#0A1128] focus:border-[#0052FF]'
-                  }`}
-                >
-                  <option value="" disabled>
-                    Selecciona tu ciclo de admisión...
-                  </option>
-                  {KEY_ADMISSION_COHORTS.map((c) => (
-                    <option key={c} value={c} className="text-[#0A1128]">
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               {/* Login Buttons */}
               <div className="space-y-3 pt-1">
                 <button
                   type="button"
-                  disabled={loadingGoogle || loadingMs || !selectedCohort}
+                  disabled={loadingGoogle || loadingMs}
                   onClick={handleClickGoogleLogin}
                   className="w-full py-3.5 px-5 rounded-xl bg-white hover:bg-slate-50 text-[#0A1128] border-2 border-slate-200 hover:border-[#0052FF]/40 font-display font-bold text-sm sm:text-base shadow-xs grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-slate-200"
                 >
@@ -404,7 +364,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
                 <button
                   type="button"
-                  disabled={loadingGoogle || loadingMs || !selectedCohort}
+                  disabled={loadingGoogle || loadingMs}
                   onClick={handleClickMicrosoftLogin}
                   className="w-full py-3.5 px-5 rounded-xl bg-[#0A1128] hover:bg-[#0052FF] text-white border-2 border-[#0A1128] hover:border-[#0052FF] font-display font-bold text-sm sm:text-base shadow-lg grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#0A1128]"
                 >

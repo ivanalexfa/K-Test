@@ -767,6 +767,23 @@ async function getAllUsers() {
 }
 async function updateUserCohort(userId, cohort) {
   await ensureDbReady();
+  const existingUser = await dbGet(
+    `SELECT id, role, cohort FROM users WHERE id = ?`,
+    [userId]
+  );
+  if (!existingUser) {
+    const err = new Error("Usuario no encontrado.");
+    err.statusCode = 404;
+    throw err;
+  }
+  if (existingUser.role === "student" && existingUser.cohort && existingUser.cohort.trim() !== "") {
+    const err = new Error(
+      "El ciclo de admisi\xF3n ya ha sido definido y no puede ser modificado por el estudiante."
+    );
+    err.statusCode = 403;
+    err.code = "COHORT_ALREADY_SET";
+    throw err;
+  }
   await dbRun(`UPDATE users SET cohort = ? WHERE id = ?`, [cohort.trim(), userId]);
   return dbGet(
     `SELECT
@@ -915,7 +932,7 @@ async function authenticateMicrosoftUser(payload) {
     }
   } else {
     if (existingUser) {
-      const updatedCohort = payload.cohort?.trim() || existingUser.cohort || "Ciclo 1 2027";
+      const updatedCohort = existingUser.cohort || payload.cohort?.trim() || "";
       await dbRun(
         `UPDATE users
          SET role = 'student',
@@ -929,7 +946,7 @@ async function authenticateMicrosoftUser(payload) {
     } else {
       const id = `stu-${crypto.randomUUID().slice(0, 8)}`;
       const createdAt = (/* @__PURE__ */ new Date()).toISOString();
-      const cohort = payload.cohort?.trim() || "Ciclo 1 2027";
+      const cohort = payload.cohort?.trim() || "";
       await dbRun(
         `INSERT INTO users (id, name, email, password, role, cohort, microsoft_oid, auth_provider, created_at)
          VALUES (?, ?, ?, 'MICROSOFT_SSO', 'student', ?, ?, 'microsoft', ?)`,
@@ -1019,7 +1036,7 @@ async function authenticateGoogleUser(payload) {
     [verifiedEmail]
   );
   if (existingUser) {
-    const updatedCohort = payload.cohort?.trim() || existingUser.cohort || "Ciclo 1 2027";
+    const updatedCohort = existingUser.cohort || payload.cohort?.trim() || "";
     await dbRun(
       `UPDATE users
        SET role = 'student',
@@ -1033,7 +1050,7 @@ async function authenticateGoogleUser(payload) {
   } else {
     const id = `stu-${crypto.randomUUID().slice(0, 8)}`;
     const createdAt = (/* @__PURE__ */ new Date()).toISOString();
-    const cohort = payload.cohort?.trim() || "Ciclo 1 2027";
+    const cohort = payload.cohort?.trim() || "";
     await dbRun(
       `INSERT INTO users (id, name, email, password, role, cohort, google_id, auth_provider, created_at)
        VALUES (?, ?, ?, 'GOOGLE_OAUTH', 'student', ?, ?, 'google', ?)`,

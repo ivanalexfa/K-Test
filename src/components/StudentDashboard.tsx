@@ -31,7 +31,6 @@ import {
 } from '../types/exam';
 import { StudentUser } from '../models/UserClasses';
 import { SPRINTS_CATALOG } from '../data/sprintsCatalog';
-import { KEY_ADMISSION_COHORTS } from '../data/cohortsCatalog';
 import { KTestLogo } from './brand/KTestLogo';
 import {
   SimulacroEngineIcon,
@@ -48,7 +47,7 @@ interface StudentDashboardProps {
   allAttempts: TestAttemptRecord[];
   onStartTest: (mode: TestMode, sprintConfig?: SprintConfig) => void;
   onInspectAttempt: (attempt: TestAttemptRecord) => void;
-  onUpdateCohort: (newCohort: string) => Promise<void>;
+  onUpdateCohort?: (newCohort: string) => Promise<void>;
   onLogout: () => void;
 }
 
@@ -90,7 +89,6 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   onLogout,
 }) => {
   const [activeTab, setActiveTab] = useState<StudentTab>('tests');
-  const [updatingCohort, setUpdatingCohort] = useState<boolean>(false);
   // Active sprint hub subject ('reading' | 'math' | null)
   const [selectedSprintSubject, setSelectedSprintSubject] =
     useState<SectionType | null>(null);
@@ -168,36 +166,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 Accede a tus pruebas de práctica, consulta guías y archivos subidos por tus docentes, o revisa tus resultados históricos.
               </p>
 
-              {/* Selector de Cohorte de Admisión Key Institute */}
-              <div className="mt-3.5 inline-flex flex-wrap items-center gap-2 bg-white/8 border border-white/15 rounded-xl px-3 py-1.5">
-                <span className="text-[11px] font-semibold text-[#00D2FF] uppercase tracking-wider">
-                  Cohorte de Admisión:
+              {/* Ciclo de Admisión Key Institute (Fijo / Inmutable) */}
+              <div className="mt-3.5 inline-flex items-center gap-2 bg-white/10 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white">
+                <span className="text-[11px] font-bold text-[#00D2FF] uppercase tracking-wider">
+                  Ciclo de Admisión:
                 </span>
-                <select
-                  aria-label="Seleccionar cohorte de admisión"
-                  disabled={updatingCohort}
-                  value={student.cohort}
-                  onChange={async (e) => {
-                    const nextCohort = e.target.value;
-                    if (!nextCohort || nextCohort === student.cohort) return;
-                    try {
-                      setUpdatingCohort(true);
-                      await onUpdateCohort(nextCohort);
-                    } finally {
-                      setUpdatingCohort(false);
-                    }
-                  }}
-                  className="bg-[#0A1128] text-white text-xs font-semibold rounded-lg px-2.5 py-1 border border-white/15 focus:outline-none focus:border-[#00D2FF] cursor-pointer"
-                >
-                  {!KEY_ADMISSION_COHORTS.includes(student.cohort) && (
-                    <option value={student.cohort}>{student.cohort}</option>
-                  )}
-                  {KEY_ADMISSION_COHORTS.map((cohortName) => (
-                    <option key={cohortName} value={cohortName}>
-                      {cohortName}
-                    </option>
-                  ))}
-                </select>
+                <span className="font-semibold text-white">
+                  {student.cohort || 'Sin ciclo asignado'}
+                </span>
               </div>
             </div>
 

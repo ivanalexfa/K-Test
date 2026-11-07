@@ -32,6 +32,7 @@ import { Header } from './components/Header';
 import { KTestLogo } from './components/brand/KTestLogo';
 import { AuthView } from './components/AuthView';
 import { StudentDashboard } from './components/StudentDashboard';
+import { StudentOnboardingModal } from './components/StudentOnboardingModal';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { ReadingQuestionView } from './components/ReadingQuestionView';
 import { MathQuestionView } from './components/MathQuestionView';
@@ -426,25 +427,41 @@ export const App: React.FC = () => {
     }
 
     if (activeUserInstance instanceof StudentUser) {
+      const needsCohortOnboarding =
+        !activeUserInstance.cohort || activeUserInstance.cohort.trim() === '';
+
       return (
-        <StudentDashboard
-          student={activeUserInstance}
-          examData={examData}
-          materials={materials}
-          allAttempts={attempts}
-          onStartTest={handleStartTest}
-          onInspectAttempt={handleInspectAttempt}
-          onUpdateCohort={async (newCohort: string) => {
-            const res = await apiUpdateUserCohort(activeUserInstance.id, newCohort);
-            setCurrentUserRecord(res.user);
-            setUsers(res.users);
-            setAttempts(res.attempts);
-          }}
-          onLogout={() => {
-            setCurrentUserRecord(null);
-            setScreen('auth');
-          }}
-        />
+        <>
+          {needsCohortOnboarding && (
+            <StudentOnboardingModal
+              studentName={activeUserInstance.name}
+              onConfirmCohort={async (chosenCohort: string) => {
+                const res = await apiUpdateUserCohort(activeUserInstance.id, chosenCohort);
+                setCurrentUserRecord(res.user);
+                setUsers(res.users);
+                setAttempts(res.attempts);
+              }}
+            />
+          )}
+          <StudentDashboard
+            student={activeUserInstance}
+            examData={examData}
+            materials={materials}
+            allAttempts={attempts}
+            onStartTest={handleStartTest}
+            onInspectAttempt={handleInspectAttempt}
+            onUpdateCohort={async (newCohort: string) => {
+              const res = await apiUpdateUserCohort(activeUserInstance.id, newCohort);
+              setCurrentUserRecord(res.user);
+              setUsers(res.users);
+              setAttempts(res.attempts);
+            }}
+            onLogout={() => {
+              setCurrentUserRecord(null);
+              setScreen('auth');
+            }}
+          />
+        </>
       );
     }
   }

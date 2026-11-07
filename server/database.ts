@@ -580,6 +580,30 @@ export async function getAllUsers() {
 
 export async function updateUserCohort(userId: string, cohort: string) {
   await ensureDbReady();
+  const existingUser: any = await dbGet(
+    `SELECT id, role, cohort FROM users WHERE id = ?`,
+    [userId]
+  );
+  if (!existingUser) {
+    const err: any = new Error('Usuario no encontrado.');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // Regla de inmutabilidad: Si un estudiante ya definió su ciclo de admisión, no puede alterarlo
+  if (
+    existingUser.role === 'student' &&
+    existingUser.cohort &&
+    existingUser.cohort.trim() !== ''
+  ) {
+    const err: any = new Error(
+      'El ciclo de admisión ya ha sido definido y no puede ser modificado por el estudiante.'
+    );
+    err.statusCode = 403;
+    err.code = 'COHORT_ALREADY_SET';
+    throw err;
+  }
+
   await dbRun(`UPDATE users SET cohort = ? WHERE id = ?`, [cohort.trim(), userId]);
   return dbGet(
     `SELECT
@@ -798,7 +822,7 @@ export async function authenticateMicrosoftUser(payload: {
     // Non-institutional Microsoft accounts are students
     if (existingUser) {
       const updatedCohort =
-        payload.cohort?.trim() || existingUser.cohort || 'Ciclo 1 2027';
+        existingUser.cohort || payload.cohort?.trim() || '';
 
       await dbRun(
         `UPDATE users
@@ -813,7 +837,7 @@ export async function authenticateMicrosoftUser(payload: {
     } else {
       const id = `stu-${crypto.randomUUID().slice(0, 8)}`;
       const createdAt = new Date().toISOString();
-      const cohort = payload.cohort?.trim() || 'Ciclo 1 2027';
+      const cohort = payload.cohort?.trim() || '';
 
       await dbRun(
         `INSERT INTO users (id, name, email, password, role, cohort, microsoft_oid, auth_provider, created_at)
@@ -934,7 +958,7 @@ export async function authenticateGoogleUser(payload: {
   // Google logins are always students
   if (existingUser) {
     const updatedCohort =
-      payload.cohort?.trim() || existingUser.cohort || 'Ciclo 1 2027';
+      existingUser.cohort || payload.cohort?.trim() || '';
 
     await dbRun(
       `UPDATE users
@@ -949,7 +973,7 @@ export async function authenticateGoogleUser(payload: {
   } else {
     const id = `stu-${crypto.randomUUID().slice(0, 8)}`;
     const createdAt = new Date().toISOString();
-    const cohort = payload.cohort?.trim() || 'Ciclo 1 2027';
+    const cohort = payload.cohort?.trim() || '';
 
     await dbRun(
       `INSERT INTO users (id, name, email, password, role, cohort, google_id, auth_provider, created_at)
