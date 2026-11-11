@@ -31,12 +31,3 @@ export const MENU_ESTUDIANTE = [
   { texto: 'Material', ruta: rutas.material, exacta: false },
   { texto: 'Resultados', ruta: rutas.misResultados, exacta: false },
 ] as const;
-
-/** Pestañas del portal del estudiante y su URL. */
-export const PESTANAS_ESTUDIANTE = {
-  tests: rutas.pruebas,
-  materials: rutas.material,
-  history: rutas.misResultados,
-} as const;
-
-export type PestanaEstudiante = keyof typeof PESTANAS_ESTUDIANTE;

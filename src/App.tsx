@@ -6,9 +6,11 @@ import { ExamenProvider } from './estado/ExamenContext';
 import { Cargando } from './paginas/Cargando';
 import { PaginaAcceso } from './paginas/PaginaAcceso';
 import { PaginaLanding } from './paginas/PaginaLanding';
-import { PaginaEstudiante } from './paginas/PaginaEstudiante';
 import { LayoutEstudiante } from './paginas/estudiante/LayoutEstudiante';
 import { PaginaInicioEstudiante } from './paginas/estudiante/PaginaInicioEstudiante';
+import { PaginaPruebas } from './paginas/estudiante/PaginaPruebas';
+import { PaginaMaterial } from './paginas/estudiante/PaginaMaterial';
+import { PaginaMisResultados } from './paginas/estudiante/PaginaMisResultados';
 import { PaginaDocente } from './paginas/PaginaDocente';
 import { PaginaExamen } from './paginas/PaginaExamen';
 import { PaginaResultados } from './paginas/PaginaResultados';
@@ -43,9 +45,9 @@ const Rutas: React.FC = () => {
       <Route element={<RequiereSesion rol="student" />}>
         <Route element={<LayoutEstudiante />}>
           <Route path={rutas.estudiante} element={<PaginaInicioEstudiante />} />
-          <Route path={rutas.pruebas} element={<PaginaEstudiante pestana="tests" />} />
-          <Route path={rutas.material} element={<PaginaEstudiante pestana="materials" />} />
-          <Route path={rutas.misResultados} element={<PaginaEstudiante pestana="history" />} />
+          <Route path={rutas.pruebas} element={<PaginaPruebas />} />
+          <Route path={rutas.material} element={<PaginaMaterial />} />
+          <Route path={rutas.misResultados} element={<PaginaMisResultados />} />
         </Route>
         <Route path="/examen/:clave" element={<PaginaExamen />} />
       </Route>
