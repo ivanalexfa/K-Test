@@ -285,7 +285,7 @@ export const ReadingQuestionView: React.FC<ReadingQuestionViewProps> = ({
                 <KeyHintIcon size={20} className="shrink-0 mt-0.5" />
                 <div>
                   <div className="font-display font-bold text-xs uppercase tracking-wider text-amber-800 mb-0.5">
-                    Asistencia Guiada K-test ({question.category})
+                    Asistencia Guiada K-Test ({question.category})
                   </div>
                   <p className="text-xs leading-relaxed text-amber-900">
                     {question.referencedLinesLabel

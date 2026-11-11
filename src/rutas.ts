@@ -5,7 +5,7 @@ import type { UserRole } from './types/exam';
  * funciones, nunca con cadenas sueltas. Ver docs/general/decisiones/0005-react-router-y-estado.md.
  */
 export const rutas = {
-  /** Landing pública (Fase 3). Por ahora muestra el acceso. */
+  /** Landing pública. */
   inicio: '/',
   entrar: '/entrar',
   estudiante: '/inicio',

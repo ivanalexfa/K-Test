@@ -5,6 +5,7 @@ import { useSesion } from './estado/useSesion';
 import { ExamenProvider } from './estado/ExamenContext';
 import { Cargando } from './paginas/Cargando';
 import { PaginaAcceso } from './paginas/PaginaAcceso';
+import { PaginaLanding } from './paginas/PaginaLanding';
 import { PaginaEstudiante } from './paginas/PaginaEstudiante';
 import { PaginaDocente } from './paginas/PaginaDocente';
 import { PaginaExamen } from './paginas/PaginaExamen';
@@ -17,7 +18,7 @@ import { rutas } from './rutas';
  * un enlace. Ver docs/general/decisiones/0005-react-router-y-estado.md.
  *
  * | URL                     | Pantalla                         | Quién        |
- * | /                       | Landing (Fase 3); hoy, el acceso | Todos        |
+ * | /                       | Landing                          | Todos        |
  * | /entrar                 | Acceso con Google o Microsoft    | Todos        |
  * | /inicio/pruebas         | Simulacro y sprints              | Estudiante   |
  * | /inicio/material        | Material de estudio              | Estudiante   |
@@ -32,7 +33,7 @@ const Rutas: React.FC = () => {
 
   return (
     <Routes>
-      <Route path={rutas.inicio} element={<PaginaAcceso />} />
+      <Route path={rutas.inicio} element={<PaginaLanding />} />
       <Route path={rutas.entrar} element={<PaginaAcceso />} />
 
       <Route element={<RequiereSesion rol="student" />}>
