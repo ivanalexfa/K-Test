@@ -48,3 +48,9 @@ Un ADR (*Architecture Decision Record*) es un archivo corto por decisión: conte
 | # | Decisión | Estado |
 | :--- | :--- | :--- |
 | [0001](landing/decisiones/0001-estructura-de-la-landing.md) | Estructura de la landing: un solo llamado y la lógica del Tec con el estilo de Key | Aceptada |
+
+### Acceso
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](acceso/decisiones/0001-pantalla-de-acceso.md) | Pantalla de acceso como la de Key, con Google y Microsoft al mismo nivel | Aceptada |

@@ -29,8 +29,8 @@ K-test es la plataforma de práctica de la PAA para los admitidos de Key Institu
 | 0 · Herramientas y reglas | `chore/herramientas` | ~3 | En `main` (PR #8 y #10) |
 | 1 · Base de marca | `feat/marca-key` | ~4 | Fusionada en `rediseno/estudiante` (PR #11) |
 | 2 · Router y estructura | `feat/router` | ~3 | Fusionada en `rediseno/estudiante` (PR #12) |
-| 3 · Landing | `feat/landing` | ~6 | En revisión |
-| 4 · Login | `feat/login` | ~2 | Pendiente |
+| 3 · Landing | `feat/landing` | ~6 | Fusionada en `rediseno/estudiante` (PR #13) |
+| 4 · Login | `feat/login` | ~2 | En revisión |
 | 5 · Dashboard del estudiante | `feat/dashboard-estudiante` | ~6 | Pendiente |
 | 6 · Docente, examen y resultados: solo estilo | `feat/estilo-docente-examen` | ~3 | Pendiente |
 | 7 · Revisión y entrega del jueves | `rediseno/estudiante` → `main` | ~4 | Pendiente |
