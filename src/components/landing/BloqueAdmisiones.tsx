@@ -15,7 +15,7 @@ export const BloqueAdmisiones: React.FC = () => (
           id="admisiones-titulo"
           className="max-w-[1000px] text-key-blanco font-semibold tracking-[-0.02em] text-balance text-[34px] leading-[40px] sm:text-[52px] sm:leading-[58px] lg:text-[72px] lg:leading-[76px]"
         >
-          Futuro ingeniero, construyamos juntos la llave para transformar vidas.
+          Una universidad para ingenieros con una misión. Para los que imaginan, y hacen.
         </h2>
       </div>
     </div>

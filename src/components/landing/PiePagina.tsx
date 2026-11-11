@@ -59,7 +59,7 @@ export const PiePagina: React.FC = () => (
     </div>
     <div className="border-t-[0.8px] border-key-negro/30">
       <p className="mx-auto max-w-[1360px] px-5 sm:px-8 lg:px-10 py-6 text-sm text-key-texto">
-        © {ANIO} Key Institute. K-test es la plataforma de práctica de la PAA
+        © {ANIO} Key Institute. K-Test es la plataforma de práctica de la PAA
         de Key Institute.
       </p>
     </div>

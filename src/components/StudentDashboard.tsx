@@ -435,7 +435,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 text-purple-900 border border-purple-200/70 text-xs font-bold uppercase tracking-wider">
                           <VerbalPAAIcon size={18} />
-                          Área de Lenguaje y Redacción
+                          Lectura y Redacción
                         </span>
                         <span className="inline-flex items-center gap-1 text-xs font-mono-num font-bold text-[#0052FF] bg-[#0052FF]/10 px-2.5 py-1 rounded-md">
                           {readingSprints.length} Sprints disponibles
@@ -472,7 +472,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0052FF]/8 text-[#0A1128] border border-[#0052FF]/20 text-xs font-bold uppercase tracking-wider">
                           <MathPAAIcon size={18} />
-                          Área Cuantitativa · Matemáticas
+                          Matemáticas
                         </span>
                         <span className="inline-flex items-center gap-1 text-xs font-mono-num font-bold text-[#0052FF] bg-[#0052FF]/10 px-2.5 py-1 rounded-md">
                           {mathSprints.length} Sprints disponibles

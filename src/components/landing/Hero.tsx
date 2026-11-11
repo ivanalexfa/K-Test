@@ -16,7 +16,7 @@ export const Hero: React.FC = () => (
       sizes="100vw"
       width={1440}
       height={961}
-      alt="Estudiantes de Key trabajando en grupo con un profesor alrededor de una mesa"
+      alt="Estudiantes de Key trabajando en grupo alrededor de una mesa"
       // React 18 no conoce la prop fetchPriority (llega en React 19): se pasa el atributo HTML tal cual.
       {...{ fetchpriority: 'high' }}
       className="absolute inset-0 -z-20 h-full w-full object-cover object-[65%_center]"
@@ -33,10 +33,10 @@ export const Hero: React.FC = () => (
           id="hero-titulo"
           className="text-key-blanco font-bold tracking-[-0.02em] text-balance text-[40px] leading-[44px] sm:text-[56px] sm:leading-[60px] lg:text-[72px] lg:leading-[76px]"
         >
-          Llega a la PAA sabiendo qué esperar.
+          Practica y prepárate para tu prueba de admisión
         </h1>
         <p className="mt-6 max-w-[560px] text-key-blanco/90 text-lg leading-7 sm:text-xl sm:leading-[30px]">
-          Practica la Prueba de Aptitud Académica con los simulacros y sprints de Key Institute.
+          Simulacros y sprints de la Prueba de Aptitud Académica (PAA), hechos por Key Institute.
           Gratis y a tu ritmo.
         </p>
         <div className="mt-10">

@@ -51,11 +51,11 @@ export const LogoKey: React.FC<LogoKeyProps> = ({
           />
           <span
             translate="no"
-            className={`font-sans text-lg font-semibold tracking-tight leading-none ${
+            className={`font-sans text-lg font-semibold tracking-[0.04em] leading-none ${
               theme === 'dark' ? 'text-white' : 'text-key-negro'
             }`}
           >
-            K-test
+            K-TEST
           </span>
         </>
       )}

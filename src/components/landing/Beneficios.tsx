@@ -2,7 +2,7 @@ import React from 'react';
 import { BookOpenCheck, CalendarClock, BadgeCheck } from 'lucide-react';
 
 /**
- * Por qué practicar en K-test: una frase grande de presentación, al estilo del sitio de Key,
+ * Por qué practicar en K-Test: una frase grande de presentación, al estilo del sitio de Key,
  * y tres beneficios en celdas que se tocan con borde fino (no tarjetas flotantes).
  */
 const BENEFICIOS = [
@@ -29,10 +29,10 @@ export const Beneficios: React.FC = () => (
   <section aria-labelledby="beneficios-titulo" className="bg-key-blanco">
     <div className="mx-auto max-w-[1360px] px-5 sm:px-8 lg:px-10 py-16 lg:py-24">
       <h2 id="beneficios-titulo" className="sr-only">
-        Por qué practicar en K-test
+        Por qué practicar en K-Test
       </h2>
       <p className="max-w-[940px] text-key-tinta font-light text-[28px] leading-[36px] sm:text-[36px] sm:leading-[44px] lg:text-[45px] lg:leading-[54px] text-pretty">
-        K-test es la práctica de Key Institute para la PAA: preguntas como las del examen, con
+        K-Test es la práctica de Key Institute para la PAA: preguntas como las del examen, con
         cronómetro y tu puntaje estimado en la escala de 400 a 1600.
       </p>
 

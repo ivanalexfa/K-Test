@@ -1,10 +1,10 @@
 import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
-import { IconoCarrera, type Carrera } from '../brand/IconoCarrera';
+import type { Carrera } from '../brand/IconoCarrera';
 
 /**
  * «¿Por qué estudiar en Key?»: las fichas de «Por qué elegirnos» de keyinstitute.com,
- * cada una en el color e ícono de una carrera (el único lugar de K-test con colores de
+ * cada una en el color de una carrera, sin ícono (el único lugar de K-test con colores de
  * carrera; ADR marca/0002). Llevan a la página de Key de cada tema.
  */
 const FICHAS: { carrera: Carrera; fondo: string; texto: string; enlace: string; destino: string }[] = [
@@ -61,14 +61,13 @@ export const PorQueKey: React.FC = () => (
               href={destino}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex h-full min-h-[300px] lg:min-h-[340px] flex-col justify-between p-7 sm:p-8 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-key-negro"
+              className="group flex h-full min-h-[240px] lg:min-h-[300px] flex-col justify-between p-7 sm:p-8 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-key-negro"
             >
-              <IconoCarrera carrera={carrera} className="h-12 w-auto self-start" />
+              <span className="block text-xl leading-7 sm:text-2xl sm:leading-8 font-medium text-pretty">
+                {texto}
+              </span>
               <span>
-                <span className="block text-xl leading-7 sm:text-[22px] sm:leading-[30px] font-medium text-pretty">
-                  {texto}
-                </span>
-                <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold underline decoration-[0.8px] underline-offset-4">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold underline decoration-[0.8px] underline-offset-4">
                   {enlace}
                   <ArrowUpRight
                     aria-hidden="true"

@@ -1,12 +1,12 @@
 import { test, expect } from './ayudantes';
 
 test.describe('Landing', () => {
-  test('presenta K-test y «Empezar a practicar» lleva al acceso', async ({ page }) => {
+  test('presenta K-Test y «Empezar a practicar» lleva al acceso', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page).toHaveTitle(/K-test/);
+    await expect(page).toHaveTitle(/K-Test/);
     await expect(
-      page.getByRole('heading', { level: 1, name: 'Llega a la PAA sabiendo qué esperar.' }),
+      page.getByRole('heading', { level: 1, name: 'Practica y prepárate para tu prueba de admisión' }),
     ).toBeVisible();
     await expect(page.getByRole('img', { name: 'Key Institute' }).first()).toBeVisible();
 
