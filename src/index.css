@@ -116,3 +116,15 @@ dialog.paa-dialog::backdrop {
   padding: 0.35rem 0;
   margin: 0.5rem 0 !important;
 }
+
+/* Entrada del hero (único movimiento automático de la landing; se usa con motion-safe:). */
+@keyframes entrada {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
