@@ -17,7 +17,7 @@ import {
   TestMode,
 } from '../types/exam';
 import { LatexRenderer } from './LatexRenderer';
-import { KTestLogo } from './brand/KTestLogo';
+import { LogoKey } from './brand/LogoKey';
 import { MathPAAIcon, VerbalPAAIcon } from './brand/KTestIcons';
 
 interface ResultsViewProps {
@@ -99,7 +99,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       <header className="sticky top-0 z-30 bg-[#0A1128] text-white border-b border-white/10 shadow-md">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <KTestLogo theme="dark" variant="full" />
+            <LogoKey theme="dark" variant="full" />
             {attemptRecord && (
               <div className="hidden sm:block pl-3 border-l border-white/15 text-[11px] text-[#00D2FF]">
                 Alumno: {attemptRecord.userName} ({attemptRecord.userEmail})

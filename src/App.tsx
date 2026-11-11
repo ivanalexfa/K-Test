@@ -29,7 +29,7 @@ import {
   apiSaveTestAttempt,
 } from './services/api';
 import { Header } from './components/Header';
-import { KTestLogo } from './components/brand/KTestLogo';
+import { LogoKey } from './components/brand/LogoKey';
 import { AuthView } from './components/AuthView';
 import { StudentDashboard } from './components/StudentDashboard';
 import { StudentOnboardingModal } from './components/StudentOnboardingModal';
@@ -350,7 +350,7 @@ export const App: React.FC = () => {
       <div className="min-h-dvh flex items-center justify-center bg-[#0A1128] text-white">
         <div className="text-center space-y-3">
           <div className="flex justify-center animate-pulse">
-            <KTestLogo theme="dark" variant="full" />
+            <LogoKey theme="dark" variant="full" />
           </div>
           <p className="text-xs font-mono-num text-[#00D2FF]">
             Inicializando entorno K-test...

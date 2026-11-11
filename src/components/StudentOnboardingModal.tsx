@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { GraduationCap, Sparkles, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 import { KEY_ADMISSION_COHORTS } from '../data/cohortsCatalog';
-import { KTestLogo } from './brand/KTestLogo';
+import { LogoKey } from './brand/LogoKey';
 
 interface StudentOnboardingModalProps {
   studentName: string;
@@ -50,7 +50,7 @@ export const StudentOnboardingModal: React.FC<StudentOnboardingModalProps> = ({
         <div className="relative z-10 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
-            <KTestLogo theme="dark" variant="full" />
+            <LogoKey theme="dark" variant="full" />
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#0052FF]/30 text-[#00D2FF] border border-[#00D2FF]/30 uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 text-[#00D2FF]" />
               Paso Único
