@@ -32,6 +32,7 @@ Un ADR (*Architecture Decision Record*) es un archivo corto por decisión: conte
 | [0002](general/decisiones/0002-calidad-lint-y-pruebas.md) | Calidad: ESLint, Vitest, Playwright y CI en cada PR | Aceptada |
 | [0003](general/decisiones/0003-skills-del-proyecto.md) | Skills de agente dentro del repositorio | Aceptada |
 | [0004](general/decisiones/0004-fases-por-rama-de-integracion.md) | Las fases entran a `rediseno/estudiante` y llegan a `main` en pocas entregas | Aceptada |
+| [0005](general/decisiones/0005-react-router-y-estado.md) | React Router, una URL por pantalla y el estado en dos contextos | Aceptada |
 
 ### Marca
 

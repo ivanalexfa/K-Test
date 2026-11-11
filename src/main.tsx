@@ -1,13 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { broadcastResponseToMainFrame } from '@azure/msal-browser/redirect-bridge';
+import { BrowserRouter } from 'react-router';
 import App from './App';
 import './index.css';
 
 function mountApp() {
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-      <App />
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </React.StrictMode>
   );
 }
