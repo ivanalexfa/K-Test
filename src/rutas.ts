@@ -11,6 +11,8 @@ export const rutas = {
   estudiante: '/inicio',
   pruebas: '/inicio/pruebas',
   material: '/inicio/material',
+  /** Abre un material concreto en la pestaña de material. */
+  materialDe: (id: string) => `/inicio/material?m=${encodeURIComponent(id)}`,
   misResultados: '/inicio/resultados',
   docente: '/docente',
   examen: (clave: string) => `/examen/${encodeURIComponent(clave)}`,
@@ -19,8 +21,16 @@ export const rutas = {
 
 /** Pantalla de inicio de cada rol después de entrar. */
 export function rutaDeRol(rol: UserRole): string {
-  return rol === 'teacher' ? rutas.docente : rutas.pruebas;
+  return rol === 'teacher' ? rutas.docente : rutas.estudiante;
 }
+
+/** Menú del portal del estudiante (encabezado), en orden. */
+export const MENU_ESTUDIANTE = [
+  { texto: 'Inicio', ruta: rutas.estudiante, exacta: true },
+  { texto: 'Pruebas', ruta: rutas.pruebas, exacta: false },
+  { texto: 'Material', ruta: rutas.material, exacta: false },
+  { texto: 'Resultados', ruta: rutas.misResultados, exacta: false },
+] as const;
 
 /** Pestañas del portal del estudiante y su URL. */
 export const PESTANAS_ESTUDIANTE = {

@@ -46,6 +46,10 @@ interface StudentDashboardProps {
   /** Pestaña activa, controlada desde la URL (/inicio/pruebas, /material, /resultados). */
   tab?: StudentTab;
   onChangeTab?: (tab: StudentTab) => void;
+  /** Dentro del portal nuevo (LayoutEstudiante): sin su encabezado ni su banner azul marino. */
+  incrustado?: boolean;
+  /** Material que se abre al entrar (enlace desde el inicio: /inicio/material?m=<id>). */
+  materialInicial?: string | null;
 }
 
 export type StudentTab = 'tests' | 'materials' | 'history';
@@ -86,6 +90,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   onLogout,
   tab,
   onChangeTab,
+  incrustado = false,
+  materialInicial = null,
 }) => {
   const [tabInterna, setTabInterna] = useState<StudentTab>(tab ?? 'tests');
   const activeTab = tab ?? tabInterna;
@@ -99,7 +105,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
   const [materialFilter, setMaterialFilter] = useState<'all' | SectionType>('all');
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
-    materials[0]?.id ?? null
+    materialInicial ?? materials[0]?.id ?? null
   );
 
   const myAttempts = student.getMyAttempts(allAttempts);
@@ -122,8 +128,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   const { reading, math } = examData.sections;
 
   return (
-    <div className="min-h-dvh flex flex-col bg-[#F8FAFC] text-[#0A1128]">
+    <div className={incrustado ? "text-key-tinta" : "min-h-dvh flex flex-col bg-[#F8FAFC] text-[#0A1128]"}>
       {/* Top Institutional Student Navbar */}
+      {!incrustado && (
       <header className="sticky top-0 z-30 bg-[#0A1128] text-white border-b border-white/10 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
@@ -152,9 +159,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           </button>
         </div>
       </header>
+      )}
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className={incrustado ? "max-w-[1360px] w-full mx-auto px-5 sm:px-8 lg:px-10 py-8 sm:py-10 space-y-6" : "flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6"}>
         {/* Student Summary Banner & Symmetrical 3-Column Section Selector */}
+        {!incrustado && (
         <section className="rounded-2xl bg-[#0A1128] text-white p-5 sm:p-7 shadow-lg border border-slate-800 relative overflow-hidden">
           <div className="absolute -right-12 -top-12 w-60 h-60 rounded-full bg-[#0052FF]/20 blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -335,6 +344,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             </button>
           </div>
         </section>
+        )}
 
         {/* TAB 1: APARTADO DE PRUEBAS (SIMULACRO COMPLETO + HUBS DE SPRINTS POR MATERIA) */}
         {activeTab === 'tests' && (
