@@ -2,7 +2,7 @@
 
 - **Responsable:** Soham (frontend, lo visual y la experiencia de usuario). Revisa: Iván.
 - **Entrega:** jueves 12 de noviembre de 2026, revisión con Iván. Después, prueba con los directivos de Key.
-- **Rama de integración:** `rediseno/estudiante` (ADR [general/0001](general/decisiones/0001-flujo-de-trabajo-ramas-y-pr.md)).
+- **Flujo:** cada fase sale de `rediseno/estudiante` y abre su PR contra ella; esa rama llega a `main` en pocas entregas que revisa Iván (ADR [general/0004](general/decisiones/0004-fases-por-rama-de-integracion.md)).
 
 ## Objetivo
 
@@ -19,21 +19,22 @@ K-test es la plataforma de práctica de la PAA para los admitidos de Key Institu
 | Marca de Key aplicada (tokens, logo, fuente, fotos) | Rediseño a fondo del portal del docente |
 | React Router (una URL por pantalla) | Rediseño a fondo de las pantallas del examen y de resultados |
 | Landing, login y dashboard del estudiante | Login único con el portal de admisiones de Key (requiere a TI de Key) |
-| Docente, examen y resultados con el nuevo estilo, sin rediseño | Logo en vector, fotos oficiales y el visto bueno de Key para usarlas |
+| Docente, examen y resultados con el nuevo estilo, sin rediseño | Fotos oficiales y el visto bueno de Key para usar su logo, textos y fotos |
 | Lint, pruebas y CI | |
 
 ## Fases
 
 | Fase | Rama | Horas | Estado |
 | :--- | :--- | :---: | :--- |
-| 0 · Herramientas y reglas | `chore/herramientas` | ~3 | En revisión |
-| 1 · Base de marca | `feat/marca-key` | ~4 | Pendiente |
-| 2 · Router y estructura | `feat/router` | ~3 | Pendiente |
-| 3 · Landing | `feat/landing` | ~6 | Pendiente |
-| 4 · Login | `feat/login` | ~2 | Pendiente |
-| 5 · Dashboard del estudiante | `feat/dashboard-estudiante` | ~6 | Pendiente |
-| 6 · Docente, examen y resultados: solo estilo | `feat/estilo-docente-examen` | ~3 | Pendiente |
-| 7 · Revisión y PR del jueves | `rediseno/estudiante` → `main` | ~4 | Pendiente |
+| 0 · Herramientas y reglas | `chore/herramientas` | ~3 | En `main` (PR #8 y #10) |
+| 1 · Base de marca | `feat/marca-key` | ~4 | Fusionada en `rediseno/estudiante` (PR #11) |
+| 2 · Router y estructura | `feat/router` | ~3 | Fusionada en `rediseno/estudiante` (PR #12) |
+| 3 · Landing | `feat/landing` | ~6 | Fusionada en `rediseno/estudiante` (PR #13) |
+| 4 · Login | `feat/login` | ~2 | Fusionada en `rediseno/estudiante` (PR #14) |
+| 5 · Portal del estudiante (inicio, pruebas, material, resultados) | `feat/dashboard-estudiante` | ~8 | Fusionada en `rediseno/estudiante` (PR #15) |
+| 6 · Docente, examen y solucionario con el estilo de líneas de Key | `feat/estilo-docente-examen` | ~3 | Fusionada en `rediseno/estudiante` (PR #16) |
+| 7 · Revisión y entrega del jueves | `chore/revision-final`, luego `rediseno/estudiante` → `main` | ~4 | Hecha (PR #17); la entrega a `main` es el PR #18 |
+| 8 · Rediseño del docente y del examen | `feat/rediseno-docente-examen` | ~5 | En revisión |
 
 Total: unas 31 horas. Si algo se atrasa, la Fase 6 es la primera que se recorta.
 
@@ -65,19 +66,31 @@ Orden, con la lógica de venta del Tec y el estilo de Key:
 ### 4 · Login
 Tarjeta simple como la de Key: logo, «Bienvenido», Google y Microsoft. Sin cuentas demo; el rol se detecta solo. El origen correcto es `localhost`.
 
-### 5 · Dashboard del estudiante
-- Escritorio: Pruebas (Simulacro y Sprints), Material y Mis resultados visibles sin scroll, con la acción principal de cada una a un clic.
-- Celular: tarjetas apiladas que abren cada pantalla.
+### 5 · Portal del estudiante
+- Inicio con el **simulacro completo como acción protagonista** (versión A1, ADR estudiante/0001); sprints, resultados y material acompañan; sin scroll en 1440×900.
+- Pruebas, Material y Mis resultados rehechos con el mismo estilo; se elimina el portal anterior (`StudentDashboard`).
+- Se decidió que **toda la plataforma interna usa el estilo de líneas de Key** (ADR marca/0003, `DESIGN.md` §11).
+- Se quitó el paso de elegir ciclo de admisión.
 
-### 6 · Docente, examen y resultados
-Tokens, logo y tipografía nuevos, sin rediseño.
+### 6 · Docente, examen y solucionario
+Aplicar las reglas de «Plataforma interna» (`DESIGN.md` §11) al portal del docente, a la pantalla del examen y a la de resultados y solucionario. Sin rediseñar los flujos.
+- Docente: encabezado blanco, datos y menú de celdas en un marco, tabla que se apila en celular, «Publicar material» como acción protagonista (ADR [docente/0001](docente/decisiones/0001-portal-docente-con-lineas-de-key.md)).
+- Examen: encabezado y pie blancos, reloj en una celda, «Siguiente» como única pastilla azul, opciones en celdas, ventanas rectas (ADR [examen/0001](examen/decisiones/0001-examen-y-solucionario-con-lineas-de-key.md)).
+- Resultados: el puntaje en el bloque azul, filtros en celdas y el solucionario en un solo marco.
 
 ### 7 · Revisión y PR
 Revisión con las skills (contraste AA, teclado, de 320 a 1440 px, e2e) y un PR a `main` con capturas de antes y después y los pendientes.
+- `e2e/accesibilidad.spec.ts`: axe (WCAG AA) en todas las pantallas y recorrido con Tab; se corrigió lo que encontró.
+- `scripts/capturas.mjs` y [`entrega/README.md`](entrega/README.md): capturas de antes y después, cómo se revisó y los pendientes.
+
+### 8 · Rediseño del docente y del examen
+Con tiempo antes del jueves, se rehicieron las pantallas que solo tenían el estilo nuevo encima:
+- Docente por páginas: Estudiantes, la ficha de cada estudiante como pantalla propia, Intentos, Material y el formulario de material con vista previa (ADR [docente/0002](docente/decisiones/0002-portal-docente-por-paginas.md)).
+- Examen sin adornos: sin íconos propios ni etiquetas repetidas, opciones en celdas, fórmulas y mapa de preguntas en cuadrículas de líneas (ADR [examen/0002](examen/decisiones/0002-examen-sin-adornos.md)).
 
 ## Análisis de marca (resumen)
 
-Medido el 10 de noviembre de 2026 en keyinstitute.com (a 1440 px), `admisiones.keyinstitute.com`, `info.keyinstitute.com/admisiones` e Instagram `@keyinstitute.sv`. El detalle completo pasa a `marca/DESIGN.md` en la Fase 1.
+Medido el 10 de noviembre de 2026 en keyinstitute.com (a 1440 px), `admisiones.keyinstitute.com`, `info.keyinstitute.com/admisiones` e Instagram `@keyinstitute.sv`. El detalle completo y las decisiones están en [`marca/DESIGN.md`](marca/DESIGN.md).
 
 **Colores**
 
@@ -112,7 +125,8 @@ Amarillo y verde no llevan texto blanco (no llegan a AA); Key usa texto negro so
 ## Pendientes para la reunión con Iván
 
 - Login único con el portal de admisiones de Key: requiere a TI de Key.
-- Logo en vector, fotos oficiales y el visto bueno de Key para usarlas.
+- Fotos oficiales y el visto bueno de Key para usar su logo, textos y fotos (el logo en vector ya se tomó del sitio).
 - `SPEC.md` describe otro stack (React 19, Supabase, Zustand, Recharts): hay que actualizarlo.
 - `data/paa_platform.sqlite` está en git y cambia al usar la app en local.
 - Lint del backend (`server/`, `scripts/`) y los `any` que quedan en `src/`.
+- Ya no se pide el ciclo de admisión al estudiante: los filtros por ciclo del portal del docente verán vacíos a los estudiantes nuevos. ¿Se quita el filtro o el ciclo sale de otro lado (portal de admisiones)?

@@ -69,51 +69,51 @@ export const SectionTransitionModal: React.FC<SectionTransitionModalProps> = ({
       {...({ closedby: 'any' } as any)}
       aria-labelledby={titleId}
       onClose={onClose}
-      className="paa-dialog w-[92vw] max-w-md rounded-2xl shadow-2xl overflow-hidden"
+      className="paa-dialog w-[92vw] max-w-md overflow-hidden"
     >
-      <div className="bg-white text-[#0A1128] rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="bg-key-blanco text-key-tinta border-[0.8px] border-key-negro overflow-hidden">
         <div className="p-6">
-          <div className="w-11 h-11 rounded-xl bg-[#0A1128] text-[#00D2FF] flex items-center justify-center mb-4">
+          <div className="mb-4" aria-hidden="true">
             {unansweredCount > 0 ? (
-              <AlertTriangle className="w-6 h-6 text-amber-400" />
+              <AlertTriangle className="w-8 h-8 text-estado-alerta" />
             ) : (
-              <CheckCircle2 className="w-6 h-6 text-[#00D2FF]" />
+              <CheckCircle2 className="w-8 h-8 text-key-azul" />
             )}
           </div>
 
-          <h2 id={titleId} className="font-display font-bold text-lg text-[#0A1128] mb-1">
+          <h2 id={titleId} className="font-display font-bold text-lg text-key-tinta mb-1">
             {isAdvancingToMath
-              ? '¿Finalizar Sección de Lectura y Redacción?'
-              : '¿Entregar y Guardar Resultados en Base de Datos?'}
+              ? '¿Terminar Lectura y Redacción?'
+              : '¿Entregar y guardar tus resultados?'}
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-5">
+          <p className="text-xs sm:text-sm text-key-texto-suave leading-relaxed mb-5">
             {isAdvancingToMath
-              ? 'Por el flujo secuencial estricto de la PAA, una vez que avances a la Sección 2 (Matemáticas) no podrás regresar a modificar tus respuestas de Lectura y Redacción.'
-              : 'Tus respuestas y tu puntaje se guardarán automáticamente en la base de datos SQLite asociados a tu usuario.'}
+              ? 'Como en la PAA, al pasar a Matemáticas ya no podrás volver a cambiar tus respuestas de Lectura y Redacción.'
+              : 'Tus respuestas y tu puntaje se guardan en tu historial para que veas el solucionario.'}
           </p>
 
           {/* Summary Stats */}
-          <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-2.5 text-xs sm:text-sm mb-6">
+          <div className="border-[0.8px] border-key-negro p-4 space-y-2.5 text-xs sm:text-sm mb-6">
             <div className="flex items-center justify-between">
-              <span className="text-slate-600">Sección actual:</span>
-              <span className="font-semibold text-[#0A1128]">{sectionTitle}</span>
+              <span className="text-key-texto-suave">Sección actual:</span>
+              <span className="font-semibold text-key-tinta">{sectionTitle}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-600">Preguntas respondidas:</span>
-              <span className="font-mono-num font-bold text-[#0052FF]">
+              <span className="text-key-texto-suave">Preguntas respondidas:</span>
+              <span className="font-mono-num font-bold text-key-azul">
                 {answeredCount} / {totalQuestions}
               </span>
             </div>
             {unansweredCount > 0 && (
-              <div className="flex items-center justify-between text-amber-700 font-medium">
+              <div className="flex items-center justify-between text-estado-alerta font-medium">
                 <span>Preguntas sin responder:</span>
                 <span className="font-mono-num font-bold">{unansweredCount}</span>
               </div>
             )}
             {flaggedCount > 0 && (
-              <div className="flex items-center justify-between text-amber-700">
+              <div className="flex items-center justify-between text-estado-alerta">
                 <span className="flex items-center gap-1">
-                  <Flag className="w-3.5 h-3.5 fill-amber-400" />
+                  <Flag className="w-3.5 h-3.5 fill-estado-alerta" />
                   Marcadas para revisión:
                 </span>
                 <span className="font-mono-num font-bold">{flaggedCount}</span>
@@ -125,7 +125,7 @@ export const SectionTransitionModal: React.FC<SectionTransitionModalProps> = ({
             <button
               type="button"
               onClick={() => dialogRef.current?.close()}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs sm:text-sm font-semibold text-slate-700 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-10 px-5 rounded-full border-[0.8px] border-key-negro bg-key-blanco hover:bg-key-gris-claro text-sm font-semibold text-key-tinta transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul"
             >
               Volver y revisar
             </button>
@@ -136,7 +136,7 @@ export const SectionTransitionModal: React.FC<SectionTransitionModalProps> = ({
                 dialogRef.current?.close();
                 onConfirmAdvance();
               }}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0052FF] hover:bg-[#0045D8] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#0052FF]/25 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-10 px-5 rounded-full bg-key-azul hover:bg-key-azul-hover text-sm font-semibold text-key-blanco transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul"
             >
               <span>
                 {isAdvancingToMath

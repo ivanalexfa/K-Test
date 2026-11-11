@@ -8,6 +8,7 @@ Aquí vive el porqué de lo que construimos. El código dice *qué* hace el sist
 docs/
 ├── README.md              ← este índice
 ├── PLAN.md                ← plan del rediseño del frontend, por fases
+├── entrega/               ← resumen de la entrega: capturas de antes y después y pendientes
 ├── plantilla-adr.md       ← copia esta plantilla para cada decisión nueva
 ├── general/decisiones/    ← flujo de trabajo, herramientas, arquitectura
 ├── marca/                 ← DESIGN.md (sistema de diseño) y sus decisiones
@@ -28,10 +29,50 @@ Un ADR (*Architecture Decision Record*) es un archivo corto por decisión: conte
 
 | # | Decisión | Estado |
 | :--- | :--- | :--- |
-| [0001](general/decisiones/0001-flujo-de-trabajo-ramas-y-pr.md) | Flujo de trabajo: ramas por tarea, rama de integración y PR siempre | Aceptada |
+| [0001](general/decisiones/0001-flujo-de-trabajo-ramas-y-pr.md) | Flujo de trabajo: ramas por tarea, rama de integración y PR siempre | Aceptada; precisada por 0004 |
 | [0002](general/decisiones/0002-calidad-lint-y-pruebas.md) | Calidad: ESLint, Vitest, Playwright y CI en cada PR | Aceptada |
 | [0003](general/decisiones/0003-skills-del-proyecto.md) | Skills de agente dentro del repositorio | Aceptada |
+| [0004](general/decisiones/0004-fases-por-rama-de-integracion.md) | Las fases entran a `rediseno/estudiante` y llegan a `main` en pocas entregas | Aceptada |
+| [0005](general/decisiones/0005-react-router-y-estado.md) | React Router, una URL por pantalla y el estado en dos contextos | Aceptada |
 
 ### Marca
 
-[`marca/DESIGN.md`](marca/DESIGN.md) es el sistema de diseño vivo de K-test como producto de Key Institute.
+[`marca/DESIGN.md`](marca/DESIGN.md) es el sistema de diseño vivo de K-test como producto de Key Institute. El origen de las fotos está en [`marca/fotos-originales/FUENTES.md`](marca/fotos-originales/FUENTES.md).
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](marca/decisiones/0001-k-test-usa-la-identidad-de-key.md) | K-test usa la identidad de Key Institute, no una propia | Aceptada |
+| [0002](marca/decisiones/0002-tokens-y-colores-de-carrera.md) | Tokens en Tailwind 4 y colores de carrera solo en la landing | Aceptada |
+| [0003](marca/decisiones/0003-plataforma-interna-con-lineas-de-key.md) | La plataforma interna usa el estilo de líneas de Key | Aceptada |
+
+### Landing
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](landing/decisiones/0001-estructura-de-la-landing.md) | Estructura de la landing: un solo llamado y la lógica del Tec con el estilo de Key | Aceptada |
+
+### Acceso
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](acceso/decisiones/0001-pantalla-de-acceso.md) | Pantalla de acceso como la de Key, con Google y Microsoft al mismo nivel | Aceptada |
+
+### Estudiante
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](estudiante/decisiones/0001-inicio-con-todo-a-la-vista.md) | Inicio del estudiante: el simulacro como acción protagonista y todo a un clic | Aceptada (A1) |
+
+### Docente
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](docente/decisiones/0001-portal-docente-con-lineas-de-key.md) | Portal del docente con el estilo de líneas de Key | Reemplazada en su estructura por 0002 |
+| [0002](docente/decisiones/0002-portal-docente-por-paginas.md) | Portal del docente por páginas, con la ficha del estudiante como pantalla propia | Aceptada |
+
+### Examen
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](examen/decisiones/0001-examen-y-solucionario-con-lineas-de-key.md) | Examen y solucionario con el estilo de líneas de Key | Aceptada, ampliada por 0002 |
+| [0002](examen/decisiones/0002-examen-sin-adornos.md) | Examen sin adornos: preguntas en celdas y sin íconos decorativos | Aceptada |

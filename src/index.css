@@ -3,39 +3,65 @@
 
 /*
  * ============================================================================
- * K-TEST (BY KEY INSTITUTE) · DESIGN SYSTEM & BRAND ASSETS REGISTRY
+ * K-TEST · UN PRODUCTO DE KEY INSTITUTE · TOKENS DE MARCA
  * ============================================================================
- * Paleta Oficial:
- *   - Deep Navy:     #0A1128
- *   - Electric Blue: #0052FF (Hover: #0045D8)
- *   - Tech Cyan:     #00D2FF
- *   - Surface Light: #F8FAFC / #FFFFFF
- *
- * Activos Oficiales de Marca e Iconografía Dedicada (Uso Obligatorio):
- *   1. Logotipo Oficial: `src/components/brand/KTestLogo.tsx`
- *      - `<KTestLogo variant="full" | "mark-only" theme="dark" | "light" />`
- *   2. Iconografía Bitono Semántica (24x24): `src/components/brand/KTestIcons.tsx`
- *      - `<SimulacroEngineIcon />`   -> Simulacro en Condiciones Reales
- *      - `<AsyncTrainerIcon />`      -> Práctica Asíncrona / Sprints Cortos
- *      - `<TeacherDiagnosticIcon />` -> Diagnóstico y Analítica del Profesor
- *      - `<MathPAAIcon />`           -> Insignia de Área: Matemáticas PAA
- *      - `<VerbalPAAIcon />`         -> Insignia de Área: Lectura y Redacción
- *      - `<StrikeOptionIcon />`      -> Herramienta para tachar/descartar opciones
- *      - `<KeyHintIcon />`           -> Botón de Pista / Asistencia Guiada
+ * Fuente de verdad: docs/marca/DESIGN.md (medido en keyinstitute.com).
+ * Los componentes usan estas clases (bg-key-azul, text-key-texto, …),
+ * nunca hex sueltos. Logo: src/components/brand/LogoKey.tsx.
  * ============================================================================
  */
 
+@theme {
+  /* Tipografía: Albert Sans en todo; JetBrains Mono solo para cifras y cronómetro. */
+  --font-sans: 'Albert Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Albert Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Principales */
+  --color-key-negro: #000000;
+  --color-key-blanco: #ffffff;
+  --color-key-azul: #006dff;        /* blanco encima: 4.53:1 (AA) */
+  --color-key-azul-hover: #0058d1;  /* blanco encima: 6.33:1 */
+
+  /* Neutros */
+  --color-key-tinta: #111111;       /* titulares, fondos oscuros */
+  --color-key-texto: #333333;       /* texto corrido: 12.63:1 sobre blanco */
+  --color-key-texto-suave: #5c6670; /* texto secundario: 5.85:1 sobre blanco */
+  --color-key-gris: #e3e7e8;        /* footer, divisores suaves */
+  --color-key-gris-claro: #f5f7fa;  /* fondos de sección */
+
+  /* Carreras: solo acentos. Texto negro encima (amarillo y verde no admiten blanco). */
+  --color-carrera-computacion: #31e083;
+  --color-carrera-industrial: #f5f500;
+  --color-carrera-mecatronica: #9746ff;
+  --color-carrera-quimica: #fc8524;
+
+  /* Estados (resultados, pistas, descartes). Key no los define: derivados de su
+     paleta con contraste AA para texto sobre blanco y sobre su fondo. */
+  --color-estado-exito: #0b7a43;        /* 5.41:1 */
+  --color-estado-exito-fondo: #e8fbf1;
+  --color-estado-alerta: #7a5a00;       /* 6.38:1 */
+  --color-estado-alerta-fondo: #fefbd6;
+  --color-estado-error: #c2261e;        /* 5.85:1 */
+  --color-estado-error-fondo: #fdeceb;
+
+  /* Forma y movimiento */
+  --radius-pastilla: 100px;
+  --ease-key: cubic-bezier(0.175, 0.885, 0.32, 1.275); /* hover con leve rebote */
+  --ease-key-salida: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @layer base {
   :root {
-    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-    --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    /* Borde fino característico de Key (celdas del menú, campos, divisores). */
+    --key-borde: 0.8px;
+    --key-degradado: linear-gradient(90deg, #006dff, #fbd2ff 63%, #f5f500);
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #F8FAFC;
-    color: #0A1128;
+    background-color: var(--color-key-blanco);
+    color: var(--color-key-texto);
     margin: 0;
   }
 
@@ -89,4 +115,16 @@ dialog.paa-dialog::backdrop {
   overflow-y: hidden;
   padding: 0.35rem 0;
   margin: 0.5rem 0 !important;
+}
+
+/* Entrada del hero (único movimiento automático de la landing; se usa con motion-safe:). */
+@keyframes entrada {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

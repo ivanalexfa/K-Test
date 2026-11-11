@@ -1,21 +1,9 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import {
-  ArrowRight,
-  ChevronDown,
-  ChevronUp,
-  CheckCircle2,
-  AlertCircle,
-
-  X,
-} from 'lucide-react';
+import { Link } from 'react-router';
+import { ArrowLeft, ChevronDown, ChevronUp, AlertCircle, X } from 'lucide-react';
 import { UserRecord, UserRole } from '../types/exam';
-import { instantiateUserClass } from '../models/UserClasses';
-import { KTestLogo } from './brand/KTestLogo';
-import {
-  SimulacroEngineIcon,
-  AsyncTrainerIcon,
-  TeacherDiagnosticIcon,
-} from './brand/KTestIcons';
+import { LogoKey } from './brand/LogoKey';
+import { rutas } from '../rutas';
 import {
   isDemoAccountsEnabled,
   isRealMsalConfigured,
@@ -272,199 +260,119 @@ export const AuthView: React.FC<AuthViewProps> = ({
     });
   };
 
+  const ocupado = loadingGoogle || loadingMs;
+  const claseBotonProveedor =
+    'w-full h-14 rounded-full px-5 flex items-center justify-center gap-3 text-base font-semibold whitespace-nowrap transition-[background-color,border-color,transform] duration-200 ease-key motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-key-azul disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer';
+
   return (
-    <div className="min-h-dvh flex flex-col bg-[#0A1128] text-white">
-      {/* Top Institutional Bar */}
-      <header className="bg-[#0A1128] text-white border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <KTestLogo theme="dark" variant="full" />
-
-          
-        </div>
-      </header>
-
-      {/* Unified Canvas: Hero + Showcase in one continuous, seamless gradient from header to page bottom */}
-      <div className="relative flex-1 flex flex-col bg-gradient-to-b from-[#0A1128] via-[#080E24] to-[#050A18] overflow-hidden">
-        {/* Continuous Ambient Key Institute Glows spanning the entire page */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[450px] bg-[#0052FF]/25 blur-[140px] pointer-events-none" />
-        <div className="absolute top-1/3 -right-24 w-[480px] h-[480px] bg-[#00D2FF]/10 blur-[140px] pointer-events-none" />
-        <div className="absolute bottom-10 -left-20 w-[460px] h-[460px] bg-[#0052FF]/15 blur-[140px] pointer-events-none" />
-
-        {/* Hero Section with Centered Minimalist Login Card */}
-        <section className="relative z-10 pt-10 pb-6 sm:pt-14 sm:pb-8 px-4 sm:px-6">
-          <div className="max-w-3xl mx-auto text-center mb-8 sm:mb-10">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#0052FF]/25 border border-[#00D2FF]/35 text-[#00D2FF] text-xs font-bold uppercase tracking-wider mb-4">
-              Plataforma de Preparación y Diagnóstico PAA
-            </div>
-            <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight mb-3">
-              Entrena tu mente para la ingeniería del futuro
-            </h1>
-          </div>
-
-          {/* Centered Login Card */}
-          <div className="max-w-md mx-auto bg-white text-[#0A1128] rounded-2xl shadow-2xl border border-white/15 overflow-hidden">
-            <div className="p-6 sm:p-7 space-y-5">
-              <div className="text-center">
-                <h2 className="font-display font-extrabold text-xl text-[#0A1128]">
-                  Iniciar Sesión
-                </h2>
-              </div>
-
-              {error && (
-                <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-xs text-red-800">
-                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  <div className="flex-1 font-medium">{error}</div>
-                </div>
-              )}
-
-              {/* Login Buttons */}
-              <div className="space-y-3 pt-1">
-                <button
-                  type="button"
-                  disabled={loadingGoogle || loadingMs}
-                  onClick={handleClickGoogleLogin}
-                  className="w-full py-3.5 px-5 rounded-xl bg-white hover:bg-slate-50 text-[#0A1128] border-2 border-slate-200 hover:border-[#0052FF]/40 font-display font-bold text-sm sm:text-base shadow-xs grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-slate-200"
-                >
-                  <GoogleLogoSvg className="w-5 h-5 shrink-0" />
-                  <span className="text-center">
-                    {loadingGoogle
-                      ? 'Conectando con Google...'
-                      : 'Continuar con Google'}
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-[#0052FF] justify-self-end" />
-                </button>
-
-                <div className="flex items-center gap-3.5 py-1" role="separator">
-                  <div className="h-px flex-1 bg-slate-200" />
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest select-none leading-none">
-                    o bien
-                  </span>
-                  <div className="h-px flex-1 bg-slate-200" />
-                </div>
-
-                <button
-                  type="button"
-                  disabled={loadingGoogle || loadingMs}
-                  onClick={handleClickMicrosoftLogin}
-                  className="w-full py-3.5 px-5 rounded-xl bg-[#0A1128] hover:bg-[#0052FF] text-white border-2 border-[#0A1128] hover:border-[#0052FF] font-display font-bold text-sm sm:text-base shadow-lg grid grid-cols-[20px_1fr_20px] items-center gap-3 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#0A1128]"
-                >
-                  <MicrosoftLogoSvg className="w-5 h-5 shrink-0" />
-                  <span className="text-center">
-                    {loadingMs
-                      ? 'Conectando con Microsoft...'
-                      : 'Continuar con Microsoft'}
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-[#00D2FF] justify-self-end" />
-                </button>
-              </div>
-            </div>
-          </div>
-      </section>
-
-      {/* Welcome Landing Showcase Section: What Awaits Inside */}
-      <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 pt-4 pb-16 space-y-10">
-        {/* 3 Symmetrical Pillars of the Platform (Compact: Icon + Title) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Pillar 1: Full PAA Simulacro */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-[#0052FF]/10 border border-[#0052FF]/20 flex items-center justify-center shrink-0">
-              <SimulacroEngineIcon size={22} />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#0052FF] block">
-                Experiencia Oficial
-              </span>
-              <h3 className="font-display text-sm sm:text-base font-extrabold text-[#0A1128]">
-                Simulacros Completos PAA
-              </h3>
-            </div>
-          </div>
-
-          {/* Pillar 2: Focused Sprints / Práctica Asíncrona */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] border border-[#10B981]/20 flex items-center justify-center shrink-0">
-              <AsyncTrainerIcon size={22} />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">
-                Entrenamiento Diario Ágil
-              </span>
-              <h3 className="font-display text-sm sm:text-base font-extrabold text-[#0A1128]">
-                Sprints Cortos por Materia
-              </h3>
-            </div>
-          </div>
-
-          {/* Pillar 3: Teacher Diagnostic & Study Materials */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-[#F1F5F9] border border-[#CBD5E1] flex items-center justify-center shrink-0">
-              <TeacherDiagnosticIcon size={22} />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#0052FF] block">
-                Diagnóstico y Acompañamiento
-              </span>
-              <h3 className="font-display text-sm sm:text-base font-extrabold text-[#0A1128]">
-                Materiales y Solucionarios
-              </h3>
-            </div>
-          </div>
-        </div>
-
-        {/* Discreet Collapsible Demo Quick-Access (Only visible in Dev when VITE_ENABLE_DEMO_ACCOUNTS=true) */}
-        {showDemoSection && (
-          <div className="max-w-2xl mx-auto bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setDemoPanelOpen((v) => !v)}
-              className="w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100/80 flex items-center justify-between text-xs font-semibold text-slate-500 transition-colors cursor-pointer"
+    <div className="min-h-dvh flex flex-col bg-key-negro">
+      <main className="flex-1 flex items-center justify-center px-5 py-12 sm:py-16">
+        <div className="w-full max-w-[460px]">
+          <div className="bg-key-blanco text-key-tinta rounded-[4px] px-5 py-8 min-[380px]:px-7 min-[380px]:py-9 sm:px-10 sm:py-11">
+            <Link
+              to={rutas.inicio}
+              aria-label="K-Test, inicio"
+              className="inline-flex rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-key-azul max-[379px]:[&_img]:h-7"
             >
-              <span>
-                Acceso rápido de prueba (Cuentas Demo)
-              </span>
-              {demoPanelOpen ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
+              <LogoKey theme="light" variant="mark-only" />
+            </Link>
 
-            {demoPanelOpen && (
-              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 border-t border-slate-200 max-h-60 overflow-y-auto custom-scrollbar">
-                {users.map((u) => {
-                  const inst = instantiateUserClass(u);
-                  return (
-                    <button
-                      key={u.id}
-                      type="button"
-                      onClick={() => onSelectUser(u)}
-                      className="text-left p-2.5 rounded-lg border border-slate-200 hover:border-[#0052FF] bg-white hover:bg-slate-50 flex items-center justify-between gap-2 transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-7 h-7 rounded-md bg-[#0A1128] text-[#00D2FF] font-display font-bold text-[11px] flex items-center justify-center shrink-0">
-                          {inst.getInitials()}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-bold text-xs text-[#0A1128] truncate">
-                            {u.name}
-                          </div>
-                          <div className="text-[10px] text-slate-500 truncate">
-                            {u.cohort}
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-bold text-[#0052FF] shrink-0">
-                        Entrar
-                      </span>
-                    </button>
-                  );
-                })}
+            <h1 className="mt-9 text-[30px] leading-9 sm:text-[34px] sm:leading-10 font-semibold tracking-[-0.01em] text-balance">
+              Te damos la bienvenida
+            </h1>
+            <p className="mt-3 text-key-texto text-base leading-[26px]">
+              Entra con tu cuenta de Google o de Microsoft. Si es tu primera vez, tu cuenta se crea
+              al entrar.
+            </p>
+
+            {error && (
+              <div
+                role="alert"
+                className="mt-6 flex items-start gap-2.5 rounded-[4px] border-[0.8px] border-estado-error bg-estado-error-fondo p-3.5 text-sm text-estado-error"
+              >
+                <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                <p className="flex-1 font-medium">{error}</p>
               </div>
             )}
+
+            <div className="mt-8 space-y-3" aria-busy={ocupado}>
+              <button
+                type="button"
+                disabled={ocupado}
+                onClick={handleClickGoogleLogin}
+                className={`${claseBotonProveedor} bg-key-blanco text-key-tinta border-[0.8px] border-key-negro hover:bg-key-gris-claro`}
+              >
+                <GoogleLogoSvg className="w-5 h-5 shrink-0" />
+                <span>{loadingGoogle ? 'Conectando con Google…' : 'Continuar con Google'}</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={ocupado}
+                onClick={handleClickMicrosoftLogin}
+                className={`${claseBotonProveedor} bg-key-blanco text-key-tinta border-[0.8px] border-key-negro hover:bg-key-gris-claro`}
+              >
+                <MicrosoftLogoSvg className="w-5 h-5 shrink-0" />
+                <span>{loadingMs ? 'Conectando con Microsoft…' : 'Continuar con Microsoft'}</span>
+              </button>
+            </div>
+
+            <p className="mt-7 border-t-[0.8px] border-key-gris pt-5 text-sm leading-6 text-key-texto-suave">
+              ¿Eres docente? Entra con tu cuenta de Microsoft de Key (
+              <span className="whitespace-nowrap">@{INSTITUTIONAL_TEACHER_DOMAINS[0]}</span>).
+            </p>
           </div>
-        )}
+
+          <Link
+            to={rutas.inicio}
+            className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-key-blanco/85 hover:text-key-blanco rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-key-blanco"
+          >
+            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+            Volver al inicio
+          </Link>
+
+          {/* Acceso rápido con cuentas demo: solo con VITE_ENABLE_DEMO_ACCOUNTS=true (desarrollo). */}
+          {showDemoSection && (
+            <div className="mt-8 rounded-[4px] border-[0.8px] border-key-blanco/30 text-key-blanco">
+              <button
+                type="button"
+                aria-expanded={demoPanelOpen}
+                onClick={() => setDemoPanelOpen((v) => !v)}
+                className="w-full px-4 py-3 flex items-center justify-between text-sm font-medium cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-blanco"
+              >
+                <span>Cuentas de prueba (solo desarrollo)</span>
+                {demoPanelOpen ? (
+                  <ChevronUp aria-hidden="true" className="w-4 h-4" />
+                ) : (
+                  <ChevronDown aria-hidden="true" className="w-4 h-4" />
+                )}
+              </button>
+
+              {demoPanelOpen && (
+                <ul className="max-h-64 overflow-y-auto border-t-[0.8px] border-key-blanco/30">
+                  {users.map((u) => (
+                    <li key={u.id}>
+                      <button
+                        type="button"
+                        onClick={() => onSelectUser(u)}
+                        className="w-full px-4 py-2.5 text-left flex items-center justify-between gap-3 hover:bg-key-blanco/10 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-key-blanco"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold">{u.name}</span>
+                          <span className="block truncate text-xs text-key-blanco/70">
+                            {u.role === 'teacher' ? 'Docente' : 'Estudiante'} · {u.cohort}
+                          </span>
+                        </span>
+                        <span className="text-xs font-semibold shrink-0">Entrar</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       </main>
-      </div>
 
       {/* Fallback Microsoft SSO Simulator Modal (only if VITE_MSAL_CLIENT_ID is empty) */}
       <dialog
@@ -472,15 +380,15 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {...({ closedby: 'any' } as any)}
         aria-labelledby={msDialogTitleId}
         onClose={() => setIsMsSimModalOpen(false)}
-        className="paa-dialog w-[94vw] max-w-md rounded-2xl shadow-2xl overflow-hidden"
+        className="paa-dialog w-[94vw] max-w-md rounded-[4px] overflow-hidden"
       >
-        <div className="bg-white text-[#0A1128] rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div className="bg-key-blanco text-key-tinta">
+          <div className="px-6 py-4 border-b-[0.8px] border-key-gris flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <MicrosoftLogoSvg className="w-5 h-5" />
               <span
                 id={msDialogTitleId}
-                className="font-semibold text-sm text-slate-800"
+                className="font-semibold text-base"
               >
                 Iniciar sesión con Microsoft
               </span>
@@ -489,16 +397,16 @@ export const AuthView: React.FC<AuthViewProps> = ({
               type="button"
               onClick={() => msDialogRef.current?.close()}
               aria-label="Cerrar ventana de Microsoft"
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
+              className="p-1.5 rounded-full text-key-texto-suave hover:text-key-tinta cursor-pointer focus-visible:outline-2 focus-visible:outline-key-azul"
             >
-              <X className="w-4 h-4" />
+              <X aria-hidden="true" className="w-4 h-4" />
             </button>
           </div>
 
           <form onSubmit={handleSimulatedMsSubmit} className="p-6 space-y-4">
             <div className="space-y-3">
               <div>
-                <label htmlFor={simEmailId} className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor={simEmailId} className="block text-sm font-medium text-key-tinta mb-1.5">
                   Correo Microsoft (Personal o Institucional)
                 </label>
                 <input
@@ -508,12 +416,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   value={simEmail}
                   onChange={(e) => setSimEmail(e.target.value)}
                   placeholder="usuario@keyinstitute.edu.sv o usuario@outlook.com"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-[#0052FF]"
+                  className="w-full h-10 px-3 rounded-none border-[0.8px] border-key-negro text-base focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-key-azul"
                 />
               </div>
 
               <div>
-                <label htmlFor={simNameId} className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor={simNameId} className="block text-sm font-medium text-key-tinta mb-1.5">
                   Nombre Completo
                 </label>
                 <input
@@ -523,7 +431,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   value={simName}
                   onChange={(e) => setSimName(e.target.value)}
                   placeholder="Nombre y Apellido"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-[#0052FF]"
+                  className="w-full h-10 px-3 rounded-none border-[0.8px] border-key-negro text-base focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-key-azul"
                 />
               </div>
             </div>
@@ -532,17 +440,16 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="button"
                 onClick={() => msDialogRef.current?.close()}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 cursor-pointer"
+                className="h-11 px-5 rounded-full border-[0.8px] border-key-negro text-sm font-semibold cursor-pointer hover:bg-key-gris-claro focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={loadingMs}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#0052FF] hover:bg-[#0045D8] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#0052FF]/25 cursor-pointer"
+                className="h-11 px-6 rounded-full bg-key-azul hover:bg-key-azul-hover text-key-blanco text-sm font-semibold cursor-pointer disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul"
               >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Continuar</span>
+                Entrar
               </button>
             </div>
           </form>

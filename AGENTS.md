@@ -5,7 +5,7 @@ These rules apply to every agent on the team (Antigravity, Claude Code, …). `C
 ## Repository rules (team agreement)
 
 - **Never commit or merge directly to `main`.** Every change goes through a Pull Request that Iván or Soham reviews. Work on one branch per task, named `<type>/<area-task>` (`feat/landing`, `fix/login-origen`, `chore/herramientas`, `docs/...`).
-- **Frontend redesign:** task branches open their PR against the integration branch `rediseno/estudiante`; that branch goes to `main` in a single PR. See `docs/PLAN.md`.
+- **Frontend redesign:** each phase branches from `rediseno/estudiante` and opens its PR against it; Soham merges it once CI passes (only `main` is protected). `rediseno/estudiante` reaches `main` in a few deliveries, each one a PR that Iván reviews (`main` rule: one CODEOWNERS approval, the last pusher cannot approve). See ADR `docs/general/decisiones/0004-fases-por-rama-de-integracion.md`.
 - **Commits:** Conventional Commits in Spanish, as in the history: `feat(ui): ...`, `fix(auth): ...`, `chore: ...`, `docs: ...`, `test: ...`.
 - **Before opening a PR:** `npm run verificar` must pass (lint, types, component tests, API tests and e2e). CI (`.github/workflows/verificar.yml`) runs the same checks on every PR.
 - **Decisions:** every design or architecture decision gets an ADR in `docs/<module>/decisiones/NNNN-titulo.md` (template in `docs/plantilla-adr.md`). Index in `docs/README.md`.
@@ -24,6 +24,8 @@ These rules apply to every agent on the team (Antigravity, Claude Code, …). `C
 | `npm run test:api` | API test suite on a temporary copy of the database |
 | `npm run test:e2e` | Playwright (`e2e/`), desktop and Pixel 7, own Vite on port 5174 and temporary DB. First time: `npx playwright install chromium` |
 | `npm run verificar` | All of the above |
+
+**Routes:** every URL lives in `src/rutas.ts`; screens live in `src/paginas/`; shared state in `src/estado/` (`useSesion`, `useExamen`). A new screen = its page, its URL in `rutas.ts`, its `<Route>` in `App.tsx` (inside `RequiereSesion` if private) and its e2e test (ADR `general/0005`).
 
 A new screen or flow gets its test in `e2e/`, importing `test` and `expect` from `e2e/ayudantes.ts` (it fails the test on page exceptions, console errors or API 5xx).
 
