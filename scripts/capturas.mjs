@@ -69,6 +69,12 @@ async function despues(tamano) {
   await p.goto(`${base}/docente`);
   await p.getByRole('heading', { level: 1 }).waitFor();
   await foto(p, '6-docente', tamano);
+  await p.goto(`${base}/docente/estudiantes/stu-1`);
+  await p.getByRole('heading', { level: 1 }).waitFor();
+  await foto(p, '7-ficha-estudiante', tamano);
+  await p.goto(`${base}/docente/material/nuevo`);
+  await p.getByRole('heading', { level: 1 }).waitFor();
+  await foto(p, '8-publicar-material', tamano);
 }
 
 async function entrarDemo(p, nombre) {

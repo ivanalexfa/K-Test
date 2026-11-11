@@ -11,7 +11,12 @@ import { PaginaInicioEstudiante } from './paginas/estudiante/PaginaInicioEstudia
 import { PaginaPruebas } from './paginas/estudiante/PaginaPruebas';
 import { PaginaMaterial } from './paginas/estudiante/PaginaMaterial';
 import { PaginaMisResultados } from './paginas/estudiante/PaginaMisResultados';
-import { PaginaDocente } from './paginas/PaginaDocente';
+import { LayoutDocente } from './paginas/docente/LayoutDocente';
+import { PaginaEstudiantesDocente } from './paginas/docente/PaginaEstudiantesDocente';
+import { PaginaFichaEstudiante } from './paginas/docente/PaginaFichaEstudiante';
+import { PaginaIntentosDocente } from './paginas/docente/PaginaIntentosDocente';
+import { PaginaMaterialDocente } from './paginas/docente/PaginaMaterialDocente';
+import { PaginaFormularioMaterial } from './paginas/docente/PaginaFormularioMaterial';
 import { PaginaExamen } from './paginas/PaginaExamen';
 import { PaginaResultados } from './paginas/PaginaResultados';
 import { RequiereCualquierSesion, RequiereSesion } from './paginas/RequiereSesion';
@@ -31,7 +36,12 @@ import { rutas } from './rutas';
  * | /inicio/resultados      | Mis resultados                   | Estudiante   |
  * | /examen/:clave          | Examen en curso                  | Estudiante   |
  * | /resultados/:intentoId  | Resultado y solucionario         | Ambos        |
- * | /docente                | Portal del docente               | Docente      |
+ * | /docente                | Estudiantes (inicio del docente) | Docente      |
+ * | /docente/estudiantes/:id| Ficha de un estudiante           | Docente      |
+ * | /docente/intentos       | Todos los intentos               | Docente      |
+ * | /docente/material       | Material publicado               | Docente      |
+ * | /docente/material/nuevo | Publicar material                | Docente      |
+ * | /docente/material/:id   | Editar material                  | Docente      |
  */
 const Rutas: React.FC = () => {
   const { cargando } = useSesion();
@@ -53,7 +63,14 @@ const Rutas: React.FC = () => {
       </Route>
 
       <Route element={<RequiereSesion rol="teacher" />}>
-        <Route path={rutas.docente} element={<PaginaDocente />} />
+        <Route element={<LayoutDocente />}>
+          <Route path={rutas.docente} element={<PaginaEstudiantesDocente />} />
+          <Route path="/docente/estudiantes/:id" element={<PaginaFichaEstudiante />} />
+          <Route path={rutas.intentosDocente} element={<PaginaIntentosDocente />} />
+          <Route path={rutas.materialDocente} element={<PaginaMaterialDocente />} />
+          <Route path={rutas.materialNuevo} element={<PaginaFormularioMaterial key="nuevo" />} />
+          <Route path="/docente/material/:id" element={<PaginaFormularioMaterial />} />
+        </Route>
       </Route>
 
       <Route element={<RequiereCualquierSesion />}>

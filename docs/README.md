@@ -67,10 +67,12 @@ Un ADR (*Architecture Decision Record*) es un archivo corto por decisión: conte
 
 | # | Decisión | Estado |
 | :--- | :--- | :--- |
-| [0001](docente/decisiones/0001-portal-docente-con-lineas-de-key.md) | Portal del docente con el estilo de líneas de Key | Aceptada |
+| [0001](docente/decisiones/0001-portal-docente-con-lineas-de-key.md) | Portal del docente con el estilo de líneas de Key | Reemplazada en su estructura por 0002 |
+| [0002](docente/decisiones/0002-portal-docente-por-paginas.md) | Portal del docente por páginas, con la ficha del estudiante como pantalla propia | Aceptada |
 
 ### Examen
 
 | # | Decisión | Estado |
 | :--- | :--- | :--- |
-| [0001](examen/decisiones/0001-examen-y-solucionario-con-lineas-de-key.md) | Examen y solucionario con el estilo de líneas de Key | Aceptada |
+| [0001](examen/decisiones/0001-examen-y-solucionario-con-lineas-de-key.md) | Examen y solucionario con el estilo de líneas de Key | Aceptada, ampliada por 0002 |
+| [0002](examen/decisiones/0002-examen-sin-adornos.md) | Examen sin adornos: preguntas en celdas y sin íconos decorativos | Aceptada |

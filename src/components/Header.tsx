@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { SectionType } from '../types/exam';
 import { LogoKey } from './brand/LogoKey';
-import { MathPAAIcon, VerbalPAAIcon } from './brand/KTestIcons';
 
 interface HeaderProps {
   currentSection: SectionType;
@@ -58,11 +57,6 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="max-sm:hidden flex items-center gap-2 min-w-0 pl-4 border-l-[0.8px] border-key-negro">
-            {currentSection === 'reading' ? (
-              <VerbalPAAIcon size={18} className="shrink-0" />
-            ) : (
-              <MathPAAIcon size={18} className="shrink-0" />
-            )}
             <span className="text-sm font-semibold text-key-tinta truncate">{sectionTitle}</span>
           </div>
         </div>

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Award,
   CheckCircle2,
   XCircle,
   ArrowLeft,
@@ -16,7 +15,6 @@ import {
 } from '../types/exam';
 import { LatexRenderer } from './LatexRenderer';
 import { LogoKey } from './brand/LogoKey';
-import { MathPAAIcon, VerbalPAAIcon } from './brand/KTestIcons';
 
 interface ResultsViewProps {
   examData: MockPaaExamData;
@@ -121,8 +119,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         <section aria-labelledby="resultado-titulo" className="border-[0.8px] border-key-negro">
           <div className="bg-key-azul text-key-blanco px-6 sm:px-9 py-7 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="min-w-0">
-              <p className="text-sm font-medium inline-flex items-center gap-1.5">
-                <Award aria-hidden="true" className="w-4 h-4" />
+              <p className="text-sm font-medium">
                 {testMode === 'simulacro'
                   ? 'Simulacro completo PAA'
                   : testMode === 'sprint_reading'
@@ -152,10 +149,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
           <div className={`grid grid-cols-1 border-t-[0.8px] border-key-negro ${readingQuestions.length > 0 && mathQuestions.length > 0 ? 'sm:grid-cols-2' : ''}`}>
             {readingQuestions.length > 0 && (
               <div className="px-6 sm:px-9 py-5 flex items-center justify-between gap-4 max-sm:[&+div]:border-t-[0.8px] sm:[&+div]:border-l-[0.8px] border-key-negro">
-                <div className="flex items-center gap-3">
-                  <VerbalPAAIcon size={24} />
-                  <div className="font-semibold">Lectura y Redacción</div>
-                </div>
+                <div className="font-semibold">Lectura y Redacción</div>
                 <div className="text-right font-mono-num">
                   <div className="text-lg font-bold">
                     {readingCorrect}/{readingQuestions.length}
@@ -167,10 +161,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
 
             {mathQuestions.length > 0 && (
               <div className="px-6 sm:px-9 py-5 flex items-center justify-between gap-4 border-key-negro">
-                <div className="flex items-center gap-3">
-                  <MathPAAIcon size={24} />
-                  <div className="font-semibold">Matemáticas</div>
-                </div>
+                <div className="font-semibold">Matemáticas</div>
                 <div className="text-right font-mono-num">
                   <div className="text-lg font-bold">
                     {mathCorrect}/{mathQuestions.length}

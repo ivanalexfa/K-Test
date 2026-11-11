@@ -11,6 +11,8 @@ Resumen para la revisión de Iván y la prueba con los directivos de Key. El pla
 | Sin página pública: se abría directo en el login | Landing con foto real, beneficios, «¿Por qué estudiar en Key?» y el enlace a Admisiones 2027 |
 | Portal pesado: banner oscuro, pestañas grandes, tarjetas con sombra | Estilo de líneas de Key en toda la plataforma: bordes finos, formas rectas, solo los botones en pastilla y **una acción protagonista** por pantalla |
 | Pedía el ciclo de admisión la primera vez | Se quitó: no hace falta para practicar |
+| Portal del docente en una sola página: la ficha de un estudiante era un bloque encima de la tabla | Estudiantes, ficha propia, Intentos y Material, cada uno con su URL; publicar material en su propia página con vista previa |
+| Íconos dibujados a mano y etiquetas repetidas en el examen | Sin íconos decorativos; opciones en celdas; fórmulas y mapa en cuadrículas de líneas |
 | Sin pruebas de interfaz ni CI | ESLint, Vitest, Playwright (escritorio y celular) y CI en cada PR; revisión automática de accesibilidad (axe, WCAG AA) y de foco con teclado |
 
 ## Capturas
@@ -25,6 +27,8 @@ Escritorio a 1440×900 y celular a 390×844. Se regeneran con `node scripts/capt
 | Examen | ![](capturas/antes-4-examen-escritorio.jpg) | ![](capturas/despues-4-examen-escritorio.jpg) |
 | Solucionario | ![](capturas/antes-5-solucionario-escritorio.jpg) | ![](capturas/despues-5-solucionario-escritorio.jpg) |
 | Portal del docente | ![](capturas/antes-6-docente-escritorio.jpg) | ![](capturas/despues-6-docente-escritorio.jpg) |
+| Ficha de un estudiante | (era un bloque encima de la tabla) | ![](capturas/despues-7-ficha-estudiante-escritorio.jpg) |
+| Publicar material | (formulario dentro de la lista) | ![](capturas/despues-8-publicar-material-escritorio.jpg) |
 
 En celular, las mismas pantallas están en `capturas/*-celular.jpg`.
 
@@ -42,4 +46,3 @@ En celular, las mismas pantallas están en `capturas/*-celular.jpg`.
 - **`SPEC.md`** describe otro stack (React 19, Supabase, Zustand): hay que actualizarlo.
 - **`data/paa_platform.sqlite` está en git** y cambia al usar la app en local; conviene sacarlo y crear la base desde un script.
 - **Lint del backend** (`server/`, `scripts/`) y los `any` que quedan en `src/` (avisos, no errores).
-- **Rediseño a fondo** del examen y del portal docente (por pantallas y rutas, como el del estudiante): quedó fuera del jueves.

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useLocation } from 'react-router';
 import { ResultsView } from '../components/ResultsView';
 import { useSesion } from '../estado/useSesion';
 import { useExamen } from '../estado/useExamen';
@@ -19,8 +19,14 @@ export const PaginaResultados: React.FC = () => {
   const { ultimoResultado } = useExamen();
   const navigate = useNavigate();
 
-  const volver = () =>
-    navigate(usuario?.role === 'teacher' ? rutas.docente : rutas.misResultados);
+  const { key } = useLocation();
+  // El docente llega desde una ficha o desde Intentos: vuelve a donde estaba.
+  const volver = () => {
+    if (usuario?.role === 'teacher') {
+      if (key !== 'default') navigate(-1);
+      else navigate(rutas.docente);
+    } else navigate(rutas.misResultados);
+  };
 
   const esElUltimo =
     ultimoResultado &&
@@ -50,8 +56,8 @@ export const PaginaResultados: React.FC = () => {
 
   if (!intento || !puedeVerlo) {
     return (
-      <main className="min-h-dvh flex items-center justify-center bg-key-gris-claro px-5">
-        <div className="w-full max-w-md bg-key-blanco border-[0.8px] border-key-gris p-8 space-y-5 text-center">
+      <main className="min-h-dvh flex items-center justify-center bg-key-blanco px-5">
+        <div className="w-full max-w-md bg-key-blanco border-[0.8px] border-key-negro p-8 space-y-5 text-center">
           <h1 className="text-2xl font-semibold text-key-tinta">No encontramos este resultado</h1>
           <p className="text-key-texto">El enlace no corresponde a ninguno de tus intentos.</p>
           <Link

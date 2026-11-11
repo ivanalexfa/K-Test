@@ -14,7 +14,13 @@ export const rutas = {
   /** Abre un material concreto en la pestaña de material. */
   materialDe: (id: string) => `/inicio/material?m=${encodeURIComponent(id)}`,
   misResultados: '/inicio/resultados',
+  /** Portal del docente: estudiantes (inicio), ficha, intentos y material. */
   docente: '/docente',
+  fichaEstudiante: (id: string) => `/docente/estudiantes/${encodeURIComponent(id)}`,
+  intentosDocente: '/docente/intentos',
+  materialDocente: '/docente/material',
+  materialNuevo: '/docente/material/nuevo',
+  editarMaterial: (id: string) => `/docente/material/${encodeURIComponent(id)}`,
   examen: (clave: string) => `/examen/${encodeURIComponent(clave)}`,
   resultados: (intentoId: string) => `/resultados/${encodeURIComponent(intentoId)}`,
 } as const;
@@ -30,4 +36,12 @@ export const MENU_ESTUDIANTE = [
   { texto: 'Pruebas', ruta: rutas.pruebas, exacta: false },
   { texto: 'Material', ruta: rutas.material, exacta: false },
   { texto: 'Resultados', ruta: rutas.misResultados, exacta: false },
+] as const;
+
+/** Menú del portal del docente (encabezado), en orden. */
+export const MENU_DOCENTE = [
+  // «Estudiantes» también queda activa en la ficha de un estudiante (/docente/estudiantes/<id>).
+  { texto: 'Estudiantes', ruta: rutas.docente, exacta: true, tambien: '/docente/estudiantes' },
+  { texto: 'Intentos', ruta: rutas.intentosDocente, exacta: false },
+  { texto: 'Material', ruta: rutas.materialDocente, exacta: false },
 ] as const;

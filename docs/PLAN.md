@@ -33,7 +33,8 @@ K-test es la plataforma de práctica de la PAA para los admitidos de Key Institu
 | 4 · Login | `feat/login` | ~2 | Fusionada en `rediseno/estudiante` (PR #14) |
 | 5 · Portal del estudiante (inicio, pruebas, material, resultados) | `feat/dashboard-estudiante` | ~8 | Fusionada en `rediseno/estudiante` (PR #15) |
 | 6 · Docente, examen y solucionario con el estilo de líneas de Key | `feat/estilo-docente-examen` | ~3 | Fusionada en `rediseno/estudiante` (PR #16) |
-| 7 · Revisión y entrega del jueves | `chore/revision-final`, luego `rediseno/estudiante` → `main` | ~4 | En revisión |
+| 7 · Revisión y entrega del jueves | `chore/revision-final`, luego `rediseno/estudiante` → `main` | ~4 | Hecha (PR #17); la entrega a `main` es el PR #18 |
+| 8 · Rediseño del docente y del examen | `feat/rediseno-docente-examen` | ~5 | En revisión |
 
 Total: unas 31 horas. Si algo se atrasa, la Fase 6 es la primera que se recorta.
 
@@ -81,6 +82,11 @@ Aplicar las reglas de «Plataforma interna» (`DESIGN.md` §11) al portal del do
 Revisión con las skills (contraste AA, teclado, de 320 a 1440 px, e2e) y un PR a `main` con capturas de antes y después y los pendientes.
 - `e2e/accesibilidad.spec.ts`: axe (WCAG AA) en todas las pantallas y recorrido con Tab; se corrigió lo que encontró.
 - `scripts/capturas.mjs` y [`entrega/README.md`](entrega/README.md): capturas de antes y después, cómo se revisó y los pendientes.
+
+### 8 · Rediseño del docente y del examen
+Con tiempo antes del jueves, se rehicieron las pantallas que solo tenían el estilo nuevo encima:
+- Docente por páginas: Estudiantes, la ficha de cada estudiante como pantalla propia, Intentos, Material y el formulario de material con vista previa (ADR [docente/0002](docente/decisiones/0002-portal-docente-por-paginas.md)).
+- Examen sin adornos: sin íconos propios ni etiquetas repetidas, opciones en celdas, fórmulas y mapa de preguntas en cuadrículas de líneas (ADR [examen/0002](examen/decisiones/0002-examen-sin-adornos.md)).
 
 ## Análisis de marca (resumen)
 

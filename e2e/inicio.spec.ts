@@ -34,6 +34,7 @@ test.describe('Landing', () => {
   });
 
   test('ningún elemento se sale de la pantalla, de 1280 a 320 px', async ({ page }) => {
+    test.setTimeout(60_000); // carga la landing en cinco anchos
     for (const ancho of [1280, 1024, 768, 390, 320]) {
       await page.setViewportSize({ width: ancho, height: 800 });
       await page.goto('/');

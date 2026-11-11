@@ -76,6 +76,9 @@ test.describe('Teclado: todo lo que recibe foco lo muestra', () => {
 });
 
 test.describe('Accesibilidad (axe, WCAG AA)', () => {
+  // Cada prueba recorre varias pantallas: más tiempo que el de una sola.
+  test.describe.configure({ timeout: 90_000 });
+
   test('landing y acceso', async ({ page }) => {
     for (const ruta of ['/', '/entrar']) {
       await page.goto(ruta);
@@ -116,11 +119,10 @@ test.describe('Accesibilidad (axe, WCAG AA)', () => {
     await page.goto('/docente');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     expect(await revisar(page), 'resultados').toEqual([]);
-    const material = page.getByRole('navigation', { name: 'Portal del docente' }).getByRole('button', { name: /Material/ });
-    await material.click();
-    await expect(material).toHaveAttribute('aria-current', 'page');
-    // Espera a que termine la transición de color de la celda activa antes de medir el contraste.
-    await page.waitForTimeout(400);
-    expect(await revisar(page), 'material').toEqual([]);
+    for (const ruta of ['/docente/estudiantes/stu-1', '/docente/intentos', '/docente/material', '/docente/material/nuevo']) {
+      await page.goto(ruta);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      expect(await revisar(page), ruta).toEqual([]);
+    }
   });
 });
