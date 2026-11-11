@@ -31,8 +31,8 @@ K-test es la plataforma de práctica de la PAA para los admitidos de Key Institu
 | 2 · Router y estructura | `feat/router` | ~3 | Fusionada en `rediseno/estudiante` (PR #12) |
 | 3 · Landing | `feat/landing` | ~6 | Fusionada en `rediseno/estudiante` (PR #13) |
 | 4 · Login | `feat/login` | ~2 | Fusionada en `rediseno/estudiante` (PR #14) |
-| 5 · Portal del estudiante (inicio, pruebas, material, resultados) | `feat/dashboard-estudiante` | ~8 | En revisión (PR #15) |
-| 6 · Docente, examen y solucionario con el estilo de líneas de Key | `feat/estilo-docente-examen` | ~3 | Pendiente |
+| 5 · Portal del estudiante (inicio, pruebas, material, resultados) | `feat/dashboard-estudiante` | ~8 | Fusionada en `rediseno/estudiante` (PR #15) |
+| 6 · Docente, examen y solucionario con el estilo de líneas de Key | `feat/estilo-docente-examen` | ~3 | En revisión |
 | 7 · Revisión y entrega del jueves | `rediseno/estudiante` → `main` | ~4 | Pendiente |
 
 Total: unas 31 horas. Si algo se atrasa, la Fase 6 es la primera que se recorta.
@@ -73,6 +73,9 @@ Tarjeta simple como la de Key: logo, «Bienvenido», Google y Microsoft. Sin cue
 
 ### 6 · Docente, examen y solucionario
 Aplicar las reglas de «Plataforma interna» (`DESIGN.md` §11) al portal del docente, a la pantalla del examen y a la de resultados y solucionario. Sin rediseñar los flujos.
+- Docente: encabezado blanco, datos y menú de celdas en un marco, tabla que se apila en celular, «Publicar material» como acción protagonista (ADR [docente/0001](docente/decisiones/0001-portal-docente-con-lineas-de-key.md)).
+- Examen: encabezado y pie blancos, reloj en una celda, «Siguiente» como única pastilla azul, opciones en celdas, ventanas rectas (ADR [examen/0001](examen/decisiones/0001-examen-y-solucionario-con-lineas-de-key.md)).
+- Resultados: el puntaje en el bloque azul, filtros en celdas y el solucionario en un solo marco.
 
 ### 7 · Revisión y PR
 Revisión con las skills (contraste AA, teclado, de 320 a 1440 px, e2e) y un PR a `main` con capturas de antes y después y los pendientes.

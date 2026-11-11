@@ -31,8 +31,8 @@ export const PaginaExamen: React.FC = () => {
 };
 
 const EmpezarExamen: React.FC<{ titulo: string; onEmpezar: () => void }> = ({ titulo, onEmpezar }) => (
-  <main className="min-h-dvh flex items-center justify-center bg-key-gris-claro px-5">
-    <div className="w-full max-w-md bg-key-blanco border border-key-gris p-8 space-y-6 text-center">
+  <main className="min-h-dvh flex items-center justify-center bg-key-blanco px-5">
+    <div className="w-full max-w-md bg-key-blanco border-[0.8px] border-key-negro p-8 space-y-6 text-center">
       <h1 className="text-2xl font-semibold text-key-tinta text-balance">{titulo}</h1>
       <p className="text-key-texto">
         Este examen no está en curso. Si recargaste la página a mitad del examen, tus respuestas
@@ -48,7 +48,7 @@ const EmpezarExamen: React.FC<{ titulo: string; onEmpezar: () => void }> = ({ ti
         </button>
         <Link
           to={rutas.pruebas}
-          className="h-12 inline-flex items-center justify-center rounded-full border border-key-negro text-key-tinta font-semibold hover:bg-key-gris-claro transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul"
+          className="h-12 inline-flex items-center justify-center rounded-full border-[0.8px] border-key-negro text-key-tinta font-semibold hover:bg-key-gris-claro transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul"
         >
           Volver a mis pruebas
         </Link>
@@ -99,7 +99,7 @@ const ExamenEnCurso: React.FC = () => {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col bg-[#F8FAFC] text-[#0A1128]">
+    <div className="min-h-dvh flex flex-col bg-key-blanco text-key-tinta">
       <Header
         currentSection={seccion}
         sectionTitle={titulo}
@@ -137,29 +137,30 @@ const ExamenEnCurso: React.FC = () => {
         )}
       </main>
 
-      <footer className="sticky bottom-0 z-30 bg-white/95 backdrop-blur-xs border-t border-slate-200 shadow-lg">
+      <footer className="sticky bottom-0 z-30 bg-key-blanco border-t-[0.8px] border-key-negro">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 h-15 flex items-center justify-between gap-2">
           <button
             type="button"
             disabled={indice === 0}
             onClick={() => irAPregunta(Math.max(0, indice - 1))}
-            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none text-xs sm:text-sm font-semibold text-[#0A1128] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 h-11 px-4 sm:px-5 rounded-full text-sm font-semibold transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul border-[0.8px] border-key-negro bg-key-blanco hover:bg-key-gris-claro text-key-tinta disabled:opacity-40 disabled:pointer-events-none"
           >
-            <ChevronLeft className="w-4 h-4" />
-            <span>Anterior</span>
+            <ChevronLeft aria-hidden="true" className="w-4 h-4" />
+            <span className="max-[379px]:sr-only">Anterior</span>
           </button>
 
           <button
             type="button"
             onClick={() => setNavegadorAbierto(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-xs sm:text-sm font-semibold text-[#0A1128] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 h-11 px-2 sm:px-4 text-sm text-key-tinta hover:underline underline-offset-4 cursor-pointer focus-visible:outline-2 focus-visible:outline-key-azul"
           >
-            <LayoutGrid className="w-4 h-4 text-[#0052FF]" />
+            <LayoutGrid aria-hidden="true" className="w-4 h-4 text-key-azul" />
             <span>
-              Pregunta <strong className="font-mono-num">{indice + 1}</strong> de{' '}
+              <span className="max-[379px]:hidden">Pregunta </span>
+              <strong className="font-mono-num">{indice + 1}</strong> de{' '}
               <strong className="font-mono-num">{preguntas.length}</strong>
             </span>
-            <span className="hidden sm:inline text-xs text-slate-500 font-mono-num">
+            <span className="hidden sm:inline text-xs text-key-texto-suave font-mono-num">
               ({respondidas}/{preguntas.length} respondidas)
             </span>
           </button>
@@ -168,18 +169,18 @@ const ExamenEnCurso: React.FC = () => {
             <button
               type="button"
               onClick={() => irAPregunta(Math.min(preguntas.length - 1, indice + 1))}
-              className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-xl bg-[#0A1128] hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 h-11 px-4 sm:px-5 rounded-full text-sm font-semibold transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul bg-key-azul hover:bg-key-azul-hover text-key-blanco"
             >
               <span>Siguiente</span>
-              <ChevronRight className="w-4 h-4 text-[#00D2FF]" />
+              <ChevronRight aria-hidden="true" className="w-4 h-4" />
             </button>
           ) : (
             <button
               type="button"
               onClick={() => setTransicionAbierta(true)}
-              className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-xl bg-[#0052FF] hover:bg-[#0045D8] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#0052FF]/25 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 h-11 px-4 sm:px-5 rounded-full text-sm font-semibold transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul bg-key-azul hover:bg-key-azul-hover text-key-blanco"
             >
-              <CheckCircle2 className="w-4 h-4 text-[#00D2FF]" />
+              <CheckCircle2 aria-hidden="true" className="w-4 h-4" />
               <span>
                 {modo === 'simulacro' && seccion === 'reading' ? 'Finalizar Sección 1' : 'Entregar y Guardar'}
               </span>

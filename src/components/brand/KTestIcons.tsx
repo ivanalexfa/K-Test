@@ -8,8 +8,8 @@ export interface CustomIconProps extends React.SVGProps<SVGSVGElement> {
 
 export const SimulacroEngineIcon: React.FC<CustomIconProps> = ({
   size = 24,
-  primaryColor = '#0052FF',
-  accentColor = '#00D2FF',
+  primaryColor = '#006DFF',
+  accentColor = '#111111',
   ...props
 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -24,8 +24,8 @@ export const SimulacroEngineIcon: React.FC<CustomIconProps> = ({
 
 export const AsyncTrainerIcon: React.FC<CustomIconProps> = ({
   size = 24,
-  primaryColor = '#0052FF',
-  accentColor = '#10B981',
+  primaryColor = '#006DFF',
+  accentColor = '#0B7A43',
   ...props
 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -40,21 +40,21 @@ export const AsyncTrainerIcon: React.FC<CustomIconProps> = ({
 
 export const TeacherDiagnosticIcon: React.FC<CustomIconProps> = ({
   size = 24,
-  primaryColor = '#0A1128',
-  accentColor = '#0052FF',
+  primaryColor = '#111111',
+  accentColor = '#006DFF',
   ...props
 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" {...props}>
     <polygon points="12 3 20 8.5 17 18.5 7 18.5 4 8.5" fill={accentColor} fillOpacity="0.15" stroke={primaryColor} />
     <path d="M12 3v9m0 0l8-3.5M12 12l-5 6.5M12 12l5 6.5M12 12L4 8.5" stroke={accentColor} strokeOpacity="0.5" strokeWidth="1.2" />
-    <circle cx="12" cy="12" r="2" fill="#00D2FF" stroke={primaryColor} strokeWidth="1.5" />
+    <circle cx="12" cy="12" r="2" fill="#111111" stroke={primaryColor} strokeWidth="1.5" />
   </svg>
 );
 
 export const MathPAAIcon: React.FC<CustomIconProps> = ({
   size = 24,
-  primaryColor = '#0052FF',
-  accentColor = '#00D2FF',
+  primaryColor = '#006DFF',
+  accentColor = '#111111',
   ...props
 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -68,8 +68,8 @@ export const MathPAAIcon: React.FC<CustomIconProps> = ({
 
 export const VerbalPAAIcon: React.FC<CustomIconProps> = ({
   size = 24,
-  primaryColor = '#0052FF',
-  accentColor = '#8B5CF6',
+  primaryColor = '#006DFF',
+  accentColor = '#111111',
   ...props
 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -85,8 +85,8 @@ export const VerbalPAAIcon: React.FC<CustomIconProps> = ({
 
 export const StrikeOptionIcon: React.FC<CustomIconProps> = ({
   size = 20,
-  primaryColor = '#64748B',
-  accentColor = '#EF4444',
+  primaryColor = '#5C6670',
+  accentColor = '#C2261E',
   ...props
 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -99,8 +99,8 @@ export const StrikeOptionIcon: React.FC<CustomIconProps> = ({
 
 export const KeyHintIcon: React.FC<CustomIconProps> = ({
   size = 24,
-  primaryColor = '#F59E0B',
-  accentColor = '#00D2FF',
+  primaryColor = '#7A5A00',
+  accentColor = '#111111',
   ...props
 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" {...props}>
