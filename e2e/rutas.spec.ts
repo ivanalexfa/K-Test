@@ -56,7 +56,7 @@ test.describe('Estudiante', () => {
 
   test('el simulacro abre /examen/simulacro y al recargar pide empezarlo de nuevo', async ({ page }) => {
     await page.goto('/inicio/pruebas');
-    await page.getByRole('button', { name: /Iniciar Simulacro Completo/ }).click();
+    await page.getByRole('button', { name: 'Empezar simulacro' }).click();
     await expect(page).toHaveURL(/\/examen\/simulacro$/);
     await expect(page.getByRole('button', { name: /Siguiente/ })).toBeVisible();
 
