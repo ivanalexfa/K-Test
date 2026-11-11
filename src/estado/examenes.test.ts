@@ -26,7 +26,7 @@ describe('claves de examen en la URL', () => {
 
 describe('rutas', () => {
   it('cada rol tiene su pantalla de inicio', () => {
-    expect(rutaDeRol('student')).toBe('/inicio/pruebas');
+    expect(rutaDeRol('student')).toBe('/inicio');
     expect(rutaDeRol('teacher')).toBe('/docente');
   });
 
