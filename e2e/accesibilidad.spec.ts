@@ -113,7 +113,11 @@ test.describe('Accesibilidad (axe, WCAG AA)', () => {
     await page.goto('/docente');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     expect(await revisar(page), 'resultados').toEqual([]);
-    await page.getByRole('navigation', { name: 'Portal del docente' }).getByRole('button', { name: /Material/ }).click();
+    const material = page.getByRole('navigation', { name: 'Portal del docente' }).getByRole('button', { name: /Material/ });
+    await material.click();
+    await expect(material).toHaveAttribute('aria-current', 'page');
+    // Espera a que termine la transición de color de la celda activa antes de medir el contraste.
+    await page.waitForTimeout(400);
     expect(await revisar(page), 'material').toEqual([]);
   });
 });
