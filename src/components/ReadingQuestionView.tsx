@@ -144,7 +144,7 @@ export const ReadingQuestionView: React.FC<ReadingQuestionViewProps> = ({
                 <button
                   type="button"
                   onClick={scrollToReferencedLines}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-key-azul bg-key-gris-claro hover:bg-key-gris-claro px-2.5 py-1 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-key-azul-hover bg-key-gris-claro hover:bg-key-gris hover:underline px-2.5 py-1 transition-colors cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Enfoque: {question.referencedLinesLabel}</span>
@@ -196,7 +196,7 @@ export const ReadingQuestionView: React.FC<ReadingQuestionViewProps> = ({
                     <span
                       className={`w-8 text-right font-mono-num text-xs shrink-0 select-none ${
                         isReferenced
-                          ? 'text-key-azul font-bold'
+                          ? 'text-key-azul-hover font-bold'
                           : isMultipleOfFive
                           ? 'text-key-texto-suave font-semibold'
                           : 'text-transparent group-hover:text-key-texto-suave'
@@ -299,8 +299,8 @@ export const ReadingQuestionView: React.FC<ReadingQuestionViewProps> = ({
             {/* Referenced Lines Chip */}
             {question.referencedLinesLabel && (
               <div className="flex items-center justify-between gap-2 p-3 bg-key-gris-claro border-[0.8px] border-key-azul">
-                <div className="flex items-center gap-2 text-xs font-semibold text-key-azul">
-                  <Sparkles className="w-4 h-4 shrink-0" />
+                <div className="flex items-center gap-2 text-sm font-semibold text-key-tinta">
+                  <Sparkles aria-hidden="true" className="w-4 h-4 shrink-0 text-key-azul" />
                   <span>
                     Referencia directa en el texto:{' '}
                     <strong>{question.referencedLinesLabel}</strong>

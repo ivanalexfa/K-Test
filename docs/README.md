@@ -8,6 +8,7 @@ Aquí vive el porqué de lo que construimos. El código dice *qué* hace el sist
 docs/
 ├── README.md              ← este índice
 ├── PLAN.md                ← plan del rediseño del frontend, por fases
+├── entrega/               ← resumen de la entrega: capturas de antes y después y pendientes
 ├── plantilla-adr.md       ← copia esta plantilla para cada decisión nueva
 ├── general/decisiones/    ← flujo de trabajo, herramientas, arquitectura
 ├── marca/                 ← DESIGN.md (sistema de diseño) y sus decisiones

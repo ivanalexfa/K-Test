@@ -741,7 +741,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                       </div>
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="px-2 py-0.5 bg-key-gris-claro text-key-azul text-xs font-bold">
+                          <span className="px-2 py-0.5 bg-key-gris-claro text-key-azul-hover text-xs font-bold">
                             Ficha del estudiante
                           </span>
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-key-gris text-key-tinta text-xs font-semibold">
@@ -903,7 +903,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                               <span
                                 className={`inline-block px-2 py-0.5 text-xs font-bold mb-0.5 ${
                                   att.mode === 'simulacro'
-                                    ? 'bg-key-gris-claro text-key-azul'
+                                    ? 'bg-key-gris-claro text-key-azul-hover'
                                     : 'bg-estado-alerta-fondo text-estado-alerta'
                                 }`}
                               >
@@ -939,7 +939,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                                   att.percentage >= 85
                                     ? 'bg-estado-exito-fondo text-estado-exito'
                                     : att.percentage >= 60
-                                    ? 'bg-key-gris-claro text-key-azul'
+                                    ? 'bg-key-gris-claro text-key-azul-hover'
                                     : 'bg-estado-alerta-fondo text-estado-alerta'
                                 }`}
                               >
@@ -1279,7 +1279,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                       </div>
                     )}
 
-                    <div className="p-3 bg-key-gris-claro border-[0.8px] border-key-negro text-xs text-key-texto max-h-36 overflow-y-auto custom-scrollbar">
+                    {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- región con scroll: axe pide que se pueda recorrer con teclado */}
+                    <div tabIndex={0} role="region" aria-label={`Vista previa de ${mat.title}`} className="p-3 bg-key-gris-claro border-[0.8px] border-key-negro text-xs text-key-texto max-h-36 overflow-y-auto custom-scrollbar focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-key-azul">
                       <LatexRenderer content={mat.content} />
                     </div>
                   </div>

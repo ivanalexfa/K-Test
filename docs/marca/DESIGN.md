@@ -66,6 +66,7 @@ Key no define colores de estado. Para resultados, pistas y descartes del examen:
 | :--- | :--- | :--- |
 | Blanco sobre azul Key | 4.53:1 | Sí, cualquier tamaño (justo: no aclarar el azul) |
 | Azul Key sobre blanco | 4.53:1 | Sí |
+| Azul Key sobre gris claro `#F5F7FA` | 4.2:1 | **No** en texto chico: usar `key-azul-hover` (`#0058D1`) o tinta. Lo revisa `e2e/accesibilidad.spec.ts` |
 | Negro sobre verde / amarillo / naranja / morado | 12.1 / 17.9 / 8.5 / 4.6 | Sí |
 | Blanco sobre verde o amarillo | 1.7 / 1.1 | **Nunca** |
 | Blanco sobre morado | 4.53:1 | Sí, pero Key usa negro; seguimos a Key |

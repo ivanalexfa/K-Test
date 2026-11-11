@@ -32,8 +32,8 @@ K-test es la plataforma de práctica de la PAA para los admitidos de Key Institu
 | 3 · Landing | `feat/landing` | ~6 | Fusionada en `rediseno/estudiante` (PR #13) |
 | 4 · Login | `feat/login` | ~2 | Fusionada en `rediseno/estudiante` (PR #14) |
 | 5 · Portal del estudiante (inicio, pruebas, material, resultados) | `feat/dashboard-estudiante` | ~8 | Fusionada en `rediseno/estudiante` (PR #15) |
-| 6 · Docente, examen y solucionario con el estilo de líneas de Key | `feat/estilo-docente-examen` | ~3 | En revisión |
-| 7 · Revisión y entrega del jueves | `rediseno/estudiante` → `main` | ~4 | Pendiente |
+| 6 · Docente, examen y solucionario con el estilo de líneas de Key | `feat/estilo-docente-examen` | ~3 | Fusionada en `rediseno/estudiante` (PR #16) |
+| 7 · Revisión y entrega del jueves | `chore/revision-final`, luego `rediseno/estudiante` → `main` | ~4 | En revisión |
 
 Total: unas 31 horas. Si algo se atrasa, la Fase 6 es la primera que se recorta.
 
@@ -79,6 +79,8 @@ Aplicar las reglas de «Plataforma interna» (`DESIGN.md` §11) al portal del do
 
 ### 7 · Revisión y PR
 Revisión con las skills (contraste AA, teclado, de 320 a 1440 px, e2e) y un PR a `main` con capturas de antes y después y los pendientes.
+- `e2e/accesibilidad.spec.ts`: axe (WCAG AA) en todas las pantallas y recorrido con Tab; se corrigió lo que encontró.
+- `scripts/capturas.mjs` y [`entrega/README.md`](entrega/README.md): capturas de antes y después, cómo se revisó y los pendientes.
 
 ## Análisis de marca (resumen)
 

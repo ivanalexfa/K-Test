@@ -342,7 +342,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
 
                       {/* Step-by-Step Explanation Box with KaTeX */}
                       <div className="bg-key-gris-claro border-l-2 border-key-azul p-4 text-xs sm:text-sm text-key-tinta leading-relaxed">
-                        <div className="font-semibold text-key-azul text-sm mb-1.5">
+                        <div className="font-semibold text-key-tinta text-sm mb-1.5">
                           Solución paso a paso
                         </div>
                         <LatexRenderer content={q.explanation} />
