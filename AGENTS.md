@@ -5,7 +5,7 @@ These rules apply to every agent on the team (Antigravity, Claude Code, …). `C
 ## Repository rules (team agreement)
 
 - **Never commit or merge directly to `main`.** Every change goes through a Pull Request that Iván or Soham reviews. Work on one branch per task, named `<type>/<area-task>` (`feat/landing`, `fix/login-origen`, `chore/herramientas`, `docs/...`).
-- **Each phase opens its PR straight to `main`** (no integration branch). Phases that do not depend on each other branch from `main` and go in parallel; a phase that needs another one branches from it and still targets `main`. Approval rule: one CODEOWNERS approval, and the last pusher cannot approve (ADR `docs/general/decisiones/0004-pr-directo-a-main-en-paralelo.md`).
+- **Frontend redesign:** each phase branches from `rediseno/estudiante` and opens its PR against it; Soham merges it once CI passes (only `main` is protected). `rediseno/estudiante` reaches `main` in a few deliveries, each one a PR that Iván reviews (`main` rule: one CODEOWNERS approval, the last pusher cannot approve). See ADR `docs/general/decisiones/0004-fases-por-rama-de-integracion.md`.
 - **Commits:** Conventional Commits in Spanish, as in the history: `feat(ui): ...`, `fix(auth): ...`, `chore: ...`, `docs: ...`, `test: ...`.
 - **Before opening a PR:** `npm run verificar` must pass (lint, types, component tests, API tests and e2e). CI (`.github/workflows/verificar.yml`) runs the same checks on every PR.
 - **Decisions:** every design or architecture decision gets an ADR in `docs/<module>/decisiones/NNNN-titulo.md` (template in `docs/plantilla-adr.md`). Index in `docs/README.md`.

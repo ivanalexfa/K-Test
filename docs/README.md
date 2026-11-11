@@ -28,10 +28,10 @@ Un ADR (*Architecture Decision Record*) es un archivo corto por decisión: conte
 
 | # | Decisión | Estado |
 | :--- | :--- | :--- |
-| [0001](general/decisiones/0001-flujo-de-trabajo-ramas-y-pr.md) | Flujo de trabajo: ramas por tarea, rama de integración y PR siempre | Reemplazada en parte por 0004 |
+| [0001](general/decisiones/0001-flujo-de-trabajo-ramas-y-pr.md) | Flujo de trabajo: ramas por tarea, rama de integración y PR siempre | Aceptada; precisada por 0004 |
 | [0002](general/decisiones/0002-calidad-lint-y-pruebas.md) | Calidad: ESLint, Vitest, Playwright y CI en cada PR | Aceptada |
 | [0003](general/decisiones/0003-skills-del-proyecto.md) | Skills de agente dentro del repositorio | Aceptada |
-| [0004](general/decisiones/0004-pr-directo-a-main-en-paralelo.md) | Cada fase va directo a `main` con su PR, en paralelo | Aceptada |
+| [0004](general/decisiones/0004-fases-por-rama-de-integracion.md) | Las fases entran a `rediseno/estudiante` y llegan a `main` en pocas entregas | Aceptada |
 
 ### Marca
 
