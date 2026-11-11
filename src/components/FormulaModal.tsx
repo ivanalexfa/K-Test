@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { X, Sigma, Info, Compass } from 'lucide-react';
+import { X } from 'lucide-react';
 import { LatexRenderer } from './LatexRenderer';
 
 interface FormulaModalProps {
@@ -381,48 +381,43 @@ export const FormulaModal: React.FC<FormulaModalProps> = ({ isOpen, onClose }) =
       className="paa-dialog w-[95vw] max-w-4xl overflow-hidden"
     >
       <div className="bg-key-blanco text-key-tinta flex flex-col max-h-[88dvh] border-[0.8px] border-key-negro overflow-hidden">
-        {/* Modal Header */}
-        <div className="bg-key-blanco text-key-tinta px-5 sm:px-6 py-4 border-b-[0.8px] border-key-negro flex items-center justify-between gap-4 shrink-0">
-          <div className="flex items-center gap-3">
-            <Compass aria-hidden="true" className="w-6 h-6 text-key-azul shrink-0" />
-            <div>
-              <h2 id={titleId} className="font-display font-bold text-base sm:text-lg">
-                Fórmulas y notas de referencia PAA
-              </h2>
-              <p className="text-sm text-key-texto-suave">
-                Hoja oficial de consulta para la sección de Matemáticas · College Board
-              </p>
-            </div>
+        {/* Encabezado: título y cerrar */}
+        <div className="px-5 sm:px-7 py-4 border-b-[0.8px] border-key-negro flex items-center justify-between gap-4 shrink-0">
+          <div>
+            <h2 id={titleId} className="text-xl font-semibold text-key-tinta">
+              Fórmulas de referencia
+            </h2>
+            <p className="text-sm text-key-texto-suave">Las mismas que da la PAA en la sección de Matemáticas.</p>
           </div>
-
           <button
             type="button"
             onClick={() => dialogRef.current?.close()}
-            aria-label="Cerrar modal de fórmulas"
+            aria-label="Cerrar fórmulas"
             className="inline-flex items-center justify-center w-10 h-10 rounded-full border-[0.8px] border-key-negro bg-key-blanco hover:bg-key-gris-claro text-key-tinta transition-colors cursor-pointer shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul"
           >
-            <X className="w-5 h-5" />
+            <X aria-hidden="true" className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Category Filter Tabs */}
-        <div className="px-5 sm:px-6 py-3 bg-key-gris-claro border-b-[0.8px] border-key-negro flex flex-wrap items-center gap-2 shrink-0">
+        {/* Filtro por tipo: celdas, la activa en azul */}
+        <div role="group" aria-label="Tipo de fórmula" className="grid grid-cols-2 sm:grid-cols-4 border-b-[0.8px] border-key-negro shrink-0">
           {(
             [
-              { id: 'all', label: 'Todas las Fórmulas' },
-              { id: 'areas', label: 'Áreas y Perímetros' },
-              { id: 'triangles', label: 'Triángulos y Pitágoras' },
-              { id: 'volumes', label: 'Volúmenes 3D' },
+              { id: 'all', label: 'Todas' },
+              { id: 'areas', label: 'Áreas y perímetros' },
+              { id: 'triangles', label: 'Triángulos' },
+              { id: 'volumes', label: 'Volúmenes' },
             ] as { id: FormulaCategory; label: string }[]
-          ).map((tab) => (
+          ).map((tab, i) => (
             <button
               key={tab.id}
               type="button"
+              aria-pressed={category === tab.id}
               onClick={() => setCategory(tab.id)}
-              className={`px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
-                category === tab.id
-                  ? 'bg-key-azul text-key-blanco'
-                  : 'bg-key-blanco text-key-texto-suave border-[0.8px] border-key-negro hover:border-key-negro'
+              className={`h-11 px-2 text-sm cursor-pointer border-key-negro focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-key-azul ${
+                i > 0 ? 'sm:border-l-[0.8px]' : ''
+              } ${i % 2 === 1 ? 'max-sm:border-l-[0.8px]' : ''} ${i >= 2 ? 'max-sm:border-t-[0.8px]' : ''} ${
+                category === tab.id ? 'bg-key-azul text-key-blanco font-semibold' : 'bg-key-blanco text-key-tinta hover:bg-key-gris-claro'
               }`}
             >
               {tab.label}
@@ -430,91 +425,46 @@ export const FormulaModal: React.FC<FormulaModalProps> = ({ isOpen, onClose }) =
           ))}
         </div>
 
-        {/* Scrollable Formulas Grid + Official Notes */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-6 space-y-6 bg-key-gris-claro">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Fórmulas en celdas que se tocan, y las notas de la prueba */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+          {/* Cada celda dibuja su línea derecha e inferior; la del borde derecho queda fuera. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 -mr-[0.8px]">
             {filteredItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-key-blanco border-[0.8px] border-key-negro p-4 flex flex-col justify-between hover:border-key-azul transition-colors"
+                className="p-5 border-r-[0.8px] border-b-[0.8px] border-key-negro"
               >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <h3 className="font-display font-bold text-sm text-key-tinta">
-                      {item.title}
-                    </h3>
-                    <Sigma className="w-3.5 h-3.5 text-key-azul" />
-                  </div>
-
-                  {/* SVG Geometric Diagram */}
-                  <div className="h-26 bg-key-gris-claro border-[0.8px] border-key-gris flex items-center justify-center my-2">
-                    {item.svg}
-                  </div>
-
-                  {/* KaTeX Rendered Formulas */}
-                  <div className="space-y-1 my-2 text-center bg-key-gris-claro py-2 px-2 border-[0.8px] border-key-azul">
-                    {item.formulas.map((f, idx) => (
-                      <div key={idx} className="text-sm font-medium text-key-tinta">
-                        <LatexRenderer content={`$${f}$`} />
-                      </div>
-                    ))}
-                  </div>
+                <h3 className="font-semibold text-key-tinta">{item.title}</h3>
+                <div className="h-26 flex items-center justify-center my-3" aria-hidden="true">
+                  {item.svg}
                 </div>
-
-                <p className="text-xs text-key-texto-suave leading-snug mt-1">
-                  {item.caption}
-                </p>
+                <div className="space-y-1 text-center text-key-tinta">
+                  {item.formulas.map((f, idx) => (
+                    <div key={idx}>
+                      <LatexRenderer content={`$${f}$`} />
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 text-sm text-key-texto-suave leading-snug">{item.caption}</p>
               </div>
             ))}
           </div>
 
-          {/* Official PAA General Notes Box */}
-          <div className="bg-key-blanco border-[0.8px] border-key-negro p-4 sm:p-5">
-            <div className="flex items-center gap-2 font-display font-bold text-sm text-key-tinta mb-2.5">
-              <Info className="w-4 h-4 text-key-azul" />
-              Notas Generales de la Prueba PAA
-            </div>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-key-texto-suave">
-              <li className="flex items-start gap-2">
-                <span className="text-key-azul font-bold">•</span>
-                <span>
-                  <LatexRenderer content="El número de grados de arco en un círculo es $360^\circ$." />
-                </span>
+          <div className="px-5 sm:px-7 py-5">
+            <h3 className="font-semibold text-key-tinta mb-2">Notas de la prueba</h3>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm text-key-texto list-disc pl-5">
+              <li>
+                <LatexRenderer content="Un círculo tiene $360^\circ$ de arco." />
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-key-azul font-bold">•</span>
-                <span>
-                  <LatexRenderer content="La suma de las medidas en grados de los ángulos de un triángulo es $180^\circ$." />
-                </span>
+              <li>
+                <LatexRenderer content="Los ángulos de un triángulo suman $180^\circ$." />
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-key-azul font-bold">•</span>
-                <span>
-                  <LatexRenderer content="Las figuras que acompañan a los ejercicios proveen información útil, pero no están necesariamente dibujadas a escala." />
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-key-azul font-bold">•</span>
-                <span>
-                  <LatexRenderer content="Todos los números que se usan son números reales ($x \in \mathbb{R}$)." />
-                </span>
+              <li>Las figuras ayudan, pero no siempre están dibujadas a escala.</li>
+              <li>
+                <LatexRenderer content="Todos los números son reales ($x \in \mathbb{R}$)." />
               </li>
             </ul>
           </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="px-5 sm:px-6 py-3 bg-key-blanco border-t-[0.8px] border-key-negro flex items-center justify-between shrink-0">
-          <span className="text-xs text-key-texto-suave">
-            Presiona <kbd className="px-1.5 py-0.5 bg-key-gris border-[0.8px] text-xs">Esc</kbd> o haz clic fuera para cerrar
-          </span>
-          <button
-            type="button"
-            onClick={() => dialogRef.current?.close()}
-            className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-full bg-key-azul hover:bg-key-azul-hover text-sm font-semibold text-key-blanco transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul"
-          >
-            Entendido, volver al problema
-          </button>
         </div>
       </div>
     </dialog>

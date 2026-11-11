@@ -1,8 +1,8 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router';
-import { EncabezadoEstudiante } from '../../components/estudiante/EncabezadoEstudiante';
+import { EncabezadoPortal } from '../../components/EncabezadoPortal';
 import { useSesion } from '../../estado/useSesion';
-import { rutas } from '../../rutas';
+import { MENU_ESTUDIANTE, rutas } from '../../rutas';
 
 /**
  * Marco de las pantallas del estudiante (/inicio y sus pestañas): encabezado con el menú,
@@ -22,9 +22,12 @@ export const LayoutEstudiante: React.FC = () => {
       >
         Saltar al contenido
       </a>
-      <EncabezadoEstudiante
+      <EncabezadoPortal
+        etiqueta="Portal del estudiante"
+        menu={MENU_ESTUDIANTE}
+        inicio={rutas.estudiante}
         nombre={usuario.name}
-        ciclo={usuario.cohort}
+        detalle={usuario.cohort}
         onSalir={() => {
           salir();
           navigate(rutas.inicio, { replace: true });

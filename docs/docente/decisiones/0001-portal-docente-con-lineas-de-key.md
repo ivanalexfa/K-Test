@@ -1,6 +1,6 @@
 # 0001 · Portal del docente con el estilo de líneas de Key
 
-- **Estado:** Aceptada
+- **Estado:** Reemplazada en su estructura por [0002](0002-portal-docente-por-paginas.md); el estilo sigue vigente
 - **Fecha:** 2026-11-11
 - **Módulo:** docente
 - **Autores:** Soham, con Claude Code

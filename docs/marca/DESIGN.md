@@ -66,6 +66,7 @@ Key no define colores de estado. Para resultados, pistas y descartes del examen:
 | :--- | :--- | :--- |
 | Blanco sobre azul Key | 4.53:1 | Sí, cualquier tamaño (justo: no aclarar el azul) |
 | Azul Key sobre blanco | 4.53:1 | Sí |
+| Azul Key sobre gris claro `#F5F7FA` | 4.2:1 | **No** en texto chico: usar `key-azul-hover` (`#0058D1`) o tinta. Lo revisa `e2e/accesibilidad.spec.ts` |
 | Negro sobre verde / amarillo / naranja / morado | 12.1 / 17.9 / 8.5 / 4.6 | Sí |
 | Blanco sobre verde o amarillo | 1.7 / 1.1 | **Nunca** |
 | Blanco sobre morado | 4.53:1 | Sí, pero Key usa negro; seguimos a Key |
@@ -209,12 +210,15 @@ Todo lo que ve un usuario con sesión (estudiante y, desde la Fase 6, docente, e
 | Listas y tablas | Líneas negras finas entre filas; la acción de cada fila siempre visible; en celular, tablas como filas apiladas |
 | Gris claro `#F5F7FA` | Solo para el elemento activo de una lista (con una barra azul de 4 px a la izquierda) y los estados vacíos |
 | Cifras | JetBrains Mono |
+| Íconos | Solo de `lucide-react` y solo si ayudan a reconocer una acción (reloj, fórmulas, marcar). Nada de íconos propios ni de íconos que repiten el texto de al lado (ADR examen/0002) |
+| Páginas | Cada vista con su URL; el detalle de algo (la ficha de un estudiante, un formulario) es una página propia con «← Volver», no un bloque encima de la lista (ADR docente/0002) |
 | Sin | Sombras, degradados, tarjetas flotantes ni etiquetas en mayúsculas |
 
-Piezas compartidas en `src/components/estudiante/piezas.tsx`: `BloqueSimulacro`, `FilaSprint`, `FilaIntento`, `DatosEstudiante`, `EncabezadoBloque`, `TituloPagina`, `Pastilla` y `Vacio`. El encabezado es `EncabezadoEstudiante`.
+Piezas compartidas en `src/components/estudiante/piezas.tsx`: `BloqueSimulacro`, `FilaSprint`, `FilaIntento`, `DatosEstudiante`, `EncabezadoBloque`, `TituloPagina`, `Pastilla` y `Vacio`. El encabezado de los dos portales es `EncabezadoPortal`. El examen usa `src/components/examen/piezas.tsx` (`BarraPregunta`, `Pista`, `Opciones`).
 
 ## Historial
 
 - **1.0 (2026-11-10):** primera versión a partir del análisis de Key (Fase 1, `feat/marca-key`).
 - **1.1 (2026-11-10):** «K-TEST» junto al logo y «K-Test» en el texto (Fase 3, `feat/landing`).
 - **1.2 (2026-11-11):** «Plataforma interna» con el estilo de líneas de Key y sin tarjetas redondeadas (Fase 5, `feat/dashboard-estudiante`).
+- **1.3 (2026-11-11):** sin íconos decorativos y una página por vista (Fase 8, `feat/rediseno-docente-examen`).

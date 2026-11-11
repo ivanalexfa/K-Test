@@ -13,6 +13,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
+  // En local, pocos navegadores a la vez: todos comparten un solo servidor de Vite.
+  workers: process.env.CI ? undefined : 6,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: URL_BASE,

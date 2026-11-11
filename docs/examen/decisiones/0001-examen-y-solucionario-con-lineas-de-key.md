@@ -1,6 +1,6 @@
 # 0001 · Examen y solucionario con el estilo de líneas de Key
 
-- **Estado:** Aceptada
+- **Estado:** Aceptada, ampliada por [0002](0002-examen-sin-adornos.md)
 - **Fecha:** 2026-11-11
 - **Módulo:** examen
 - **Autores:** Soham, con Claude Code

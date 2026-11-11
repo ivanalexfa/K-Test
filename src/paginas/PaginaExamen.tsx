@@ -160,9 +160,6 @@ const ExamenEnCurso: React.FC = () => {
               <strong className="font-mono-num">{indice + 1}</strong> de{' '}
               <strong className="font-mono-num">{preguntas.length}</strong>
             </span>
-            <span className="hidden sm:inline text-xs text-key-texto-suave font-mono-num">
-              ({respondidas}/{preguntas.length} respondidas)
-            </span>
           </button>
 
           {!esUltima ? (

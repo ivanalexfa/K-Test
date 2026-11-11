@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { SectionType } from '../types/exam';
 import { LogoKey } from './brand/LogoKey';
-import { MathPAAIcon, VerbalPAAIcon } from './brand/KTestIcons';
 
 interface HeaderProps {
   currentSection: SectionType;
@@ -57,12 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 min-w-0 pl-3 sm:pl-4 border-l-[0.8px] border-key-negro">
-            {currentSection === 'reading' ? (
-              <VerbalPAAIcon size={18} className="shrink-0 max-sm:hidden" />
-            ) : (
-              <MathPAAIcon size={18} className="shrink-0 max-sm:hidden" />
-            )}
+          <div className="max-sm:hidden flex items-center gap-2 min-w-0 pl-4 border-l-[0.8px] border-key-negro">
             <span className="text-sm font-semibold text-key-tinta truncate">{sectionTitle}</span>
           </div>
         </div>
@@ -109,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onOpenNavigatorModal}
             className="inline-flex items-center gap-1.5 h-10 px-3 sm:px-4 rounded-full border-[0.8px] border-key-negro bg-key-blanco hover:bg-key-gris-claro text-sm font-semibold text-key-tinta transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-azul"
             title="Abrir mapa de preguntas"
-            aria-label={`Mapa de preguntas: pregunta ${currentQuestionIndex + 1} de ${totalQuestions}`}
+            aria-label={`Mapa de preguntas, ${currentQuestionIndex + 1}/${totalQuestions}`}
           >
             <LayoutGrid aria-hidden="true" className="w-4 h-4 text-key-azul max-[379px]:hidden" />
             <span className="font-mono-num">
