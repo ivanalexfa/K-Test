@@ -2,7 +2,7 @@
 
 - **Responsable:** Soham (frontend, lo visual y la experiencia de usuario). Revisa: Iván.
 - **Entrega:** jueves 12 de noviembre de 2026, revisión con Iván. Después, prueba con los directivos de Key.
-- **Rama de integración:** `rediseno/estudiante` (ADR [general/0001](general/decisiones/0001-flujo-de-trabajo-ramas-y-pr.md)).
+- **Flujo:** cada fase sale de `rediseno/estudiante` y abre su PR contra ella; esa rama llega a `main` en pocas entregas que revisa Iván (ADR [general/0004](general/decisiones/0004-fases-por-rama-de-integracion.md)).
 
 ## Objetivo
 
@@ -19,21 +19,21 @@ K-test es la plataforma de práctica de la PAA para los admitidos de Key Institu
 | Marca de Key aplicada (tokens, logo, fuente, fotos) | Rediseño a fondo del portal del docente |
 | React Router (una URL por pantalla) | Rediseño a fondo de las pantallas del examen y de resultados |
 | Landing, login y dashboard del estudiante | Login único con el portal de admisiones de Key (requiere a TI de Key) |
-| Docente, examen y resultados con el nuevo estilo, sin rediseño | Logo en vector, fotos oficiales y el visto bueno de Key para usarlas |
+| Docente, examen y resultados con el nuevo estilo, sin rediseño | Fotos oficiales y el visto bueno de Key para usar su logo, textos y fotos |
 | Lint, pruebas y CI | |
 
 ## Fases
 
 | Fase | Rama | Horas | Estado |
 | :--- | :--- | :---: | :--- |
-| 0 · Herramientas y reglas | `chore/herramientas` | ~3 | En revisión |
-| 1 · Base de marca | `feat/marca-key` | ~4 | Pendiente |
+| 0 · Herramientas y reglas | `chore/herramientas` | ~3 | En `main` (PR #8 y #10) |
+| 1 · Base de marca | `feat/marca-key` | ~4 | PR #11 a `rediseno/estudiante` |
 | 2 · Router y estructura | `feat/router` | ~3 | Pendiente |
 | 3 · Landing | `feat/landing` | ~6 | Pendiente |
 | 4 · Login | `feat/login` | ~2 | Pendiente |
 | 5 · Dashboard del estudiante | `feat/dashboard-estudiante` | ~6 | Pendiente |
 | 6 · Docente, examen y resultados: solo estilo | `feat/estilo-docente-examen` | ~3 | Pendiente |
-| 7 · Revisión y PR del jueves | `rediseno/estudiante` → `main` | ~4 | Pendiente |
+| 7 · Revisión y entrega del jueves | `rediseno/estudiante` → `main` | ~4 | Pendiente |
 
 Total: unas 31 horas. Si algo se atrasa, la Fase 6 es la primera que se recorta.
 
@@ -77,7 +77,7 @@ Revisión con las skills (contraste AA, teclado, de 320 a 1440 px, e2e) y un PR 
 
 ## Análisis de marca (resumen)
 
-Medido el 10 de noviembre de 2026 en keyinstitute.com (a 1440 px), `admisiones.keyinstitute.com`, `info.keyinstitute.com/admisiones` e Instagram `@keyinstitute.sv`. El detalle completo pasa a `marca/DESIGN.md` en la Fase 1.
+Medido el 10 de noviembre de 2026 en keyinstitute.com (a 1440 px), `admisiones.keyinstitute.com`, `info.keyinstitute.com/admisiones` e Instagram `@keyinstitute.sv`. El detalle completo y las decisiones están en [`marca/DESIGN.md`](marca/DESIGN.md).
 
 **Colores**
 
@@ -112,7 +112,7 @@ Amarillo y verde no llevan texto blanco (no llegan a AA); Key usa texto negro so
 ## Pendientes para la reunión con Iván
 
 - Login único con el portal de admisiones de Key: requiere a TI de Key.
-- Logo en vector, fotos oficiales y el visto bueno de Key para usarlas.
+- Fotos oficiales y el visto bueno de Key para usar su logo, textos y fotos (el logo en vector ya se tomó del sitio).
 - `SPEC.md` describe otro stack (React 19, Supabase, Zustand, Recharts): hay que actualizarlo.
 - `data/paa_platform.sqlite` está en git y cambia al usar la app en local.
 - Lint del backend (`server/`, `scripts/`) y los `any` que quedan en `src/`.

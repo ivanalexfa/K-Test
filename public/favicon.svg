@@ -1,6 +1,1 @@
-<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="40" height="40" rx="10" fill="#0A1128"/>
-  <path d="M13 11V29" stroke="#0052FF" stroke-width="4.5" stroke-linecap="round"/>
-  <path d="M27 11L17.5 20L27 29" stroke="#00D2FF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="13" cy="20" r="3" fill="#00D2FF"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>K-test · Key Institute</title><circle cx="32" cy="32" r="32" fill="#006DFF"/><g transform="translate(14.4 14) scale(0.4286)" fill="#FFFFFF"><path d="M37.3872 31.1118L31.219 34.669L14.6444 25.1148L6.16826 29.999L31.219 44.4421L45.8633 36.0007V0L37.3872 4.88886V31.1118Z"/><path d="M31.219 46.6677L0 64.668L8.47612 69.5569L31.219 56.4408L37.3872 59.998V84L45.8633 79.1111V55.1138L31.219 46.6677Z"/><path d="M83.2459 64.668L56.265 49.1121V41.9977L72.8396 32.4434V22.6704L47.7935 37.1135V54.001L74.7698 69.5569L83.2459 64.668Z"/></g></svg>

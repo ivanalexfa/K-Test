@@ -28,10 +28,16 @@ Un ADR (*Architecture Decision Record*) es un archivo corto por decisión: conte
 
 | # | Decisión | Estado |
 | :--- | :--- | :--- |
-| [0001](general/decisiones/0001-flujo-de-trabajo-ramas-y-pr.md) | Flujo de trabajo: ramas por tarea, rama de integración y PR siempre | Aceptada |
+| [0001](general/decisiones/0001-flujo-de-trabajo-ramas-y-pr.md) | Flujo de trabajo: ramas por tarea, rama de integración y PR siempre | Aceptada; precisada por 0004 |
 | [0002](general/decisiones/0002-calidad-lint-y-pruebas.md) | Calidad: ESLint, Vitest, Playwright y CI en cada PR | Aceptada |
 | [0003](general/decisiones/0003-skills-del-proyecto.md) | Skills de agente dentro del repositorio | Aceptada |
+| [0004](general/decisiones/0004-fases-por-rama-de-integracion.md) | Las fases entran a `rediseno/estudiante` y llegan a `main` en pocas entregas | Aceptada |
 
 ### Marca
 
-[`marca/DESIGN.md`](marca/DESIGN.md) es el sistema de diseño vivo de K-test como producto de Key Institute.
+[`marca/DESIGN.md`](marca/DESIGN.md) es el sistema de diseño vivo de K-test como producto de Key Institute. El origen de las fotos está en [`marca/fotos-originales/FUENTES.md`](marca/fotos-originales/FUENTES.md).
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](marca/decisiones/0001-k-test-usa-la-identidad-de-key.md) | K-test usa la identidad de Key Institute, no una propia | Aceptada |
+| [0002](marca/decisiones/0002-tokens-y-colores-de-carrera.md) | Tokens en Tailwind 4 y colores de carrera solo en la landing | Aceptada |

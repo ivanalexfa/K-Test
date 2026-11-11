@@ -7,7 +7,7 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { SectionType } from '../types/exam';
-import { KTestLogo } from './brand/KTestLogo';
+import { LogoKey } from './brand/LogoKey';
 import { MathPAAIcon, VerbalPAAIcon } from './brand/KTestIcons';
 
 interface HeaderProps {
@@ -50,10 +50,10 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
           <div className="shrink-0">
             <div className="hidden sm:block">
-              <KTestLogo theme="dark" variant="full" />
+              <LogoKey theme="dark" variant="full" />
             </div>
             <div className="sm:hidden">
-              <KTestLogo theme="dark" variant="mark-only" />
+              <LogoKey theme="dark" variant="mark-only" />
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 # 0001 · Ramas por tarea, rama de integración y PR siempre
 
-- **Estado:** Aceptada
+- **Estado:** Aceptada; el [0004](0004-fases-por-rama-de-integracion.md) precisa cómo se aprueba cada paso
 - **Fecha:** 2026-11-10
 - **Módulo:** general
 - **Autores:** Soham, con Claude Code

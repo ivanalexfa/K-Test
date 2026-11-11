@@ -30,7 +30,7 @@ import {
 import { TeacherUser } from '../models/UserClasses';
 import { SPRINTS_CATALOG } from '../data/sprintsCatalog';
 import { KEY_ADMISSION_COHORTS } from '../data/cohortsCatalog';
-import { KTestLogo } from './brand/KTestLogo';
+import { LogoKey } from './brand/LogoKey';
 import {
   TeacherDiagnosticIcon,
 } from './brand/KTestIcons';
@@ -373,7 +373,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       <header className="sticky top-0 z-30 bg-[#0A1128] text-white border-b border-white/10 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <KTestLogo theme="dark" variant="full" />
+            <LogoKey theme="dark" variant="full" />
             <div className="hidden md:block h-6 w-px bg-white/15" />
             <div className="hidden md:block min-w-0">
               <div className="flex items-center gap-2">

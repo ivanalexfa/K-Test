@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { UserRecord, UserRole } from '../types/exam';
 import { instantiateUserClass } from '../models/UserClasses';
-import { KTestLogo } from './brand/KTestLogo';
+import { LogoKey } from './brand/LogoKey';
 import {
   SimulacroEngineIcon,
   AsyncTrainerIcon,
@@ -277,7 +277,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       {/* Top Institutional Bar */}
       <header className="bg-[#0A1128] text-white border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <KTestLogo theme="dark" variant="full" />
+          <LogoKey theme="dark" variant="full" />
 
           
         </div>
