@@ -31,8 +31,8 @@ K-test es la plataforma de práctica de la PAA para los admitidos de Key Institu
 | 2 · Router y estructura | `feat/router` | ~3 | Fusionada en `rediseno/estudiante` (PR #12) |
 | 3 · Landing | `feat/landing` | ~6 | Fusionada en `rediseno/estudiante` (PR #13) |
 | 4 · Login | `feat/login` | ~2 | Fusionada en `rediseno/estudiante` (PR #14) |
-| 5 · Dashboard del estudiante | `feat/dashboard-estudiante` | ~6 | En revisión |
-| 6 · Docente, examen y resultados: solo estilo | `feat/estilo-docente-examen` | ~3 | Pendiente |
+| 5 · Portal del estudiante (inicio, pruebas, material, resultados) | `feat/dashboard-estudiante` | ~8 | En revisión (PR #15) |
+| 6 · Docente, examen y solucionario con el estilo de líneas de Key | `feat/estilo-docente-examen` | ~3 | Pendiente |
 | 7 · Revisión y entrega del jueves | `rediseno/estudiante` → `main` | ~4 | Pendiente |
 
 Total: unas 31 horas. Si algo se atrasa, la Fase 6 es la primera que se recorta.
@@ -65,12 +65,14 @@ Orden, con la lógica de venta del Tec y el estilo de Key:
 ### 4 · Login
 Tarjeta simple como la de Key: logo, «Bienvenido», Google y Microsoft. Sin cuentas demo; el rol se detecta solo. El origen correcto es `localhost`.
 
-### 5 · Dashboard del estudiante
-- Escritorio: Pruebas (Simulacro y Sprints), Material y Mis resultados visibles sin scroll, con la acción principal de cada una a un clic.
-- Celular: tarjetas apiladas que abren cada pantalla.
+### 5 · Portal del estudiante
+- Inicio con el **simulacro completo como acción protagonista** (versión A1, ADR estudiante/0001); sprints, resultados y material acompañan; sin scroll en 1440×900.
+- Pruebas, Material y Mis resultados rehechos con el mismo estilo; se elimina el portal anterior (`StudentDashboard`).
+- Se decidió que **toda la plataforma interna usa el estilo de líneas de Key** (ADR marca/0003, `DESIGN.md` §11).
+- Se quitó el paso de elegir ciclo de admisión.
 
-### 6 · Docente, examen y resultados
-Tokens, logo y tipografía nuevos, sin rediseño.
+### 6 · Docente, examen y solucionario
+Aplicar las reglas de «Plataforma interna» (`DESIGN.md` §11) al portal del docente, a la pantalla del examen y a la de resultados y solucionario. Sin rediseñar los flujos.
 
 ### 7 · Revisión y PR
 Revisión con las skills (contraste AA, teclado, de 320 a 1440 px, e2e) y un PR a `main` con capturas de antes y después y los pendientes.
@@ -116,3 +118,4 @@ Amarillo y verde no llevan texto blanco (no llegan a AA); Key usa texto negro so
 - `SPEC.md` describe otro stack (React 19, Supabase, Zustand, Recharts): hay que actualizarlo.
 - `data/paa_platform.sqlite` está en git y cambia al usar la app en local.
 - Lint del backend (`server/`, `scripts/`) y los `any` que quedan en `src/`.
+- Ya no se pide el ciclo de admisión al estudiante: los filtros por ciclo del portal del docente verán vacíos a los estudiantes nuevos. ¿Se quita el filtro o el ciclo sale de otro lado (portal de admisiones)?

@@ -118,7 +118,7 @@ La misma lógica, reducida para una app que se usa más tiempo y en celular:
 
 - **Bloques que se tocan**, separados por bordes finos de 0.8 px, no por tarjetas flotantes con sombra. Las sombras casi no existen en Key.
 - **Menú hecho de celdas:** cada opción es una celda con borde fino (49 px de alto, 20 px de relleno lateral). La celda de la sección activa se pinta del color de esa sección.
-- **Radios:** 0 en bloques, campos y celdas; pastilla (`rounded-full`) solo en botones. **Decisión K-test:** las tarjetas de la app pueden llevar `rounded-2xl` (16 px) cuando agrupan contenido interactivo, pero nunca botones cuadrados.
+- **Radios:** 0 en bloques, campos y celdas; pastilla (`rounded-full`) solo en botones. **Decisión K-test (ADR marca/0003):** también dentro de la plataforma; no hay tarjetas redondeadas.
 
 ## 4. Componentes
 
@@ -195,7 +195,26 @@ En Instagram, Key usa fondos azul Key o negros con titular blanco en negrita, el
 | Prácticos: «Empieza con un sprint de 10 minutos» | Vagos: «Mejora tu desempeño» |
 | Cercanos: «Así vas» | Fríos: «Reporte de rendimiento» |
 
+## 11. Plataforma interna (**Decisión K-test**, ADR marca/0003)
+
+Todo lo que ve un usuario con sesión (estudiante y, desde la Fase 6, docente, examen y resultados) usa el **estilo de líneas de Key**, el mismo de keyinstitute.com, ordenado por una acción protagonista. Se comparó con una versión suave (líneas grises, paneles redondeados) y se eligió esta.
+
+| Regla | Cómo se aplica |
+| :--- | :--- |
+| Marco | Cada pantalla agrupa su contenido en un marco con borde negro de 0.8 px; los bloques internos se tocan y se separan con la misma línea |
+| Formas | Radio 0 en marcos, celdas, campos, tablas y bloques; **solo los botones son pastillas** |
+| Acción protagonista | Una por pantalla, en un bloque azul Key plano a sangre dentro del marco, con pastilla blanca (por ejemplo, «Empezar simulacro») |
+| Acciones secundarias | Enlace azul con subrayado al pasar («Empezar», «Ver todo») o pastilla con borde negro («Ver solucionario», «Salir») |
+| Menú y filtros | Celdas con borde fino; la activa en azul Key con texto blanco |
+| Listas y tablas | Líneas negras finas entre filas; la acción de cada fila siempre visible; en celular, tablas como filas apiladas |
+| Gris claro `#F5F7FA` | Solo para el elemento activo de una lista (con una barra azul de 4 px a la izquierda) y los estados vacíos |
+| Cifras | JetBrains Mono |
+| Sin | Sombras, degradados, tarjetas flotantes ni etiquetas en mayúsculas |
+
+Piezas compartidas en `src/components/estudiante/piezas.tsx`: `BloqueSimulacro`, `FilaSprint`, `FilaIntento`, `DatosEstudiante`, `EncabezadoBloque`, `TituloPagina`, `Pastilla` y `Vacio`. El encabezado es `EncabezadoEstudiante`.
+
 ## Historial
 
 - **1.0 (2026-11-10):** primera versión a partir del análisis de Key (Fase 1, `feat/marca-key`).
 - **1.1 (2026-11-10):** «K-TEST» junto al logo y «K-Test» en el texto (Fase 3, `feat/landing`).
+- **1.2 (2026-11-11):** «Plataforma interna» con el estilo de líneas de Key y sin tarjetas redondeadas (Fase 5, `feat/dashboard-estudiante`).
