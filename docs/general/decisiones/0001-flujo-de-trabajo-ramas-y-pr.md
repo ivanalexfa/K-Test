@@ -1,6 +1,6 @@
 # 0001 · Ramas por tarea, rama de integración y PR siempre
 
-- **Estado:** Aceptada
+- **Estado:** Aceptada; el punto 3 (rama de integración) lo reemplaza el [0004](0004-pr-directo-a-main-en-paralelo.md)
 - **Fecha:** 2026-11-10
 - **Módulo:** general
 - **Autores:** Soham, con Claude Code

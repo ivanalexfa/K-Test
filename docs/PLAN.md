@@ -2,7 +2,7 @@
 
 - **Responsable:** Soham (frontend, lo visual y la experiencia de usuario). Revisa: Iván.
 - **Entrega:** jueves 12 de noviembre de 2026, revisión con Iván. Después, prueba con los directivos de Key.
-- **Rama de integración:** `rediseno/estudiante` (ADR [general/0001](general/decisiones/0001-flujo-de-trabajo-ramas-y-pr.md)).
+- **Flujo:** cada fase abre su PR directo a `main`, en paralelo cuando no dependen entre sí (ADR [general/0004](general/decisiones/0004-pr-directo-a-main-en-paralelo.md), que reemplaza la rama de integración del ADR 0001).
 
 ## Objetivo
 
@@ -26,14 +26,14 @@ K-test es la plataforma de práctica de la PAA para los admitidos de Key Institu
 
 | Fase | Rama | Horas | Estado |
 | :--- | :--- | :---: | :--- |
-| 0 · Herramientas y reglas | `chore/herramientas` | ~3 | En revisión (PR #8) |
+| 0 · Herramientas y reglas | `chore/herramientas` | ~3 | Aprobada (PR #8); en camino a `main` |
 | 1 · Base de marca | `feat/marca-key` | ~4 | En revisión |
 | 2 · Router y estructura | `feat/router` | ~3 | Pendiente |
 | 3 · Landing | `feat/landing` | ~6 | Pendiente |
 | 4 · Login | `feat/login` | ~2 | Pendiente |
 | 5 · Dashboard del estudiante | `feat/dashboard-estudiante` | ~6 | Pendiente |
 | 6 · Docente, examen y resultados: solo estilo | `feat/estilo-docente-examen` | ~3 | Pendiente |
-| 7 · Revisión y PR del jueves | `rediseno/estudiante` → `main` | ~4 | Pendiente |
+| 7 · Revisión final del jueves | `main` | ~4 | Pendiente |
 
 Total: unas 31 horas. Si algo se atrasa, la Fase 6 es la primera que se recorta.
 
