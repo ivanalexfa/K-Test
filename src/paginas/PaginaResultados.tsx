@@ -51,7 +51,7 @@ export const PaginaResultados: React.FC = () => {
   if (!intento || !puedeVerlo) {
     return (
       <main className="min-h-dvh flex items-center justify-center bg-key-gris-claro px-5">
-        <div className="w-full max-w-md bg-key-blanco border border-key-gris p-8 space-y-5 text-center">
+        <div className="w-full max-w-md bg-key-blanco border-[0.8px] border-key-gris p-8 space-y-5 text-center">
           <h1 className="text-2xl font-semibold text-key-tinta">No encontramos este resultado</h1>
           <p className="text-key-texto">El enlace no corresponde a ninguno de tus intentos.</p>
           <Link
