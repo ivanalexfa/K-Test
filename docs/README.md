@@ -42,3 +42,9 @@ Un ADR (*Architecture Decision Record*) es un archivo corto por decisión: conte
 | :--- | :--- | :--- |
 | [0001](marca/decisiones/0001-k-test-usa-la-identidad-de-key.md) | K-test usa la identidad de Key Institute, no una propia | Aceptada |
 | [0002](marca/decisiones/0002-tokens-y-colores-de-carrera.md) | Tokens en Tailwind 4 y colores de carrera solo en la landing | Aceptada |
+
+### Landing
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](landing/decisiones/0001-estructura-de-la-landing.md) | Estructura de la landing: un solo llamado y la lógica del Tec con el estilo de Key | Aceptada |
