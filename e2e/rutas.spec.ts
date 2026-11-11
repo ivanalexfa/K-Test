@@ -30,17 +30,18 @@ test.describe('Estudiante', () => {
     await entrarComo(page, 'stu-1');
   });
 
-  test('el acceso con sesión lleva a sus pruebas', async ({ page }) => {
+  test('el acceso con sesión lleva a su inicio', async ({ page }) => {
     await page.goto('/entrar');
-    await expect(page).toHaveURL(/\/inicio\/pruebas$/);
+    await expect(page).toHaveURL(/\/inicio$/);
   });
 
   test('cada pestaña tiene su URL y «Atrás» vuelve a la anterior', async ({ page }) => {
     await page.goto('/inicio/pruebas');
-    await page.getByRole('button', { name: /Materiales de Estudio/ }).click();
+    const menu = page.getByRole('navigation', { name: 'Portal del estudiante' });
+    await menu.getByRole('link', { name: 'Material' }).click();
     await expect(page).toHaveURL(/\/inicio\/material$/);
 
-    await page.getByRole('button', { name: /Mis Resultados/ }).click();
+    await menu.getByRole('link', { name: 'Resultados' }).click();
     await expect(page).toHaveURL(/\/inicio\/resultados$/);
 
     await page.goBack();
@@ -55,7 +56,7 @@ test.describe('Estudiante', () => {
 
   test('el simulacro abre /examen/simulacro y al recargar pide empezarlo de nuevo', async ({ page }) => {
     await page.goto('/inicio/pruebas');
-    await page.getByRole('button', { name: /Iniciar Simulacro Completo/ }).click();
+    await page.getByRole('button', { name: 'Empezar simulacro' }).click();
     await expect(page).toHaveURL(/\/examen\/simulacro$/);
     await expect(page.getByRole('button', { name: /Siguiente/ })).toBeVisible();
 
@@ -81,7 +82,7 @@ test.describe('Estudiante', () => {
 
   test('no puede entrar al portal del docente', async ({ page }) => {
     await page.goto('/docente');
-    await expect(page).toHaveURL(/\/inicio\/pruebas$/);
+    await expect(page).toHaveURL(/\/inicio$/);
   });
 });
 

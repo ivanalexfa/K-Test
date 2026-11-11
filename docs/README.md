@@ -42,6 +42,7 @@ Un ADR (*Architecture Decision Record*) es un archivo corto por decisión: conte
 | :--- | :--- | :--- |
 | [0001](marca/decisiones/0001-k-test-usa-la-identidad-de-key.md) | K-test usa la identidad de Key Institute, no una propia | Aceptada |
 | [0002](marca/decisiones/0002-tokens-y-colores-de-carrera.md) | Tokens en Tailwind 4 y colores de carrera solo en la landing | Aceptada |
+| [0003](marca/decisiones/0003-plataforma-interna-con-lineas-de-key.md) | La plataforma interna usa el estilo de líneas de Key | Aceptada |
 
 ### Landing
 
@@ -54,3 +55,9 @@ Un ADR (*Architecture Decision Record*) es un archivo corto por decisión: conte
 | # | Decisión | Estado |
 | :--- | :--- | :--- |
 | [0001](acceso/decisiones/0001-pantalla-de-acceso.md) | Pantalla de acceso como la de Key, con Google y Microsoft al mismo nivel | Aceptada |
+
+### Estudiante
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](estudiante/decisiones/0001-inicio-con-todo-a-la-vista.md) | Inicio del estudiante: el simulacro como acción protagonista y todo a un clic | Aceptada (A1) |
