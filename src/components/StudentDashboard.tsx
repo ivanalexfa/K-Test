@@ -43,9 +43,12 @@ interface StudentDashboardProps {
   onInspectAttempt: (attempt: TestAttemptRecord) => void;
   onUpdateCohort?: (newCohort: string) => Promise<void>;
   onLogout: () => void;
+  /** Pestaña activa, controlada desde la URL (/inicio/pruebas, /material, /resultados). */
+  tab?: StudentTab;
+  onChangeTab?: (tab: StudentTab) => void;
 }
 
-type StudentTab = 'tests' | 'materials' | 'history';
+export type StudentTab = 'tests' | 'materials' | 'history';
 
 function formatFileSize(bytes?: number | null): string {
   if (!bytes || bytes <= 0) return '';
@@ -81,8 +84,15 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   onInspectAttempt,
   onUpdateCohort: _onUpdateCohort,
   onLogout,
+  tab,
+  onChangeTab,
 }) => {
-  const [activeTab, setActiveTab] = useState<StudentTab>('tests');
+  const [tabInterna, setTabInterna] = useState<StudentTab>(tab ?? 'tests');
+  const activeTab = tab ?? tabInterna;
+  const setActiveTab = (siguiente: StudentTab) => {
+    if (onChangeTab) onChangeTab(siguiente);
+    else setTabInterna(siguiente);
+  };
   // Active sprint hub subject ('reading' | 'math' | null)
   const [selectedSprintSubject, setSelectedSprintSubject] =
     useState<SectionType | null>(null);
