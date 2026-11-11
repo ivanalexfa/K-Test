@@ -25,6 +25,8 @@ These rules apply to every agent on the team (Antigravity, Claude Code, …). `C
 | `npm run test:e2e` | Playwright (`e2e/`), desktop and Pixel 7, own Vite on port 5174 and temporary DB. First time: `npx playwright install chromium` |
 | `npm run verificar` | All of the above |
 
+**Routes:** every URL lives in `src/rutas.ts`; screens live in `src/paginas/`; shared state in `src/estado/` (`useSesion`, `useExamen`). A new screen = its page, its URL in `rutas.ts`, its `<Route>` in `App.tsx` (inside `RequiereSesion` if private) and its e2e test (ADR `general/0005`).
+
 A new screen or flow gets its test in `e2e/`, importing `test` and `expect` from `e2e/ayudantes.ts` (it fails the test on page exceptions, console errors or API 5xx).
 
 ## Command: `/add-sprint` or `#ADD_SPRINT` (or `/nueva-prueba`)
