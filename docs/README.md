@@ -54,3 +54,9 @@ Un ADR (*Architecture Decision Record*) es un archivo corto por decisión: conte
 | # | Decisión | Estado |
 | :--- | :--- | :--- |
 | [0001](acceso/decisiones/0001-pantalla-de-acceso.md) | Pantalla de acceso como la de Key, con Google y Microsoft al mismo nivel | Aceptada |
+
+### Estudiante
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](estudiante/decisiones/0001-inicio-con-todo-a-la-vista.md) | Inicio del estudiante con todo a la vista y cada acción a un clic | Aceptada |
