@@ -17,6 +17,9 @@ interface Problema {
 }
 
 async function revisar(page: Page) {
+  // Sin transiciones ni animaciones: axe mide el color final, no uno a mitad de camino.
+  await page.addStyleTag({ content: '*,*::before,*::after{transition:none!important;animation:none!important}' });
+  await page.waitForTimeout(50);
   await page.addScriptTag({ path: rutaAxe });
   const problemas = await page.evaluate(async () => {
     // @ts-expect-error axe se inyecta en la página
