@@ -44,11 +44,14 @@ export const ReadingQuestionView: React.FC<ReadingQuestionViewProps> = ({
   const referencedSet = new Set(question.referencedLines ?? []);
   const firstReferencedLine = question.referencedLines?.[0];
 
-  // Reset hint & struck options when switching questions
-  useEffect(() => {
+  // Reset hint & struck options when switching questions (adjusted during render,
+  // not in an effect: https://react.dev/learn/you-might-not-need-an-effect)
+  const [shownQuestionId, setShownQuestionId] = useState(question.id);
+  if (shownQuestionId !== question.id) {
+    setShownQuestionId(question.id);
     setShowKeyHint(false);
     setStruckOptions({});
-  }, [question.id]);
+  }
 
   const toggleStrikeOption = (e: React.MouseEvent, optId: OptionId) => {
     e.stopPropagation();
