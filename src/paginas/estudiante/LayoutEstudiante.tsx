@@ -1,21 +1,18 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router';
 import { EncabezadoEstudiante } from '../../components/estudiante/EncabezadoEstudiante';
-import { StudentOnboardingModal } from '../../components/StudentOnboardingModal';
 import { useSesion } from '../../estado/useSesion';
 import { rutas } from '../../rutas';
 
 /**
  * Marco de las pantallas del estudiante (/inicio y sus pestañas): encabezado con el menú,
- * fondo blanco y la ventana para elegir ciclo de admisión si todavía no lo tiene.
+ * y fondo blanco. Ya no se pide el ciclo de admisión (se quitó el paso; ver ADR estudiante/0001).
  * El examen tiene su propio encabezado y no usa este marco.
  */
 export const LayoutEstudiante: React.FC = () => {
-  const { usuario, cambiarCohorte, salir } = useSesion();
+  const { usuario, salir } = useSesion();
   const navigate = useNavigate();
   if (!usuario) return null; // RequiereSesion ya filtró
-
-  const necesitaCiclo = !usuario.cohort || usuario.cohort.trim() === '';
 
   return (
     <div className="min-h-dvh flex flex-col bg-key-blanco">
@@ -36,9 +33,6 @@ export const LayoutEstudiante: React.FC = () => {
       <main id="contenido" className="flex-1">
         <Outlet />
       </main>
-      {necesitaCiclo && (
-        <StudentOnboardingModal studentName={usuario.name} onConfirmCohort={cambiarCohorte} />
-      )}
     </div>
   );
 };

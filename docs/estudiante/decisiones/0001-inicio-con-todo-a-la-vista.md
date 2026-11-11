@@ -19,6 +19,7 @@ El portal anterior abría en un banner azul marino con métricas y tres botones 
 3. **Encabezado del estudiante** blanco y fijo, con el logo de Key + K-TEST, un **menú de celdas** con borde fino (Inicio · Pruebas · Material · Resultados) y el nombre con «Salir». La celda activa se pinta de azul Key: en keyinstitute.com se pinta del color de la sección, pero en K-Test el único color de acción es el azul (ADR marca/0002). En celular el menú baja a una fila de cuatro celdas.
 4. **Las pestañas existentes se conservan** (`/inicio/pruebas`, `/material`, `/resultados`) dentro del nuevo marco: `StudentDashboard` se muestra «incrustado», sin su encabezado ni su banner. Su contenido interno se restiliza en la Fase 6.
 5. Los números (minutos, preguntas, porcentajes) van en JetBrains Mono, como dicta `DESIGN.md`.
+6. **Se quita el paso de elegir ciclo de admisión** (la ventana que aparecía la primera vez): no hace falta para practicar. El campo `cohort` queda en la base; los filtros del docente por ciclo verán vacíos a los estudiantes nuevos (avisar a Iván).
 
 ## Alternativas consideradas
 
