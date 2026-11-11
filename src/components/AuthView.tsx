@@ -1,6 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import {
-  GraduationCap,
   ArrowRight,
   ChevronDown,
   ChevronUp,
@@ -8,10 +7,6 @@ import {
   AlertCircle,
 
   X,
-  Layers,
-  Zap,
-  BookOpen,
-  Compass,
 } from 'lucide-react';
 import { UserRecord, UserRole } from '../types/exam';
 import { instantiateUserClass } from '../models/UserClasses';
@@ -117,10 +112,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [loadingMs, setLoadingMs] = useState<boolean>(false);
   const [loadingGoogle, setLoadingGoogle] = useState<boolean>(false);
 
-  // Fallback Simulator Modal (Google)
-  const [isGoogleSimModalOpen, setIsGoogleSimModalOpen] = useState<boolean>(false);
-  const googleDialogRef = useRef<HTMLDialogElement | null>(null);
-  const googleDialogTitleId = useId();
   const realGoogleActive = isRealGoogleConfigured();
 
   // Collapsible Developer / Demo Accounts section
@@ -133,12 +124,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   const msDialogRef = useRef<HTMLDialogElement | null>(null);
   const msDialogTitleId = useId();
+  const simEmailId = useId();
+  const simNameId = useId();
 
   const realMsalActive = isRealMsalConfigured();
   const showDemoSection = isDemoAccountsEnabled();
-
-  const students = users.filter((u) => u.role === 'student');
-  const teachers = users.filter((u) => u.role === 'teacher');
 
   useEffect(() => {
     const dialog = msDialogRef.current;
@@ -219,16 +209,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
         googleId: 'google-sim-demo',
       });
     }
-  };
-
-  const handleSimulatedGoogleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!simEmail.trim()) return;
-    await completeBackendGoogleHandshake({
-      name: simName.trim() || simEmail.split('@')[0],
-      email: simEmail.trim().toLowerCase(),
-      googleId: `google-sim-${simEmail.trim().toLowerCase()}`,
-    });
   };
 
   const completeBackendMicrosoftHandshake = async (
@@ -518,10 +498,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <form onSubmit={handleSimulatedMsSubmit} className="p-6 space-y-4">
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor={simEmailId} className="block text-xs font-semibold text-slate-700 mb-1">
                   Correo Microsoft (Personal o Institucional)
                 </label>
                 <input
+                  id={simEmailId}
                   type="email"
                   required
                   value={simEmail}
@@ -532,10 +513,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor={simNameId} className="block text-xs font-semibold text-slate-700 mb-1">
                   Nombre Completo
                 </label>
                 <input
+                  id={simNameId}
                   type="text"
                   required
                   value={simName}

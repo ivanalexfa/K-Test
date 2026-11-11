@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "k-test",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--host", "localhost", "--port", "5173", "--strictPort", "--open", "false"],
+      "port": 5173
+    }
+  ]
+}

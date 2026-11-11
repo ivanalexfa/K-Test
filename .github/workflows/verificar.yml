@@ -1,0 +1,60 @@
+# Corre en cada PR y en cada push a main: lint, tipos, pruebas y build.
+# Un PR no se fusiona si este flujo falla. Decisión en docs/general/decisiones/0002-calidad-lint-y-pruebas.md
+name: Verificar
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: verificar-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24 # node:sqlite sin bandera; igual que en desarrollo
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tipos
+        run: npm run typecheck
+
+      - name: Pruebas de componentes
+        run: npm run test:web
+
+      - name: Pruebas de la API
+        run: npm run test:api
+
+      - name: Build
+        run: npm run build
+
+      - name: Navegador para e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Pruebas de punta a punta
+        run: npm run test:e2e
+
+      - name: Reporte de e2e
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-playwright
+          path: |
+            playwright-report/
+            e2e/.tmp/resultados/
+          retention-days: 7

@@ -17,3 +17,12 @@ Thumbs.db
 
 # Agent workspaces and internal run logs
 .agents/
+
+# Pruebas (Vitest / Playwright)
+coverage/
+e2e/.tmp/
+playwright-report/
+test-results/
+
+# Configuración local de Claude Code (las skills sí van al repo)
+.claude/settings.local.json

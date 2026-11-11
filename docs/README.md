@@ -1,0 +1,37 @@
+# Documentación de K-test
+
+Aquí vive el porqué de lo que construimos. El código dice *qué* hace el sistema; estos documentos dicen *por qué* se decidió así, para que Iván, Soham o cualquier agente puedan seguir el hilo sin preguntar.
+
+## Cómo está organizada
+
+```
+docs/
+├── README.md              ← este índice
+├── PLAN.md                ← plan del rediseño del frontend, por fases
+├── plantilla-adr.md       ← copia esta plantilla para cada decisión nueva
+├── general/decisiones/    ← flujo de trabajo, herramientas, arquitectura
+├── marca/                 ← DESIGN.md (sistema de diseño) y sus decisiones
+├── landing/decisiones/
+├── acceso/decisiones/     ← login y roles
+├── estudiante/decisiones/ ← dashboard y portal del estudiante
+├── docente/decisiones/
+└── examen/decisiones/     ← preguntas, examen y resultados
+```
+
+Cada módulo tiene sus propias decisiones. Una carpeta se crea cuando llega su primera decisión.
+
+## Decisiones (ADR)
+
+Un ADR (*Architecture Decision Record*) es un archivo corto por decisión: contexto, decisión, alternativas y consecuencias. Se numeran por módulo (`0001-…`, `0002-…`) y no se borran: si una decisión cambia, se escribe una nueva que la reemplaza y la anterior pasa a «Reemplazada por …».
+
+### General
+
+| # | Decisión | Estado |
+| :--- | :--- | :--- |
+| [0001](general/decisiones/0001-flujo-de-trabajo-ramas-y-pr.md) | Flujo de trabajo: ramas por tarea, rama de integración y PR siempre | Aceptada |
+| [0002](general/decisiones/0002-calidad-lint-y-pruebas.md) | Calidad: ESLint, Vitest, Playwright y CI en cada PR | Aceptada |
+| [0003](general/decisiones/0003-skills-del-proyecto.md) | Skills de agente dentro del repositorio | Aceptada |
+
+### Marca
+
+[`marca/DESIGN.md`](marca/DESIGN.md) es el sistema de diseño vivo de K-test como producto de Key Institute.

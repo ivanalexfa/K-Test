@@ -8,7 +8,6 @@ import {
   Trash2,
   Eye,
   LogOut,
-  Filter,
   Sparkles,
   BookOpen,
   Clock,
@@ -34,8 +33,6 @@ import { KEY_ADMISSION_COHORTS } from '../data/cohortsCatalog';
 import { KTestLogo } from './brand/KTestLogo';
 import {
   TeacherDiagnosticIcon,
-  MathPAAIcon,
-  VerbalPAAIcon,
 } from './brand/KTestIcons';
 import { LatexRenderer } from './LatexRenderer';
 
@@ -133,7 +130,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const [attachmentDataBase64, setAttachmentDataBase64] = useState<string | null>(
     null
   );
-  const [existingAttachmentUrl, setExistingAttachmentUrl] = useState<string | null>(
+  const [, setExistingAttachmentUrl] = useState<string | null>(
     null
   );
   const [removeAttachment, setRemoveAttachment] = useState<boolean>(false);
@@ -679,10 +676,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
                 {/* 2. Filter by Admission Cohort */}
                 <div className="md:col-span-3">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <label htmlFor="docente-filtro-cohorte" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                     Cohorte de Admisión
                   </label>
                   <select
+                    id="docente-filtro-cohorte"
                     value={selectedCohort}
                     onChange={(e) => setSelectedCohort(e.target.value)}
                     aria-label="Filtrar por cohorte de admisión"
@@ -699,10 +697,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
                 {/* 3. Filter by Test Mode or Specific Sprint */}
                 <div className="md:col-span-2">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <label htmlFor="docente-filtro-evaluacion" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                     Prueba / Sprint Realizado
                   </label>
                   <select
+                    id="docente-filtro-evaluacion"
                     value={selectedEvaluationFilter}
                     onChange={(e) => setSelectedEvaluationFilter(e.target.value)}
                     aria-label="Filtrar por prueba o sprint específico"
@@ -724,10 +723,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
                 {/* 4. Filter by Performance Level */}
                 <div className="md:col-span-2">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <label htmlFor="docente-filtro-desempeno" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                     Nivel de Desempeño
                   </label>
                   <select
+                    id="docente-filtro-desempeno"
                     value={selectedPerformanceLevel}
                     onChange={(e) =>
                       setSelectedPerformanceLevel(
@@ -1085,10 +1085,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label htmlFor="material-titulo" className="block text-xs font-semibold text-slate-700 mb-1">
                       Título del Material
                     </label>
                     <input
+                      id="material-titulo"
                       type="text"
                       required
                       value={title}
@@ -1099,10 +1100,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label htmlFor="material-seccion" className="block text-xs font-semibold text-slate-700 mb-1">
                       Sección PAA
                     </label>
                     <select
+                      id="material-seccion"
                       value={section}
                       onChange={(e) => setSection(e.target.value as SectionType)}
                       className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-[#0052FF]"
@@ -1115,10 +1117,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label htmlFor="material-categoria" className="block text-xs font-semibold text-slate-700 mb-1">
                       Categoría / Tema
                     </label>
                     <input
+                      id="material-categoria"
                       type="text"
                       required
                       value={category}
@@ -1128,10 +1131,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label htmlFor="material-minutos" className="block text-xs font-semibold text-slate-700 mb-1">
                       Tiempo estimado de estudio (minutos)
                     </label>
                     <input
+                      id="material-minutos"
                       type="number"
                       min={1}
                       max={120}
@@ -1143,10 +1147,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label htmlFor="material-autor" className="block text-xs font-semibold text-slate-700 mb-1">
                       Autor Registrado
                     </label>
                     <input
+                      id="material-autor"
                       type="text"
                       disabled
                       value={teacher.name}
@@ -1156,10 +1161,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label htmlFor="material-resumen" className="block text-xs font-semibold text-slate-700 mb-1">
                     Resumen Ejecutivo
                   </label>
                   <input
+                    id="material-resumen"
                     type="text"
                     required
                     value={summary}
@@ -1234,10 +1240,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label htmlFor="material-notas" className="block text-xs font-semibold text-slate-700 mb-1">
                       Notas / Contenido Explicativo (Soporta LaTeX <code>$...$</code> y <code>$$...$$</code>)
                     </label>
                     <textarea
+                      id="material-notas"
                       rows={8}
                       required
                       value={content}

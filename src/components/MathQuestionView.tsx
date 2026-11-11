@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Flag, Sigma, Check, Sparkles } from 'lucide-react';
 import { ExamQuestion, OptionId } from '../types/exam';
 import { LatexRenderer } from './LatexRenderer';
@@ -28,10 +28,14 @@ export const MathQuestionView: React.FC<MathQuestionViewProps> = ({
   const [struckOptions, setStruckOptions] = useState<Record<string, boolean>>({});
   const [showKeyHint, setShowKeyHint] = useState<boolean>(false);
 
-  useEffect(() => {
+  // Reset hint & struck options when switching questions (adjusted during render,
+  // not in an effect: https://react.dev/learn/you-might-not-need-an-effect)
+  const [shownQuestionId, setShownQuestionId] = useState(question.id);
+  if (shownQuestionId !== question.id) {
+    setShownQuestionId(question.id);
     setShowKeyHint(false);
     setStruckOptions({});
-  }, [question.id]);
+  }
 
   const toggleStrikeOption = (e: React.MouseEvent, optId: OptionId) => {
     e.stopPropagation();

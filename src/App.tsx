@@ -73,7 +73,8 @@ export const App: React.FC = () => {
   // Section Timer state
   const [secondsRemaining, setSecondsRemaining] = useState<number>(600);
   const [timerVisible, setTimerVisible] = useState<boolean>(true);
-  const examStartTimestampRef = useRef<number>(Date.now());
+  // Set when an exam starts (handleStartTest); Date.now() is impure, so not read during render
+  const examStartTimestampRef = useRef<number>(0);
 
   // Modals state
   const [isFormulaModalOpen, setIsFormulaModalOpen] = useState<boolean>(false);
