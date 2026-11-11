@@ -26,7 +26,14 @@ const urlHasMsalResponse =
   (window.location.hash.includes('state=') ||
     window.location.search.includes('state='));
 
-if (urlHasMsalResponse) {
+// En desarrollo, Google y Microsoft solo aceptan el origen registrado
+// (http://localhost:5173): si se abre por 127.0.0.1, se pasa a localhost.
+const enOrigenNoRegistrado =
+  import.meta.env.DEV && window.location.hostname === '127.0.0.1';
+
+if (enOrigenNoRegistrado) {
+  window.location.replace(window.location.href.replace('127.0.0.1', 'localhost'));
+} else if (urlHasMsalResponse) {
   broadcastResponseToMainFrame().catch(() => {
     mountApp();
   });
