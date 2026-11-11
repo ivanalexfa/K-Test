@@ -5,9 +5,6 @@ import {
   EyeOff,
   Sigma,
   LayoutGrid,
-  Sparkles,
-  BookOpen,
-  Calculator,
 } from 'lucide-react';
 import { SectionType } from '../types/exam';
 import { KTestLogo } from './brand/KTestLogo';
@@ -37,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTimer,
   onOpenFormulaModal,
   onOpenNavigatorModal,
-  answeredCount,
+  answeredCount: _answeredCount,
   flaggedCount,
 }) => {
   const minutes = Math.floor(secondsRemaining / 60);

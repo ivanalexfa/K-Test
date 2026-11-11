@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import {
   BookOpen,
-  Calculator,
   Clock,
   Layers,
-  Zap,
   History,
   LogOut,
   ArrowRight,
@@ -16,10 +14,6 @@ import {
   GraduationCap,
   Paperclip,
   Download,
-  FileSpreadsheet,
-  FileImage,
-  File,
-  CheckCircle2,
 } from 'lucide-react';
 import {
   MockPaaExamData,
@@ -85,7 +79,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   allAttempts,
   onStartTest,
   onInspectAttempt,
-  onUpdateCohort,
+  onUpdateCohort: _onUpdateCohort,
   onLogout,
 }) => {
   const [activeTab, setActiveTab] = useState<StudentTab>('tests');

@@ -50,7 +50,7 @@ export function loadGoogleScript(): Promise<void> {
       script.async = true;
       script.defer = true;
       script.onload = () => resolve();
-      script.onerror = (e) =>
+      script.onerror = () =>
         reject(
           new Error('No se pudo cargar el SDK de Google Identity Services.')
         );

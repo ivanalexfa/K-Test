@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
   Award,
-  BookOpen,
-  Calculator,
   CheckCircle2,
   XCircle,
   ArrowLeft,

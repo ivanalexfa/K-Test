@@ -1,5 +1,32 @@
 # K-Test — Agent Guidelines & Custom Commands
 
+These rules apply to every agent on the team (Antigravity, Claude Code, …). `CLAUDE.md` points here.
+
+## Repository rules (team agreement)
+
+- **Never commit or merge directly to `main`.** Every change goes through a Pull Request that Iván or Soham reviews. Work on one branch per task, named `<type>/<area-task>` (`feat/landing`, `fix/login-origen`, `chore/herramientas`, `docs/...`).
+- **Frontend redesign:** task branches open their PR against the integration branch `rediseno/estudiante`; that branch goes to `main` in a single PR. See `docs/PLAN.md`.
+- **Commits:** Conventional Commits in Spanish, as in the history: `feat(ui): ...`, `fix(auth): ...`, `chore: ...`, `docs: ...`, `test: ...`.
+- **Before opening a PR:** `npm run verificar` must pass (lint, types, component tests, API tests and e2e). CI (`.github/workflows/verificar.yml`) runs the same checks on every PR.
+- **Decisions:** every design or architecture decision gets an ADR in `docs/<module>/decisiones/NNNN-titulo.md` (template in `docs/plantilla-adr.md`). Index in `docs/README.md`.
+- **Brand:** K-test is a Key Institute product. Visual rules, tokens and assets live in `docs/marca/DESIGN.md`; new screens follow it. No loose hex colors in components once the tokens exist.
+- **Do not commit `data/paa_platform.sqlite`** changes made by running the app locally (`git restore data/paa_platform.sqlite`). Tests use temporary databases (`SQLITE_DB_PATH`).
+- **Local URL:** open the app at `http://localhost:5173`, not `127.0.0.1`: Google and Microsoft sign-in only accept the registered origin.
+
+## Commands
+
+| Command | What it does |
+| :--- | :--- |
+| `npm run dev` | Vite + API plugin at `http://localhost:5173` |
+| `npm run lint` | ESLint (`src/`, `e2e/`, configs) with `jsx-a11y` and `react-hooks` |
+| `npm run typecheck` | TypeScript without emitting |
+| `npm run test:web` | Component tests (Vitest + Testing Library), files `src/**/*.test.tsx` |
+| `npm run test:api` | API test suite on a temporary copy of the database |
+| `npm run test:e2e` | Playwright (`e2e/`), desktop and Pixel 7, own Vite on port 5174 and temporary DB. First time: `npx playwright install chromium` |
+| `npm run verificar` | All of the above |
+
+A new screen or flow gets its test in `e2e/`, importing `test` and `expect` from `e2e/ayudantes.ts` (it fails the test on page exceptions, console errors or API 5xx).
+
 ## Command: `/add-sprint` or `#ADD_SPRINT` (or `/nueva-prueba`)
 
 Whenever the user sends a message containing `/add-sprint`, `/nueva-prueba`, `#ADD_SPRINT`, or `#NUEVA_PRUEBA` followed by a sprint template:

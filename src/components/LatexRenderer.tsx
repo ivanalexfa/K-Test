@@ -8,6 +8,23 @@ interface LatexRendererProps {
 }
 
 /**
+ * Converts a LaTeX expression to HTML, or returns null when KaTeX cannot parse it.
+ * Kept outside the JSX so rendering never happens inside a try/catch
+ * (react-hooks/error-boundaries).
+ */
+function renderKatex(math: string, displayMode: boolean): string | null {
+  try {
+    return katex.renderToString(math, {
+      displayMode,
+      throwOnError: false,
+      strict: false,
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Renders mixed text containing inline LaTeX ($...$) and display LaTeX ($$...$$),
  * or pure LaTeX expressions when blockMode={true}.
  */
@@ -20,21 +37,14 @@ export const LatexRenderer: React.FC<LatexRendererProps> = ({
     if (!content) return null;
 
     if (blockMode) {
-      try {
-        const html = katex.renderToString(content, {
-          displayMode: true,
-          throwOnError: false,
-          strict: false,
-        });
-        return (
-          <div
-            className="overflow-x-auto py-1"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        );
-      } catch {
-        return <code>{content}</code>;
-      }
+      const html = renderKatex(content, true);
+      if (html === null) return <code>{content}</code>;
+      return (
+        <div
+          className="overflow-x-auto py-1"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      );
     }
 
     // Split by $$...$$ first, then by $...$
@@ -44,42 +54,28 @@ export const LatexRenderer: React.FC<LatexRendererProps> = ({
     return segments.map((segment, index) => {
       if (segment.startsWith('$$') && segment.endsWith('$$')) {
         const math = segment.slice(2, -2).trim();
-        try {
-          const html = katex.renderToString(math, {
-            displayMode: true,
-            throwOnError: false,
-            strict: false,
-          });
-          return (
-            <span
-              key={index}
-              className="block my-2 overflow-x-auto"
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
-          );
-        } catch {
-          return <code key={index}>{math}</code>;
-        }
+        const html = renderKatex(math, true);
+        if (html === null) return <code key={index}>{math}</code>;
+        return (
+          <span
+            key={index}
+            className="block my-2 overflow-x-auto"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        );
       }
 
       if (segment.startsWith('$') && segment.endsWith('$')) {
         const math = segment.slice(1, -1).trim();
-        try {
-          const html = katex.renderToString(math, {
-            displayMode: false,
-            throwOnError: false,
-            strict: false,
-          });
-          return (
-            <span
-              key={index}
-              className="inline-block align-middle mx-0.5"
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
-          );
-        } catch {
-          return <code key={index}>{math}</code>;
-        }
+        const html = renderKatex(math, false);
+        if (html === null) return <code key={index}>{math}</code>;
+        return (
+          <span
+            key={index}
+            className="inline-block align-middle mx-0.5"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        );
       }
 
       // Handle line breaks in regular text
