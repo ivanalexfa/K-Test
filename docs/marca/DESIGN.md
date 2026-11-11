@@ -152,7 +152,8 @@ Archivos (vector) en `public/brand/key/`, tomados del sitio de Key. Componente: 
 | Isotipo + «key» | `key-wordmark-{negro,blanco}.svg` (204×84) | Celular, espacios chicos |
 | Isotipo en círculo azul | `public/favicon.svg` | Favicon (como el avatar de Instagram de Key) |
 
-- **K-test junto al logo:** «K-test» en Albert Sans 600, separado del logo de Key por una línea vertical fina. Nunca un logotipo propio de K-test.
+- **El nombre junto al logo:** «K-TEST» en mayúsculas, Albert Sans 600 con `letter-spacing: 0.04em`, separado del logo de Key por una línea vertical fina, en sintonía con «INSTITUTO KRIETE DE INGENIERÍA Y CIENCIAS». Nunca un logotipo propio. **Decisión K-test (10 nov):** se probaron «K-test», «K-Test» y «K-TEST» junto al logo; en minúsculas se veía débil y «K-TEST» acompaña mejor al logo de Key.
+- **En el texto corrido** (títulos de página, frases) el producto se escribe **«K-Test»**: en mayúsculas dentro de una frase se lee como un grito.
 - **Negro** sobre blanco o gris claro; **blanco** sobre negro, `#111`, azul Key o fotos oscuras.
 - Alto mínimo: 32 px el horizontal, 24 px el isotipo. Espacio libre alrededor: el alto del isotipo.
 - No se deforma, no se recolorea con colores de carrera, no se le ponen sombras ni degradados.
@@ -197,3 +198,4 @@ En Instagram, Key usa fondos azul Key o negros con titular blanco en negrita, el
 ## Historial
 
 - **1.0 (2026-11-10):** primera versión a partir del análisis de Key (Fase 1, `feat/marca-key`).
+- **1.1 (2026-11-10):** «K-TEST» junto al logo y «K-Test» en el texto (Fase 3, `feat/landing`).
