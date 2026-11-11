@@ -1,0 +1,14 @@
+# ==============================================================================
+# KEY INSTITUTE · CODEOWNERS
+# ==============================================================================
+# Define a los propietarios del repositorio que tienen la potestad exclusiva
+# de aprobar Pull Requests antes de que puedan ser fusionados a la rama 'main'.
+#
+# Para que un Pull Request sea aprobado, debe contar con la revisión favorable
+# de al menos uno de los propietarios aquí listados.
+#
+# Sintaxis: * @usuario1 @usuario2 ...
+# ==============================================================================
+
+# Propietarios globales de todo el código del repositorio:
+* @ivanalexfa
