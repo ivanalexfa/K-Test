@@ -435,6 +435,23 @@ async function runTests() {
       throw new Error('Subsequent login must retain the already configured cohort');
     }
 
+    // 4.20 Teacher authorization allows updating/reassigning student cohort and name
+    const resTeacherUpdate = await invokeHandler(indexHandler, {
+      url: `/api/index.js?__pathname=/api/users/${newStudentId}/cohort`,
+      method: 'PUT',
+      query: { __pathname: `/api/users/${newStudentId}/cohort` },
+      body: { cohort: 'Ciclo 2 2028', updatedByRole: 'teacher', name: 'Nuevo Aspirante Editado' },
+    });
+    const parsedTeacherUpdate = JSON.parse(resTeacherUpdate.body);
+    console.log('  4.20 Teacher updates student cohort and name:', resTeacherUpdate.statusCode, parsedTeacherUpdate.user?.cohort, parsedTeacherUpdate.user?.name);
+    if (
+      resTeacherUpdate.statusCode !== 200 ||
+      parsedTeacherUpdate.user?.cohort !== 'Ciclo 2 2028' ||
+      parsedTeacherUpdate.user?.name !== 'Nuevo Aspirante Editado'
+    ) {
+      throw new Error('Teacher must be able to update/reassign student cohort and edit student information');
+    }
+
     console.log('\n======================================================');
     console.log('🎉 ALL VERIFICATION TESTS PASSED SUCCESSFULLY!');
     console.log('======================================================');

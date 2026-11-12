@@ -578,10 +578,14 @@ export async function getAllUsers() {
   );
 }
 
-export async function updateUserCohort(userId: string, cohort: string) {
+export async function updateUserCohort(
+  userId: string,
+  cohort: string,
+  options?: { allowOverride?: boolean; updatedByRole?: string; name?: string }
+) {
   await ensureDbReady();
   const existingUser: any = await dbGet(
-    `SELECT id, role, cohort FROM users WHERE id = ?`,
+    `SELECT id, role, cohort, name FROM users WHERE id = ?`,
     [userId]
   );
   if (!existingUser) {
@@ -590,8 +594,11 @@ export async function updateUserCohort(userId: string, cohort: string) {
     throw err;
   }
 
-  // Regla de inmutabilidad: Si un estudiante ya definió su ciclo de admisión, no puede alterarlo
+  const isTeacher = options?.allowOverride || options?.updatedByRole === 'teacher';
+
+  // Regla de inmutabilidad: Si un estudiante ya definió su ciclo de admisión, no puede alterarlo sin autorización docente
   if (
+    !isTeacher &&
     existingUser.role === 'student' &&
     existingUser.cohort &&
     existingUser.cohort.trim() !== ''
@@ -604,7 +611,13 @@ export async function updateUserCohort(userId: string, cohort: string) {
     throw err;
   }
 
-  await dbRun(`UPDATE users SET cohort = ? WHERE id = ?`, [cohort.trim(), userId]);
+  const newCohort = typeof cohort === 'string' ? cohort.trim() : existingUser.cohort;
+  const newName =
+    isTeacher && typeof options?.name === 'string' && options.name.trim() !== ''
+      ? options.name.trim()
+      : existingUser.name;
+
+  await dbRun(`UPDATE users SET cohort = ?, name = ? WHERE id = ?`, [newCohort, newName, userId]);
   return dbGet(
     `SELECT
        id,

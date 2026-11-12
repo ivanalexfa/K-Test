@@ -778,10 +778,10 @@ async function getAllUsers() {
      ORDER BY role ASC, name ASC`
   );
 }
-async function updateUserCohort(userId, cohort) {
+async function updateUserCohort(userId, cohort, options) {
   await ensureDbReady();
   const existingUser = await dbGet(
-    `SELECT id, role, cohort FROM users WHERE id = ?`,
+    `SELECT id, role, cohort, name FROM users WHERE id = ?`,
     [userId]
   );
   if (!existingUser) {
@@ -789,7 +789,8 @@ async function updateUserCohort(userId, cohort) {
     err.statusCode = 404;
     throw err;
   }
-  if (existingUser.role === "student" && existingUser.cohort && existingUser.cohort.trim() !== "") {
+  const isTeacher = options?.allowOverride || options?.updatedByRole === "teacher";
+  if (!isTeacher && existingUser.role === "student" && existingUser.cohort && existingUser.cohort.trim() !== "") {
     const err = new Error(
       "El ciclo de admisi\xF3n ya ha sido definido y no puede ser modificado por el estudiante."
     );
@@ -797,7 +798,9 @@ async function updateUserCohort(userId, cohort) {
     err.code = "COHORT_ALREADY_SET";
     throw err;
   }
-  await dbRun(`UPDATE users SET cohort = ? WHERE id = ?`, [cohort.trim(), userId]);
+  const newCohort = typeof cohort === "string" ? cohort.trim() : existingUser.cohort;
+  const newName = isTeacher && typeof options?.name === "string" && options.name.trim() !== "" ? options.name.trim() : existingUser.name;
+  await dbRun(`UPDATE users SET cohort = ?, name = ? WHERE id = ?`, [newCohort, newName, userId]);
   return dbGet(
     `SELECT
        id,
@@ -1648,11 +1651,15 @@ async function handleApiRequest(req, res) {
         return true;
       }
       const body = await readJsonBody(req);
-      if (!body.cohort) {
+      if (body.cohort === void 0 || body.cohort === null) {
         sendJson(res, 400, { error: "La cohorte es obligatoria" });
         return true;
       }
-      const updatedUser = await updateUserCohort(userId, body.cohort);
+      const updatedUser = await updateUserCohort(userId, body.cohort, {
+        allowOverride: body.allowOverride === true,
+        updatedByRole: body.updatedByRole,
+        name: body.name
+      });
       const [users, attempts] = await Promise.all([
         getAllUsers(),
         getAllTestAttempts()
