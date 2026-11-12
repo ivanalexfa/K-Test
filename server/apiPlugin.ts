@@ -397,11 +397,15 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
         return true;
       }
       const body = await readJsonBody(req);
-      if (!body.cohort) {
+      if (body.cohort === undefined || body.cohort === null) {
         sendJson(res, 400, { error: 'La cohorte es obligatoria' });
         return true;
       }
-      const updatedUser = await updateUserCohort(userId, body.cohort);
+      const updatedUser = await updateUserCohort(userId, body.cohort, {
+        allowOverride: body.allowOverride === true,
+        updatedByRole: body.updatedByRole,
+        name: body.name,
+      });
       const [users, attempts] = await Promise.all([
         getAllUsers(),
         getAllTestAttempts(),

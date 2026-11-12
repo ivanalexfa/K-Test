@@ -58,7 +58,10 @@ export const PaginaEstudiantesDocente: React.FC = () => {
       (!texto ||
         r.estudiante.name.toLowerCase().includes(texto) ||
         r.estudiante.email.toLowerCase().includes(texto)) &&
-      (ciclo === 'all' || r.estudiante.cohort === ciclo) &&
+      (ciclo === 'all' ||
+        (ciclo === 'sin-ciclo'
+          ? !r.estudiante.cohort || r.estudiante.cohort.trim() === ''
+          : r.estudiante.cohort === ciclo)) &&
       enNivel(r.precision, nivel),
   );
   const hayFiltros = Boolean(texto) || ciclo !== 'all' || nivel !== 'all';
@@ -123,6 +126,7 @@ export const PaginaEstudiantesDocente: React.FC = () => {
             </label>
             <select id="docente-ciclo" value={ciclo} onChange={(e) => cambiar('ciclo', e.target.value)} className={claseCampo}>
               <option value="all">Todos los ciclos</option>
+              <option value="sin-ciclo">Sin ciclo asignado</option>
               {ciclos.map((c) => (
                 <option key={c} value={c}>
                   {c}

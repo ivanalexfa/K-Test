@@ -65,3 +65,31 @@ export function validateGridInInput(rawInput: string): { isValidFormat: boolean;
   }
   return { isValidFormat: true };
 }
+
+---
+
+## 4. Arquitectura del Sistema y Enrutamiento
+
+- **Enrutamiento:** `react-router` v7 (`<BrowserRouter>` en `src/main.tsx`). Centralizado en `src/rutas.ts`.
+  - `/` -> Landing institucional de K-Test (`PaginaLanding.tsx`).
+  - `/entrar` -> Acceso con Microsoft / Google / Cuentas demo (`PaginaAcceso.tsx`).
+  - `/inicio` -> Portal del estudiante (`LayoutEstudiante.tsx`):
+    - `/inicio/pruebas` -> Catálogo de simulacros y sprints (`PaginaPruebas.tsx`).
+    - `/inicio/material` -> Guías y material de estudio (`PaginaMaterial.tsx`).
+    - `/inicio/resultados` -> Historial de intentos del estudiante (`PaginaMisResultados.tsx`).
+  - `/examen/:clave` -> Motor de examen en curso (`PaginaExamen.tsx`).
+  - `/resultados/:intentoId` -> Solucionario y desglose de puntaje (`PaginaResultados.tsx`).
+  - `/docente` -> Portal docente (`LayoutDocente.tsx`):
+    - `/docente/estudiantes` -> Directorio de estudiantes y filtros de ciclo/desempeño (`PaginaEstudiantesDocente.tsx`).
+    - `/docente/estudiantes/:id` -> Ficha de estudiante con edición de datos (`PaginaFichaEstudiante.tsx`).
+    - `/docente/intentos` -> Historial global de intentos (`PaginaIntentosDocente.tsx`).
+    - `/docente/material` -> Gestión de guías de estudio (`PaginaMaterialDocente.tsx`).
+    - `/docente/material/nuevo` y `.../:id` -> Editor de material (`PaginaFormularioMaterial.tsx`).
+
+- **Estado y Contextos:**
+  - `SesionContext` (`src/estado/SesionContext.tsx`): Gestión de usuario activo (persistencia en `sessionStorage`), material de estudio, y sincronización con `/api/bootstrap`. Expone `actualizarEstudiante` para docentes.
+  - `ExamenContext` (`src/estado/ExamenContext.tsx`): Máquina de estado para exámenes activos, cronómetro, respuestas y entrega de intentos hacia `/api/attempts`.
+
+- **Backend y Serverless:**
+  - `server/apiPlugin.ts` y `server/database.ts`: Servidor API para desarrollo local y empaquetado a Vercel Serverless Functions (`api/index.js` y `api/[...path].js`).
+  - Base de datos dual: SQLite local (`data/paa_platform.sqlite`) con sincronización transparente a Turso (`libsql`) en producción mediante variables de entorno `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN`.

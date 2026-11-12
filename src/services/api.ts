@@ -111,7 +111,12 @@ export async function apiAuthenticateWithGoogle(payload: {
 
 export async function apiUpdateUserCohort(
   userId: string,
-  cohort: string
+  cohort: string,
+  options?: {
+    allowOverride?: boolean;
+    updatedByRole?: string;
+    name?: string;
+  }
 ): Promise<{
   user: UserRecord;
   users: UserRecord[];
@@ -122,9 +127,14 @@ export async function apiUpdateUserCohort(
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cohort }),
+      body: JSON.stringify({
+        cohort,
+        allowOverride: options?.allowOverride,
+        updatedByRole: options?.updatedByRole,
+        name: options?.name,
+      }),
     },
-    'Error al actualizar la cohorte del estudiante'
+    'Error al actualizar la información del estudiante'
   );
 }
 

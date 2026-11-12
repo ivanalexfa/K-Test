@@ -37,7 +37,10 @@ export interface SesionValor {
   /** Solo para el panel de cuentas demo (VITE_ENABLE_DEMO_ACCOUNTS). */
   entrarComo: (usuario: UserRecord) => void;
   salir: () => void;
-  cambiarCohorte: (cohorte: string) => Promise<void>;
+  actualizarEstudiante: (
+    estudianteId: string,
+    datos: { cohort: string; name?: string }
+  ) => Promise<void>;
   crearMaterial: (payload: PayloadMaterial) => Promise<void>;
   editarMaterial: (id: string, cambios: CambiosMaterial) => Promise<void>;
   eliminarMaterial: (id: string) => Promise<void>;
@@ -117,9 +120,12 @@ export const SesionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setUsuarioId(null);
         guardarSesion(null);
       },
-      cambiarCohorte: async (cohorte) => {
-        if (!usuario) return;
-        const res = await apiUpdateUserCohort(usuario.id, cohorte);
+      actualizarEstudiante: async (estudianteId, datos) => {
+        const res = await apiUpdateUserCohort(estudianteId, datos.cohort, {
+          allowOverride: true,
+          updatedByRole: usuario?.role || 'teacher',
+          name: datos.name,
+        });
         setUsuarios(res.users);
         setIntentos(res.attempts);
       },

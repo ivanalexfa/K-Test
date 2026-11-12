@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Pencil } from 'lucide-react';
 import { useSesion } from '../../estado/useSesion';
 import { rutas } from '../../rutas';
 import { Vacio } from '../../components/estudiante/piezas';
 import { formatoFecha } from '../../components/estudiante/formato';
 import { iniciales, resumirEstudiante } from '../../components/docente/datos';
+import { ModalEditarEstudiante } from '../../components/docente/ModalEditarEstudiante';
 
 /**
  * Ficha de un estudiante (/docente/estudiantes/<id>): una pantalla propia, no un bloque sobre
@@ -15,7 +16,9 @@ import { iniciales, resumirEstudiante } from '../../components/docente/datos';
 export const PaginaFichaEstudiante: React.FC = () => {
   const { id = '' } = useParams();
   const { state } = useLocation() as { state: { desde?: string } | null };
-  const { usuarios, intentos } = useSesion();
+  const { usuarios, intentos, actualizarEstudiante } = useSesion();
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [mensajeExito, setMensajeExito] = useState<string | null>(null);
 
   const estudiante = usuarios.find((u) => u.id === id && u.role === 'student');
   if (!estudiante) return <Navigate to={rutas.docente} replace />;
@@ -23,6 +26,12 @@ export const PaginaFichaEstudiante: React.FC = () => {
   const r = resumirEstudiante(estudiante, intentos);
   const pct = (v: number | null) => (v === null ? '—' : `${v}%`);
   const simulacros = r.intentos.filter((a) => a.mode === 'simulacro').length;
+
+  const handleGuardar = async (datos: { cohort: string; name?: string }) => {
+    await actualizarEstudiante(estudiante.id, datos);
+    setMensajeExito('Información actualizada');
+    setTimeout(() => setMensajeExito(null), 3500);
+  };
 
   return (
     <>
@@ -49,8 +58,23 @@ export const PaginaFichaEstudiante: React.FC = () => {
             </h1>
             <p className="mt-1 text-sm break-all">
               {estudiante.email}
-              {estudiante.cohort ? ` · ${estudiante.cohort}` : ''}
+              {estudiante.cohort ? ` · ${estudiante.cohort}` : ' · Sin ciclo asignado'}
             </p>
+            <div className="mt-3 flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setModalAbierto(true)}
+                className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full border-[0.8px] border-key-blanco text-xs font-semibold text-key-blanco hover:bg-white/10 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-key-blanco"
+              >
+                <Pencil aria-hidden="true" className="w-3.5 h-3.5" />
+                Editar información
+              </button>
+              {mensajeExito && (
+                <span className="text-xs bg-white/20 text-key-blanco px-2.5 py-1 rounded-full font-medium" role="status">
+                  {mensajeExito}
+                </span>
+              )}
+            </div>
           </div>
           <div className="shrink-0 sm:text-right">
             <p className="text-sm">Precisión general</p>
@@ -145,6 +169,13 @@ export const PaginaFichaEstudiante: React.FC = () => {
           )}
         </div>
       </section>
+
+      <ModalEditarEstudiante
+        isOpen={modalAbierto}
+        onClose={() => setModalAbierto(false)}
+        estudiante={estudiante}
+        onGuardar={handleGuardar}
+      />
     </>
   );
 };
